@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && if [ ! -f config.json ]; then echo 'SISTEMA SIN CONFIGURAR: no existe config.json. Apenas el usuario escriba cualquier cosa, salúdalo, explícale en 2 líneas qué hace este sistema y empieza la instalación guiada con la skill instalar-finanzas (Fase 0).'; elif [ ! -f token.json ]; then echo 'Falta autorizar Google (no existe token.json): retoma la skill instalar-finanzas en la Fase 2.'; fi"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,35 @@
+{
+ "_nota": "Suscripciones que se pueden recortar. 'buscar' = regex que identifica el cobro. Decide en la columna '¿Qué hago?' del Sheet.",
+ "items": [
+  {
+   "nombre": "Netflix",
+   "buscar": "NETFLIX",
+   "sugerencia": ""
+  },
+  {
+   "nombre": "Spotify",
+   "buscar": "SPOTIFY",
+   "sugerencia": ""
+  },
+  {
+   "nombre": "Apple (iCloud / apps)",
+   "buscar": "APPLE",
+   "sugerencia": "Revisar en iPhone > Ajustes > tu nombre > Suscripciones"
+  },
+  {
+   "nombre": "Google One",
+   "buscar": "GOOGLE ONE",
+   "sugerencia": ""
+  },
+  {
+   "nombre": "Disney / HBO / Prime",
+   "buscar": "DISNEY|HBO|PRIME VIDEO|AMAZON PRIME",
+   "sugerencia": ""
+  },
+  {
+   "nombre": "ChatGPT / Claude",
+   "buscar": "OPENAI|CHATGPT|ANTHROPIC|CLAUDE",
+   "sugerencia": ""
+  }
+ ]
+}

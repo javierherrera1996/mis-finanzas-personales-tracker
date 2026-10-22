@@ -1,0 +1,29 @@
+{
+ "_leeme": "Copia este archivo como config.json y llénalo con TUS datos (o pídele a Claude: 'configúralo para mí'). config.json no se comparte nunca.",
+ "nombre": "Tu Nombre",
+ "correo": "tucorreo@gmail.com",
+ "clave_pdf": "TU_CEDULA",
+ "desde": "2025-01-01",
+
+ "nombre_en_bancos": ["NOMBRE APELLIDO", "NOMBRE SEGUNDO APELLIDO1 APELLIDO2"],
+ "documento": "TU_CEDULA",
+ "celulares_propios": ["3000000000"],
+
+ "davivienda": {"cuenta_principal": "", "cuenta_afc": "", "bolsillo": "", "tarjeta_credito": ""},
+ "bancolombia": {"ahorros": "", "tarjeta_credito": "", "tarjeta_debito": ""},
+
+ "sueldo": {"dia_pago": "penultimo_habil", "neto_que_llega": 0, "otros_ingresos_mes": 0},
+ "techo_gasto_mes": 6000000,
+ "fijos_mes": 0,
+ "excluir_del_variable": "Vivienda|Impuestos",
+ "gasto_ritmo_actual": 0,
+ "renta_anual": {"monto": 0, "mes": 10},
+ "metas_categoria": {"Comida": 1500000, "Transporte": 500000, "Ocio": 300000, "Compras": 300000, "Suscripciones": 150000},
+
+ "libranzas_nomina": [],
+ "_libranzas_nomina_ejemplo": [["numero del credito", 1000000, ["2026-01", "2026-02"]]],
+ "netear_con": [],
+ "_netear_con_ejemplo": "Palabras de subcategorías donde alguien te devuelve plata de un gasto (ej. 'roomie'): esas entradas restan del gasto en vez de contarse como ingreso.",
+ "reglas_personales": [],
+ "_reglas_personales_ejemplo": [["SOCIEDAD ARRENDADORA X", "Gasto", "Vivienda", "Arriendo"], ["EMPRESA DONDE TRABAJO", "Ingreso", "Salario", "Empleador"]]
+}

@@ -1,0 +1,34 @@
+{
+ "principios": [
+  "(Escribe aquí tus reglas para decidir: cuánto vale tu tiempo, cuánto trabajo extra aceptas, qué deudas pagar primero.)"
+ ],
+ "objetivos": [
+  {
+   "id": "O1",
+   "objetivo": "(ejemplo) Pagar la tarjeta de crédito",
+   "metrica": "Saldo",
+   "meta": "$0",
+   "fecha": "2027-06-30",
+   "estado": "Pendiente",
+   "nota": ""
+  }
+ ],
+ "hoja_de_ruta": [
+  {
+   "id": "R01",
+   "fase": "1. Arranque",
+   "tarea": "(ejemplo) Revisar suscripciones y cancelar las que no uso",
+   "fecha": "2026-12-31",
+   "horas": 1,
+   "costo": 0,
+   "beneficio": "",
+   "estado": "Pendiente",
+   "nota": ""
+  }
+ ],
+ "estrategias": [],
+ "escenarios": [],
+ "mercado": [],
+ "perfil_checklist": [],
+ "secop": []
+}

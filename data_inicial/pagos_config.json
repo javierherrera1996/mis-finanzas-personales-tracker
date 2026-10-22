@@ -1,0 +1,31 @@
+{
+ "_nota": "Pagos recurrentes. dia = día del mes o 'penultimo_habil'. 'buscar' = texto (regex) que aparece en el movimiento cuando ya pagaste. automatico = sale solo. tipo: ingreso | ahorro | vivienda | deuda | tarjeta | servicio. solo_mes = 'AAAA-MM' para pagos de una sola vez.",
+ "pagos": [
+  {
+   "nombre": "💰 Llega el sueldo",
+   "dia": "penultimo_habil",
+   "monto": 0,
+   "como": "Empleador → cuenta de nómina",
+   "automatico": true,
+   "tipo": "ingreso",
+   "buscar": "Nomina|NOMINA"
+  },
+  {
+   "nombre": "Arriendo (EJEMPLO, cámbialo)",
+   "dia": 5,
+   "monto": 0,
+   "como": "Transferencia",
+   "automatico": false,
+   "tipo": "vivienda",
+   "buscar": "ARRIENDO"
+  }
+ ],
+ "anuales": [
+  {
+   "nombre": "Declaración de renta (revisar fecha según cédula)",
+   "dia": 10,
+   "mes": 8,
+   "como": "DIAN"
+  }
+ ]
+}
