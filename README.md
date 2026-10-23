@@ -2,10 +2,10 @@
 
 # 🧾 Mis Finanzas Personales Tracker+
 
-**Tu agente de finanzas personales para Colombia.**
-Lee los correos de tus bancos, organiza cada peso en un Google Sheet y cada lunes te dice cuánto puedes gastar por día.
+### Chatea con tu plata.
 
-*Cada peso en su lugar, sin hojas de cálculo a mano.*
+**Pregúntale a tu economía lo que quieras y te responde con tus números reales.**
+Lee los correos de tus bancos, organiza cada peso en un Google Sheet y tú solo conversas: *¿cuánto puedo gastar?, ¿me alcanza para el viaje?, ¿en qué se me fue la plata?*
 
 ![Hecho para Colombia](https://img.shields.io/badge/hecho%20para-Colombia%20🇨🇴-FCD116)
 ![Claude Code](https://img.shields.io/badge/funciona%20con-Claude%20Code-D97757)
@@ -15,6 +15,29 @@ Lee los correos de tus bancos, organiza cada peso en un Google Sheet y cada lune
 </div>
 
 ---
+
+## 💬 Chatea con tu presupuesto (y con toda tu economía)
+
+Esto no es otra app con gráficas que nadie mira. Es un **asistente que conoce cada movimiento de tus cuentas**, tus deudas, tus pagos fijos y tus metas, y con el que hablas como con un amigo que sabe de finanzas:
+
+> **Tú:** ¿cuánto puedo gastar hasta el sueldo?
+> **Claude:** Tienes **$1.673.000 libres** después de pagar la tarjeta ($615.298, vence el 25) y Addi ($119.900). Son **$209.000 por día** durante 8 días.
+
+> **Tú:** ¿me alcanza para un viaje de $3 M en diciembre?
+> **Claude:** Sí, si guardas $750.000 de cada sueldo desde noviembre. A tu ritmo actual de restaurantes ($1,4 M/mes) no te alcanza: bajándolo a $900.000 lo logras sin tocar tu colchón.
+
+> **Tú:** ¿en qué se me fue la plata este mes?
+> **Claude:** Gastaste $6,3 M en el día a día: comida $1,2 M, transporte $975.000, y $2,4 M en transferencias que no sé qué son. ¿Me cuentas qué fueron las de $450.000 y $390.000?
+
+> **Tú:** eso de $450 mil fue el arriendo del parqueadero
+> **Claude:** Listo, lo pasé a Vivienda y creé una regla: la próxima vez lo clasifico solo.
+
+> **Tú:** si abono $1 M extra al mes a la tarjeta, ¿cuándo salgo de deudas?
+> **Claude:** En **mar-2028** en vez de nov-2030, y te ahorras **$8,4 M** en intereses. Te conviene abonar primero al crédito del 28% E.A., no al del 12%.
+
+*(conversaciones y cifras de ejemplo)*
+
+Y como todo vive en tu Google Sheet, **también puedes chatear desde el celular**: con Claude en el teléfono y el conector de Google Drive, le preguntas a tu economía desde cualquier parte.
 
 ## ¿Qué hace?
 
@@ -114,7 +137,7 @@ Eso es todo. Claude te entrevista, corre los comandos y te guía en lo que haya 
 
 ## 🗣️ El día a día
 
-Abre Claude en la carpeta y háblale normal:
+Abre Claude en la carpeta (o en el celular) y háblale normal. Algunas ideas:
 
 | Le dices | Te responde |
 |---|---|
@@ -123,6 +146,10 @@ Abre Claude en la carpeta y háblale normal:
 | `¿cómo voy este mes?` | Gasto contra tu techo, por categoría |
 | `eso de $300 mil fue el mercado` | Lo reclasifica y crea una regla |
 | `mándame el informe` | El informe del lunes, ya |
+| `¿me alcanza para X?` | Si te alcanza, cuánto ahorrar por mes y qué recortar |
+| `¿qué suscripciones debería cancelar?` | Cuánto pagas en cada una y cuáles casi no usas |
+| `simula que me suben el sueldo 20%` | Cómo cambian tu caja, tus deudas y tu ahorro |
+| `¿cómo me fue este año?` | Informe con ingresos, gastos, deudas y recomendaciones |
 
 O simplemente **responde el correo del lunes**.
 
