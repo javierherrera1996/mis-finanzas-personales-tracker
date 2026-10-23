@@ -36,7 +36,7 @@ Copia `config.ejemplo.json` a `config.json` y ve llenando:
 ## Fase 2 — Credenciales de Google (la parte más larga; guía paso a paso)
 Sigue docs/google-cloud.md. Un paso por mensaje y espera su "listo":
 proyecto nuevo → habilitar Gmail, Sheets, Drive y Calendar API → pantalla de consentimiento (Externo, sus datos) → agregar los 5 permisos → **PUBLICAR la app** (insiste: en modo prueba el permiso vence cada 7 días) → cliente "App de escritorio" → descargar JSON → renombrar a `credentials.json` en la carpeta (ofrece moverlo tú desde Descargas con `mv ~/Downloads/client_secret_*.json credentials.json`).
-Luego corre `.venv/bin/python reautorizar.py` y explícale: aviso de "app no verificada" → Configuración avanzada → Ir a Cuentas Claras → **marcar todas las casillas**. Si el navegador no abre, dale el enlace de `data/reautorizar.log`.
+Luego corre `.venv/bin/python reautorizar.py` y explícale: aviso de "app no verificada" → Configuración avanzada → Ir a Finanzas Tracker → **marcar todas las casillas**. Si el navegador no abre, dale el enlace de `data/reautorizar.log`.
 
 ## Fase 3 — Detectar sus bancos (pregunta menos, confirma más)
 Corre `.venv/bin/python detectar_bancos.py`. Muéstrale el resultado en una tabla corta y confirma:

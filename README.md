@@ -1,11 +1,11 @@
 <div align="center">
 
-# 🧾 Cuentas Claras
+# 🧾 Mis Finanzas Personales Tracker+
 
 **Tu agente de finanzas personales para Colombia.**
 Lee los correos de tus bancos, organiza cada peso en un Google Sheet y cada lunes te dice cuánto puedes gastar por día.
 
-*Cuentas claras, plata tranquila.*
+*Cada peso en su lugar, sin hojas de cálculo a mano.*
 
 ![Hecho para Colombia](https://img.shields.io/badge/hecho%20para-Colombia%20🇨🇴-FCD116)
 ![Claude Code](https://img.shields.io/badge/funciona%20con-Claude%20Code-D97757)
@@ -65,11 +65,11 @@ Todo corre **en tu computador** con **tu cuenta de Google**. No hay servidores d
 curl -fsSL https://claude.ai/install.sh | bash
 ```
 
-**2. Descarga Cuentas Claras y ábrelo con Claude**
+**2. Descarga Mis Finanzas Tracker+ y ábrelo con Claude**
 ```bash
 cd ~/Documents
-git clone https://github.com/javierherrera1996/cuentas-claras.git
-cd cuentas-claras
+git clone https://github.com/javierherrera1996/mis-finanzas-personales-tracker.git
+cd mis-finanzas-personales-tracker
 claude
 ```
 
@@ -173,10 +173,10 @@ Llena data/plan.json conmigo (objetivos y hoja de ruta), corre plan_sheet.py y c
 | `invalid_grant` | Tu app de Google quedó en modo "Prueba" (vence cada 7 días). Publícala y corre `.venv/bin/python reautorizar.py` |
 | `has not been used in project` / `SERVICE_DISABLED` | Falta habilitar esa API en Google Cloud |
 | `NO ABRE` un PDF | La `clave_pdf` de config.json no es la correcta |
-| No llega el informe del lunes | `tail data/revisiones.log` y `launchctl list \| grep cuentasclaras` |
+| No llega el informe del lunes | `tail data/revisiones.log` y `launchctl list \| grep misfinanzas` |
 | Cualquier otro | Pégale el error a Claude tal cual |
 
-Desactivar el servicio automático: `launchctl unload ~/Library/LaunchAgents/com.cuentasclaras.actualizar.plist`
+Desactivar el servicio automático: `launchctl unload ~/Library/LaunchAgents/com.misfinanzas.actualizar.plist`
 </details>
 
 <details>

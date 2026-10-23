@@ -1,4 +1,4 @@
-# Cuentas Claras — reglas para Claude
+# Mis Finanzas Tracker+ — reglas para Claude
 
 Sistema que lee el Gmail del usuario (alertas y extractos de bancos colombianos), consolida sus movimientos y genera un Google Sheet, un informe semanal por correo (con preguntas que se responden por correo) y recordatorios en Google Calendar. Responde en español y con cifras en pesos ($1.234.567).
 
@@ -6,7 +6,7 @@ Sistema que lee el Gmail del usuario (alertas y extractos de bancos colombianos)
 Toma la iniciativa: saluda, explica en 2 líneas qué hace el sistema y arranca la **instalación guiada con la skill `instalar-finanzas`**. Es una entrevista por fases (requisitos → datos básicos → Google Cloud → detectar bancos con `detectar_bancos.py` → primera corrida → bancos que faltan → clasificar → lo fijo → automático → plan opcional). Una pregunta a la vez; tú corres los comandos, el usuario solo responde. Un hook de inicio de sesión (.claude/settings.json) te avisa si falta config.json o token.json.
 
 ## Flujo
-`actualizar.py [--informe]` = sheet_sync (guarda ediciones del Sheet) → fetch (correos nuevos) → attachments + pdftext (PDF con la clave de config.json) → saldos de créditos → build.py (clasifica) → agente.nuevas_preguntas → make_sheet.py → plan_sheet.py → (calendario.py + informe_semanal.py). El servicio launchd `com.cuentasclaras.actualizar` corre `actualizar.py --semanal`: la primera vez del día actualiza los Sheets; los lunes después de las 7:00 manda el informe; cada 15 min lee las respuestas al correo del informe.
+`actualizar.py [--informe]` = sheet_sync (guarda ediciones del Sheet) → fetch (correos nuevos) → attachments + pdftext (PDF con la clave de config.json) → saldos de créditos → build.py (clasifica) → agente.nuevas_preguntas → make_sheet.py → plan_sheet.py → (calendario.py + informe_semanal.py). El servicio launchd `com.misfinanzas.actualizar` corre `actualizar.py --semanal`: la primera vez del día actualiza los Sheets; los lunes después de las 7:00 manda el informe; cada 15 min lee las respuestas al correo del informe.
 
 ## Reglas que ya costaron errores (no repetirlas)
 - **Caja**: el saldo de la cuenta principal de Davivienda en el extracto YA INCLUYE el bolsillo. Nunca sumes el bolsillo aparte. Caja hoy = saldo del último extracto + movimientos posteriores; los traslados bolsillo↔cuenta son internos.

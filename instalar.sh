@@ -21,12 +21,12 @@ echo "✅ Entorno listo."
 [ -f credentials.json ] || echo "➡️  Falta credentials.json de Google Cloud: ver docs/google-cloud.md."
 
 if [ "$1" = "automatico" ]; then
-  PL=~/Library/LaunchAgents/com.cuentasclaras.actualizar.plist
+  PL=~/Library/LaunchAgents/com.misfinanzas.actualizar.plist
   cat > "$PL" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-  <key>Label</key><string>com.cuentasclaras.actualizar</string>
+  <key>Label</key><string>com.misfinanzas.actualizar</string>
   <key>ProgramArguments</key><array>
     <string>$DIR/.venv/bin/python</string><string>$DIR/actualizar.py</string><string>--semanal</string>
   </array>
@@ -40,5 +40,5 @@ if [ "$1" = "automatico" ]; then
 EOF
   launchctl unload "$PL" 2>/dev/null || true
   launchctl load "$PL"
-  echo "✅ Servicio automático cargado (com.cuentasclaras.actualizar): actualiza al prender el Mac, informe los lunes 7:00."
+  echo "✅ Servicio automático cargado (com.misfinanzas.actualizar): actualiza al prender el Mac, informe los lunes 7:00."
 fi

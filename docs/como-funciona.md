@@ -1,4 +1,4 @@
-# ⚙️ Cómo funciona Cuentas Claras
+# ⚙️ Cómo funciona Mis Finanzas Tracker+
 
 ## La actualización
 ```bash
@@ -19,7 +19,7 @@
 | 9 | `calendario.py` + `informe_semanal.py` | Recordatorios en Calendar y el correo del lunes (solo con `--informe`) |
 
 ## Automático
-`./instalar.sh automatico` crea el servicio `com.cuentasclaras.actualizar` (launchd), que corre `actualizar.py --semanal`:
+`./instalar.sh automatico` crea el servicio `com.misfinanzas.actualizar` (launchd), que corre `actualizar.py --semanal`:
 - **La primera vez del día** que el Mac está prendido → actualiza los Sheets.
 - **Los lunes después de las 7:00** → además manda el informe (una vez por semana; si el Mac estaba apagado, lo manda cuando lo prendas).
 - **Cada 15 minutos** → lee si respondiste el correo del informe y aplica tus respuestas.
