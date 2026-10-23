@@ -75,7 +75,7 @@ put("LEEME", [
     ["Objetivos 2027", "Objetivos del año con meta, fecha y estado (se pueden editar Estado y Nota)."],
     ["Hoja de ruta", "Tareas por fase con fecha, horas, costo, beneficio y estado (Estado y Nota editables)."],
     ["Estrategias", "Estrategias de ingreso ordenadas por costo-beneficio de su tiempo."],
-    ["Escenarios", "Probabilidad de cada escenario para pagar las libranzas."],
+    ["Escenarios", "Probabilidad de cada escenario para pagar tus deudas."],
     ["Mercado salarial", "Dónde está su salario frente al mercado."],
     ["Perfil", "Checklist de CV, LinkedIn, GitHub y página web."],
     ["SECOP", "Hallazgos de contratación pública y qué hacer con ellos."],
@@ -96,7 +96,6 @@ e = agente.estado()
 c = e["caja"]
 movs = json.load(open("data/movimientos.json"))
 cfg = {x["nombre"]: x for x in json.load(open("data/deudas_config.json"))["creditos"]}
-libranzas = sum(cfg[n]["saldo"] for n in ("Libranza 1", "Libranza 2") if n in cfg)
 filas = [
     ["Foto financiera", "Valor", "Detalle"],
     ["Actualizado", ahora, f"Movimientos hasta el {c['hasta']}"],
@@ -110,12 +109,17 @@ filas = [
     ["Gasto variable desde el último sueldo", f(e["gasto_ciclo"]), f"techo del mes {f(e['techo_ciclo'])}"],
     ["Gasto variable últimos 7 días", f(e["gasto_semana"]), f"techo semanal {f(e['techo_semana'])}"],
     ["Deuda total conocida", f(e["deuda"]), "; ".join(f"{x['nombre']} {f(x['saldo'])}" for x in e["creditos"])],
-    ["Libranzas (meta: pagarlas)", f(libranzas), "libranza 1 al 18,99% primero"],
     ["Suscripciones activas", f(sum(s["mensual"] for s in e["suscripciones"] if s["activa"])) + "/mes", ", ".join(s["nombre"] for s in e["suscripciones"] if s["activa"])],
     ["Preguntas pendientes", str(len(e["preguntas"])), "movimientos que el sistema no supo clasificar"],
     [""],
-    ["Últimos meses", "Ingresos", "Gastos", "Neto (ingresos − gastos)", "Pago de deudas"],
+    ["Deudas (de mayor a menor tasa)", "Saldo", "Tasa E.A.", "Intereses al mes", "Termina en"],
 ]
+import deudas as _dd
+_r = _dd.resumen()
+for d_ in _r["deudas"]:
+    filas.append([("👉 " if d_.get("abonar_aqui") else "") + d_["nombre"], f(d_["saldo"]), _dd.pct(d_["tasa_ea"]),
+                  f(d_["interes_mes"]) if d_["interes_mes"] is not None else "paga el total", (str(d_["meses"]) + " meses") if d_["meses"] else d_["nota"][:80]])
+filas += [["Consejo", _r["consejo"]], [""], ["Últimos meses", "Ingresos", "Gastos", "Neto (ingresos − gastos)", "Pago de deudas"]]
 por_mes = collections.defaultdict(lambda: collections.Counter())
 for m in movs: por_mes[m["Mes"]][m["Tipo"]] += m["Valor"]
 for mes in sorted(por_mes)[-6:]:
@@ -161,7 +165,9 @@ for tab, ws in ANCHOS.items():
     if tab != "LEEME":
         reqs.append({"updateSheetProperties": {"properties": {"sheetId": t, "gridProperties": {"frozenRowCount": 1}}, "fields": "gridProperties.frozenRowCount"}})
 reqs.append({"repeatCell": {"range": {"sheetId": SID["LEEME"], "startRowIndex": 0, "endRowIndex": 1}, "cell": {"userEnteredFormat": {"textFormat": {"bold": True, "fontSize": 14}}}, "fields": "userEnteredFormat.textFormat"}})
-fila_meses = [r[0] for r in datos["Hoy"]].index("Últimos meses")
+fila_meses = [r[0] if r else '' for r in datos["Hoy"]].index("Últimos meses")
+fila_deu = [r[0] if r else '' for r in datos["Hoy"]].index("Deudas (de mayor a menor tasa)")
+reqs.append({"repeatCell": {"range": {"sheetId": SID["Hoy"], "startRowIndex": fila_deu, "endRowIndex": fila_deu + 1}, "cell": {"userEnteredFormat": {"textFormat": {"bold": True}, "backgroundColor": {"red": 0.88, "green": 0.93, "blue": 0.91}}}, "fields": "userEnteredFormat(textFormat,backgroundColor)"}})
 reqs.append({"repeatCell": {"range": {"sheetId": SID["Hoy"], "startRowIndex": fila_meses, "endRowIndex": fila_meses + 1}, "cell": {"userEnteredFormat": {"textFormat": {"bold": True}, "backgroundColor": {"red": 0.88, "green": 0.93, "blue": 0.91}}},
                             "fields": "userEnteredFormat(textFormat,backgroundColor)"}})
 call(svc.spreadsheets().batchUpdate(spreadsheetId=sid, body={"requests": reqs}))

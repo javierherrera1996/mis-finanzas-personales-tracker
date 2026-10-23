@@ -16,14 +16,21 @@
 | 6 | `agente.py` | Detecta lo que no entiende y lo agrega a tus preguntas |
 | 7 | `make_sheet.py` | Regenera tu Google Sheet |
 | 8 | `plan_sheet.py` | Regenera el Sheet "Plan y estrategia" |
-| 9 | `calendario.py` + `informe_semanal.py` | Recordatorios en Calendar y el correo del lunes (solo con `--informe`) |
+| 9 | `dia_de_pago.py` | Si llegó el sueldo, el correo "hoy te pagaron" |
+| 10 | `calendario.py` + `informe_semanal.py` | Recordatorios en Calendar y el correo del lunes (solo con `--informe`) |
 
 ## Automático
 `./instalar.sh automatico` crea el servicio `com.misfinanzas.actualizar` (launchd), que corre `actualizar.py --semanal`:
 - **La primera vez del día** que el Mac está prendido → actualiza los Sheets.
 - **Los lunes después de las 7:00** → además manda el informe (una vez por semana; si el Mac estaba apagado, lo manda cuando lo prendas).
 - **Cada 15 minutos** → lee si respondiste el correo del informe y aplica tus respuestas.
+- **Alrededor del día del sueldo** → revisa cada hora si ya llegó para mandarte el aviso de día de pago.
 - Si no hay internet espera hasta 15 min; si algo falla te avisa con una notificación del Mac.
+
+## Pagos, día de pago y deudas
+- **Calendario** (`calendario.py`, desde `data/pagos_config.json`): cada pago no automático es un evento "💳 Vence: …" con aviso **3 días antes y 1 día antes a las 9:00 a. m.** (notificación + correo). Lo que se descuenta solo aparece como "🔁 … (sale solo)". El día del sueldo es "💰 Llega el sueldo" con la lista de pagos del mes. Se sincroniza con el informe semanal o con `.venv/bin/python calendario.py`.
+- **Día de pago** (`dia_de_pago.py`): alrededor de la fecha del sueldo, el servicio revisa cada hora; cuando detecta el abono (categoría Salario) te manda un correo y una notificación con qué pagar antes del próximo sueldo, qué apartar, qué sale solo y cuánto te queda libre por día. Una vez por sueldo. Vista previa: `.venv/bin/python dia_de_pago.py --simular=2026-11-30`.
+- **Deudas** (`deudas.py`): une `data/deudas_config.json` con lo que leen los extractos. De los créditos Davivienda toma saldo, cuota y **tasa cobrada**; de las tarjetas Davivienda y Nu, la tasa vigente, pago total, mínimo, fecha límite e intereses de mora. Ordena de mayor a menor tasa, calcula intereses al mes y meses que faltan, y marca con 👉 dónde abonar (método avalancha). Sale en el informe del lunes, en el correo del día de pago y en la pestaña "Hoy" del Sheet del plan.
 
 ## Tu Google Sheet
 | Pestaña | Qué tiene |

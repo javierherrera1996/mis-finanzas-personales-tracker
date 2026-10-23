@@ -3,6 +3,7 @@ Uso: .venv/bin/python informe_semanal.py [--no-enviar]"""
 import base64, datetime, json, os, sys
 from email.mime.text import MIMEText
 from agente import estado, HOY
+import deudas
 
 from config import C
 DEST = C["correo"]
@@ -60,8 +61,8 @@ def html(e):
 {tabla(["Fecha", "Pago", "Monto"], proximos)}
 <p style="font-size:12px;color:#777">✅ pagado · ⏳ pendiente · 🔁 automático. Los recordatorios también están en tu Google Calendar.</p>
 
-<h3>Deudas</h3>
-<p>Total conocido <b>{f(e['deuda'])}</b> ({cred}). Mira la pestaña <b>Proyección deudas</b> del Sheet para ver cuándo sales y cuánto ahorras abonando extra.</p>
+<h3>Deudas (de mayor a menor tasa)</h3>
+{deudas.tabla_html()}
 
 {"".join(f"<p style='background:#fdecea;padding:10px;border-radius:8px'>⚠️ <b>{s['nombre']}</b> te siguió cobrando después de cancelarla: " + ", ".join(f"{fe} {f(v)}" for fe, v in s['cobro_tras_cancelar']) + ". Revísalo.</p>" for s in e['suscripciones'] if s.get('cobro_tras_cancelar'))}
 <h3>Suscripciones activas: {f(sum(s['mensual'] for s in subs))}/mes</h3>

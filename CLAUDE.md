@@ -8,6 +8,9 @@ Toma la iniciativa: saluda, explica en 2 líneas qué hace el sistema y arranca 
 ## Flujo
 `actualizar.py [--informe]` = sheet_sync (guarda ediciones del Sheet) → fetch (correos nuevos) → attachments + pdftext (PDF con la clave de config.json) → saldos de créditos → build.py (clasifica) → agente.nuevas_preguntas → make_sheet.py → plan_sheet.py → (calendario.py + informe_semanal.py). El servicio launchd `com.misfinanzas.actualizar` corre `actualizar.py --semanal`: la primera vez del día actualiza los Sheets; los lunes después de las 7:00 manda el informe; cada 15 min lee las respuestas al correo del informe.
 
+## Deudas, tasas y día de pago
+`deudas.py` (deudas de mayor a menor tasa, intereses al mes, dónde abonar; tasas leídas de extractos Davivienda y Nu), `dia_de_pago.py` (al llegar el sueldo: correo + notificación con qué pagar, qué apartar y cuánto queda libre por día; `--simular=AAAA-MM-DD` para vista previa) y `calendario.py` (eventos "💳 Vence" con aviso 3 y 1 día antes). Skill `finanzas-deudas-y-pagos`. Lo extra siempre va a la deuda de MAYOR tasa.
+
 ## Reglas que ya costaron errores (no repetirlas)
 - **Caja**: el saldo de la cuenta principal de Davivienda en el extracto YA INCLUYE el bolsillo. Nunca sumes el bolsillo aparte. Caja hoy = saldo del último extracto + movimientos posteriores; los traslados bolsillo↔cuenta son internos.
 - **No contar dos veces**: las compras con tarjeta cuentan el día de la compra; el pago de la tarjeta, los avances, los traslados entre cuentas propias y los rediferidos son "Interno".

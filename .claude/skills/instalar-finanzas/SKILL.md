@@ -58,14 +58,18 @@ Agrupa los movimientos grandes sin clasificar ("Otros", "Transferencias a tercer
 
 ## Fase 7 — Lo fijo
 Pregunta y llena:
-- **Créditos** activos: nombre, saldo, tasa E.A., cuota, día de pago, ¿se descuenta de nómina? → `data/deudas_config.json`.
+- **Créditos** activos: nombre, saldo, tasa E.A., cuota, día de pago, ¿se descuenta de nómina? → `data/deudas_config.json`. Corre primero `.venv/bin/python deudas.py`: las tasas de Davivienda y Nu salen solas de los extractos; pregunta solo las que falten (si no la sabe, que la busque en la app o en el certificado del crédito).
+- **Tarjetas de crédito**: ¿paga el total cada mes o difiere a cuotas? Agrégalas a `pagos_config.json` con su día límite (tipo `tarjeta`).
 - **Pagos fijos** del mes: arriendo, servicios, celular, administración, cursos… (día, monto, cómo se paga) → `data/pagos_config.json`.
 - **Suscripciones**: confirma las detectadas y agrega las que falten → `data/suscripciones.json`.
 - **Plata apartada** que no se debe gastar (ahorro, inversión) → `data/reservas.json`.
-Regenera el Sheet y muéstrale "cuánto puedes gastar por día hasta el sueldo" con el cálculo.
+Regenera el Sheet y muéstrale "cuánto puedes gastar por día hasta el sueldo" con el cálculo, y la tabla de `deudas.py` con dónde le conviene abonar.
 
-## Fase 8 — Automático e informe
-Pregunta si quiere el informe por correo los lunes (sí/no) y si quiere recordatorios de pagos en Google Calendar. Corre `./instalar.sh automatico`, verifica con `launchctl list | grep finanzas`, y manda un informe de ejemplo con `.venv/bin/python actualizar.py --informe`. Explícale que puede responder ese correo con las preguntas numeradas.
+## Fase 8 — Automático, calendario e informe
+1. Pregunta si quiere sus pagos en **Google Calendar** (avisos 3 días y 1 día antes, por notificación y correo). Si sí, corre `.venv/bin/python calendario.py` y dile que revise su calendario.
+2. Explícale el **aviso de día de pago** ("hoy te pagaron: paga esto y te queda tanto libre") y muéstrale una vista previa con `.venv/bin/python dia_de_pago.py --simular=<su próximo día de pago>`. Revisa con él que lo que sale para pagar y apartar esté completo.
+3. Pregunta si quiere el **informe del lunes** por correo.
+4. Corre `./instalar.sh automatico`, verifica con `launchctl list | grep misfinanzas` y manda un informe de ejemplo con `.venv/bin/python actualizar.py --informe`. Explícale que puede responder ese correo con las preguntas numeradas.
 
 ## Fase 9 (opcional) — Objetivos y celular
 Pregunta si quiere un plan: objetivos del año (pagar deudas, ahorrar para algo, viaje) y hoja de ruta → `data/plan.json` → `plan_sheet.py`. Si quiere consultar desde el celular: crea skills para claude.ai que lean sus Sheets por el conector de Google Drive y comprímelas.

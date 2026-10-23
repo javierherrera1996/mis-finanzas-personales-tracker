@@ -32,12 +32,51 @@ Esto no es otra app con gráficas que nadie mira. Es un **asistente que conoce c
 > **Tú:** eso de $450 mil fue el arriendo del parqueadero<br>
 > **Claude:** Listo, lo pasé a Vivienda y creé una regla: la próxima vez lo clasifico solo.
 
+> **Tú:** me acaban de pagar, ¿qué pago primero?<br>
+> **Claude:** Primero el arriendo ($1.800.000, vence el 5) y la luz ($180.000). La tarjeta vence el 25: déjala apartada ($500.000). Con eso te quedan **$96.000 por día** hasta el 30.
+
 > **Tú:** si abono $1 M extra al mes a la tarjeta, ¿cuándo salgo de deudas?<br>
 > **Claude:** En **mar-2028** en vez de nov-2030, y te ahorras **$8,4 M** en intereses. Te conviene abonar primero al crédito del 28% E.A., no al del 12%.
 
 *(conversaciones y cifras de ejemplo)*
 
 Y como todo vive en tu Google Sheet, **también puedes chatear desde el celular**: con Claude en el teléfono y el conector de Google Drive, le preguntas a tu economía desde cualquier parte.
+
+## 📅 Tus pagos, tu presupuesto y tus deudas, en piloto automático
+
+**Nunca más se te pasa una factura.** Cada pago (arriendo, servicios, tarjetas, créditos) queda en tu **Google Calendar** con aviso **3 días antes y 1 día antes**, por notificación y por correo:
+
+| En tu calendario | Cuándo te avisa |
+|---|---|
+| 💳 **Vence: Arriendo — $1.800.000** | 3 días antes y el día anterior, 9:00 a. m. |
+| 💳 **Vence: Tarjeta (pago total)** | Con el valor del último extracto |
+| 🔁 **Hipoteca — $1.200.000 (sale solo)** | Para que sepas, sin alarma |
+| 💰 **Llega el sueldo** | Con la lista de todo lo que pagas ese mes |
+
+**El día que te pagan, te escribe:**
+
+> ### 💰 ¡Hoy te pagaron!
+> Llegaron **$6.500.000**. Próximo sueldo: 30 nov (31 días).
+>
+> **1. Paga esto antes del próximo sueldo — $3.120.000**
+> 5 nov · Arriendo $1.800.000 · 5 nov · Luz $180.000 · 15 nov · Crédito libre inversión $640.000 · 25 nov · Tarjeta $500.000
+>
+> **2. Aparta esto — $400.000** · Ahorro para la renta
+>
+> **Te queda libre: $2.980.000 → $96.000 por día** 🟢
+
+*(cifras de ejemplo)*
+
+**Y conoce tus deudas mejor que tú.** Lee las tasas directamente de tus extractos y te dice cuánto te cuesta cada una:
+
+| Deuda | Saldo | Tasa E.A. | Intereses al mes |
+|---|---|---|---|
+| Tarjeta | $1.300.000 | 28,47% | paga el total |
+| 👉 Libre inversión | $20.000.000 | 24,10% | $363.000 |
+| Vehículo | $35.000.000 | 15,20% | $414.000 |
+| ICETEX | $18.000.000 | 5,10% | $75.000 |
+
+> 👉 *Si te sobra plata, abónala a Libre inversión (24,10% E.A.): cada $1.000.000 te ahorra ≈ $241.000 de intereses al año. No abones extra al ICETEX: es tu deuda más barata.*
 
 ## ¿Qué hace?
 
@@ -110,8 +149,8 @@ Eso es todo. Claude te entrevista, corre los comandos y te guía en lo que haya 
 | 4 | **Tus bancos** | Revisa tu Gmail, te muestra qué bancos te escriben y confirma cuáles cuentas son tuyas |
 | 5 | **Primera corrida** | Baja tus correos, crea tu Sheet y te cuenta lo primero que encontró |
 | 6 | **Clasificar** | Te pregunta qué son los movimientos que no entendió, de a 10 |
-| 7 | **Lo fijo** | Créditos, arriendo, servicios, suscripciones y plata apartada |
-| 8 | **Automático** | Deja todo corriendo solo y te manda un informe de prueba |
+| 7 | **Lo fijo** | Créditos (con sus tasas), arriendo, servicios, tarjetas, suscripciones y plata apartada |
+| 8 | **Automático** | Pone tus pagos en Google Calendar, activa el aviso de día de pago y el informe del lunes, y te manda uno de prueba |
 | 9 | **Plan** *(opcional)* | Tus metas del año y acceso desde Claude en el celular |
 
 ---
@@ -146,6 +185,9 @@ Abre Claude en la carpeta (o en el celular) y háblale normal. Algunas ideas:
 | `¿cómo voy este mes?` | Gasto contra tu techo, por categoría |
 | `eso de $300 mil fue el mercado` | Lo reclasifica y crea una regla |
 | `mándame el informe` | El informe del lunes, ya |
+| `¿qué me toca pagar esta semana?` | Lo que vence, con montos y cómo pagarlo |
+| `¿qué tasa tiene cada deuda y a cuál abono?` | Tus deudas de mayor a menor tasa y dónde rinde más un abono |
+| `agrega la factura del gas, $80 mil el día 12` | La agrega al calendario de pagos y a tu Google Calendar |
 | `¿me alcanza para X?` | Si te alcanza, cuánto ahorrar por mes y qué recortar |
 | `¿qué suscripciones debería cancelar?` | Cuánto pagas en cada una y cuáles casi no usas |
 | `simula que me suben el sueldo 20%` | Cómo cambian tu caja, tus deudas y tu ahorro |
@@ -216,6 +258,9 @@ Desactivar el servicio automático: `launchctl unload ~/Library/LaunchAgents/com
 | `agente.py` | Los cálculos: caja, días al sueldo, pagos pendientes, cuánto gastar por día |
 | `make_sheet.py` / `plan_sheet.py` | Los Google Sheets |
 | `informe_semanal.py` / `respuestas.py` | El correo del lunes y la lectura de tus respuestas |
+| `dia_de_pago.py` | El correo "hoy te pagaron: paga esto y te queda tanto libre" |
+| `deudas.py` | Tus deudas con tasas, intereses al mes y dónde abonar |
+| `calendario.py` | Tus pagos en Google Calendar con avisos antes de vencer |
 | `detectar_bancos.py` | Qué bancos te escriben y cuáles faltan |
 | `parse_*.py` | Lectores de cada banco |
 | `.claude/` | Skills y reglas para que Claude te instale y te ayude |

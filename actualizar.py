@@ -32,6 +32,20 @@ MARCA = "data/ultimo_informe.txt"   # semana ISO del último informe enviado con
 MARCA_DIA = "data/ultima_actualizacion.txt"   # fecha de la última actualización completa (Sheets al día para Claude del celular)
 
 
+def toca_dia_pago():
+    """Alrededor del día del sueldo (1 día antes a 2 después), si aún no se avisó, revisa cada hora si ya llegó."""
+    import agente
+    hoy = datetime.date.today()
+    cerca = any(-1 <= (hoy - p).days <= 2 for p in (agente.ultimo_pago(hoy), agente.proximo_pago(hoy)))
+    if not cerca: return False
+    aviso = "data/ultimo_aviso_pago.txt"
+    if os.path.exists(aviso) and (hoy - datetime.date.fromtimestamp(os.path.getmtime(aviso))).days <= 3: return False   # ya se avisó este sueldo
+    marca = "data/ultima_revision_pago.txt"
+    if os.path.exists(marca) and time.time() - os.path.getmtime(marca) < 3600: return False
+    open(marca, "w").write(datetime.datetime.now().isoformat())
+    return True
+
+
 def toca_diaria():
     """True si hoy todavía no se actualizaron los Sheets (la primera vez que el Mac corre el servicio en el día)."""
     return not os.path.exists(MARCA_DIA) or open(MARCA_DIA).read().strip() != datetime.date.today().isoformat()
@@ -99,6 +113,9 @@ def main():
             if num.endswith(c["sufijo"]) and d["fecha"] > c["fecha_saldo"]:
                 print(f"   {c['nombre']}: {c['saldo']:,.0f} ({c['fecha_saldo']}) -> {d['saldo']:,.0f} ({d['fecha']})")
                 c["saldo"], c["fecha_saldo"] = round(d["saldo"]), d["fecha"]
+            if num.endswith(c["sufijo"]) and d.get("tasa_ea") and abs(d["tasa_ea"] - c.get("tasa_ea", 0)) > 0.0001:
+                print(f"   {c['nombre']}: tasa {c.get('tasa_ea', 0):.2%} -> {d['tasa_ea']:.2%} (según el extracto)")
+                c["tasa_ea"] = round(d["tasa_ea"], 4)
     json.dump(cfg, open("data/deudas_config.json", "w"), ensure_ascii=False, indent=1)
 
     print("5/5 Recalculando, buscando qué preguntarte y regenerando el Sheet…")
@@ -107,6 +124,11 @@ def main():
     print(f"   {nuevas_preguntas(json.load(open('data/movimientos.json')))} preguntas nuevas")
     url = run("make_sheet.py").splitlines()[-1]
     print("   Plan y estrategia:", run("plan_sheet.py").splitlines()[-1])
+    try:   # ¿llegó el sueldo? -> correo "hoy te pagaron: paga esto y te queda tanto libre" (una vez por sueldo)
+        import dia_de_pago
+        if dia_de_pago.revisar(): print("   💰 Llegó el sueldo: te mandé el aviso de día de pago")
+    except Exception as ex:
+        print("   (no se pudo revisar el día de pago:", str(ex)[:150], ")")
     open(MARCA_DIA, "w").write(datetime.date.today().isoformat())
     despues = len(json.load(open("data/movimientos.json")))
     msg = f"{t0:%Y-%m-%d %H:%M} | movimientos {antes} -> {despues} (+{despues - antes}) | {url}"
@@ -136,8 +158,9 @@ if __name__ == "__main__":
             open(LOG, "a").write(f"{datetime.datetime.now():%Y-%m-%d %H:%M} | respuestas: ERROR {str(ex)[:200]}\n")
         toca = toca_semanal()
         diaria = not toca and toca_diaria()
-        open("data/revisiones.log", "a").write(f"{datetime.datetime.now():%Y-%m-%d %H:%M} | {'toca: corriendo' if toca else 'diaria: actualizando Sheets' if diaria else 'no toca (ya enviado o antes del lunes 7:00)'}\n")
-        if not toca and not diaria: sys.exit(0)
+        pago = not toca and not diaria and toca_dia_pago()
+        open("data/revisiones.log", "a").write(f"{datetime.datetime.now():%Y-%m-%d %H:%M} | {'toca: corriendo' if toca else 'diaria: actualizando Sheets' if diaria else 'día de pago: ¿llegó el sueldo?' if pago else 'no toca (ya enviado o antes del lunes 7:00)'}\n")
+        if not toca and not diaria and not pago: sys.exit(0)
         if toca: sys.argv.append("--informe")
     try:
         if not hay_internet():
