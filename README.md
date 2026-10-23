@@ -20,19 +20,19 @@ Lee los correos de tus bancos, organiza cada peso en un Google Sheet y tú solo 
 
 Esto no es otra app con gráficas que nadie mira. Es un **asistente que conoce cada movimiento de tus cuentas**, tus deudas, tus pagos fijos y tus metas, y con el que hablas como con un amigo que sabe de finanzas:
 
-> **Tú:** ¿cuánto puedo gastar hasta el sueldo?
+> **Tú:** ¿cuánto puedo gastar hasta el sueldo?<br>
 > **Claude:** Tienes **$1.673.000 libres** después de pagar la tarjeta ($615.298, vence el 25) y Addi ($119.900). Son **$209.000 por día** durante 8 días.
 
-> **Tú:** ¿me alcanza para un viaje de $3 M en diciembre?
+> **Tú:** ¿me alcanza para un viaje de $3 M en diciembre?<br>
 > **Claude:** Sí, si guardas $750.000 de cada sueldo desde noviembre. A tu ritmo actual de restaurantes ($1,4 M/mes) no te alcanza: bajándolo a $900.000 lo logras sin tocar tu colchón.
 
-> **Tú:** ¿en qué se me fue la plata este mes?
+> **Tú:** ¿en qué se me fue la plata este mes?<br>
 > **Claude:** Gastaste $6,3 M en el día a día: comida $1,2 M, transporte $975.000, y $2,4 M en transferencias que no sé qué son. ¿Me cuentas qué fueron las de $450.000 y $390.000?
 
-> **Tú:** eso de $450 mil fue el arriendo del parqueadero
+> **Tú:** eso de $450 mil fue el arriendo del parqueadero<br>
 > **Claude:** Listo, lo pasé a Vivienda y creé una regla: la próxima vez lo clasifico solo.
 
-> **Tú:** si abono $1 M extra al mes a la tarjeta, ¿cuándo salgo de deudas?
+> **Tú:** si abono $1 M extra al mes a la tarjeta, ¿cuándo salgo de deudas?<br>
 > **Claude:** En **mar-2028** en vez de nov-2030, y te ahorras **$8,4 M** en intereses. Te conviene abonar primero al crédito del 28% E.A., no al del 12%.
 
 *(conversaciones y cifras de ejemplo)*
