@@ -124,6 +124,7 @@ def main():
     print(f"   {nuevas_preguntas(json.load(open('data/movimientos.json')))} preguntas nuevas")
     url = run("make_sheet.py").splitlines()[-1]
     print("   Plan y estrategia:", run("plan_sheet.py").splitlines()[-1])
+    print("   Contexto para Claude web:", run("contexto_doc.py").splitlines()[-1].split("· ")[-1])
     try:   # ¿llegó el sueldo? -> correo "hoy te pagaron: paga esto y te queda tanto libre" (una vez por sueldo)
         import dia_de_pago
         if dia_de_pago.revisar(): print("   💰 Llegó el sueldo: te mandé el aviso de día de pago")

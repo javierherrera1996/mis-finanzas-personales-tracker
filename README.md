@@ -151,7 +151,7 @@ Eso es todo. Claude te entrevista, corre los comandos y te guía en lo que haya 
 | 6 | **Clasificar** | Te pregunta qué son los movimientos que no entendió, de a 10 |
 | 7 | **Lo fijo** | Créditos (con sus tasas), arriendo, servicios, tarjetas, suscripciones y plata apartada |
 | 8 | **Automático** | Pone tus pagos en Google Calendar, activa el aviso de día de pago y el informe del lunes, y te manda uno de prueba |
-| 9 | **Plan** *(opcional)* | Tus metas del año y acceso desde Claude en el celular |
+| 9 | **Web y celular** *(opcional)* | Tus metas del año y el acceso desde Claude web y la app del celular |
 
 ---
 
@@ -166,6 +166,23 @@ Eso es todo. Claude te entrevista, corre los comandos y te guía en lo que haya 
 | RappiCuenta, Nequi, Lulo, BBVA, otros | — | 🛠️ Claude lo agrega durante la instalación |
 
 ¿Tu banco no está? En la fase 4 Claude lo detecta y le escribe el lector.
+
+## 🌐 Úsalo desde Claude web y el celular
+
+Tu Mac hace el trabajo pesado (lee los correos, clasifica, calcula) y deja todo en tu Google Drive. Desde cualquier lugar le preguntas a Claude:
+
+| En tu Drive | Para qué |
+|---|---|
+| 📄 **Mi economía — contexto para Claude** (Google Doc) | **Todo tu contexto en un solo texto**: foto de hoy, pagos de los próximos 30 días, deudas con tasas, flujo de 12 meses, gasto por categoría, ingresos, suscripciones, plan y los movimientos de los últimos 60 días. Claude lo lee completo |
+| 📊 **Finanzas Personales** (Sheet) | El detalle y las gráficas, para ti |
+| 🎯 **Plan y estrategia** (Sheet) | Tus metas y hoja de ruta |
+
+**Para configurarlo (una vez):**
+1. En [claude.ai](https://claude.ai) → **Configuración → Conectores** → conecta **Google Drive** con la misma cuenta.
+2. Crea un **Proyecto** "Mis finanzas" y en sus instrucciones pega: *"Antes de responder, lee en Google Drive el documento 'Mi economía — contexto para Claude' y responde solo con esas cifras."*
+3. Listo: desde la web o la app del celular, entra al proyecto y pregúntale lo que quieras.
+
+El Doc se regenera cada día que prendes tu Mac, así que Claude siempre ve tus números de ese día. *(Por qué un Doc y no el Sheet: el conector de Drive le muestra a Claude solo unas filas de cada hoja; un documento lo lee completo.)*
 
 ## 🔒 Privacidad
 
@@ -257,6 +274,7 @@ Desactivar el servicio automático: `launchctl unload ~/Library/LaunchAgents/com
 | `build.py` | Reglas de clasificación (las tuyas van en `config.json → reglas_personales`) |
 | `agente.py` | Los cálculos: caja, días al sueldo, pagos pendientes, cuánto gastar por día |
 | `make_sheet.py` / `plan_sheet.py` | Los Google Sheets |
+| `contexto_doc.py` | El Google Doc con todo tu contexto para Claude web y el celular |
 | `informe_semanal.py` / `respuestas.py` | El correo del lunes y la lectura de tus respuestas |
 | `dia_de_pago.py` | El correo "hoy te pagaron: paga esto y te queda tanto libre" |
 | `deudas.py` | Tus deudas con tasas, intereses al mes y dónde abonar |

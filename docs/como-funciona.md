@@ -15,7 +15,7 @@
 | 5 | `build.py` | Une todas las fuentes y clasifica cada movimiento → `data/movimientos.json` |
 | 6 | `agente.py` | Detecta lo que no entiende y lo agrega a tus preguntas |
 | 7 | `make_sheet.py` | Regenera tu Google Sheet |
-| 8 | `plan_sheet.py` | Regenera el Sheet "Plan y estrategia" |
+| 8 | `plan_sheet.py` + `contexto_doc.py` | Regenera el Sheet "Plan y estrategia" y el Google Doc "Mi economía — contexto para Claude" (lo que lee Claude web) |
 | 9 | `dia_de_pago.py` | Si llegó el sueldo, el correo "hoy te pagaron" |
 | 10 | `calendario.py` + `informe_semanal.py` | Recordatorios en Calendar y el correo del lunes (solo con `--informe`) |
 

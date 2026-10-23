@@ -71,8 +71,10 @@ Regenera el Sheet y muéstrale "cuánto puedes gastar por día hasta el sueldo" 
 3. Pregunta si quiere el **informe del lunes** por correo.
 4. Corre `./instalar.sh automatico`, verifica con `launchctl list | grep misfinanzas` y manda un informe de ejemplo con `.venv/bin/python actualizar.py --informe`. Explícale que puede responder ese correo con las preguntas numeradas.
 
-## Fase 9 (opcional) — Objetivos y celular
-Pregunta si quiere un plan: objetivos del año (pagar deudas, ahorrar para algo, viaje) y hoja de ruta → `data/plan.json` → `plan_sheet.py`. Si quiere consultar desde el celular: crea skills para claude.ai que lean sus Sheets por el conector de Google Drive y comprímelas.
+## Fase 9 (opcional) — Plan, Claude web y celular
+1. Pregunta si quiere un plan: objetivos del año (pagar deudas, ahorrar para algo, viaje) y hoja de ruta → `data/plan.json` → `plan_sheet.py`.
+2. Corre `.venv/bin/python contexto_doc.py`: crea en su Drive el Google Doc "Mi economía — contexto para Claude" con todo su contexto (Claude web lo lee completo; los Sheets solo en muestras).
+3. Guíalo en claude.ai: Configuración → Conectores → Google Drive (misma cuenta); crear un Proyecto "Mis finanzas" con la instrucción "Antes de responder, lee en Google Drive el documento 'Mi economía — contexto para Claude' y responde solo con esas cifras". Pídele que pruebe desde el celular: "¿cuánto puedo gastar hoy?".
 
 ## Cierre
 Resume en una tabla qué quedó listo, los enlaces de sus Sheets y 4 frases que puede decirte en el día a día ("actualiza", "¿cuánto puedo gastar?", "eso fue el mercado", "¿cómo voy este mes?"). Recuérdale: nunca compartir config.json, credentials.json ni token.json.
