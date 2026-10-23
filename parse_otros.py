@@ -24,6 +24,17 @@ def nu_todos():
             d.setdefault((x["fecha"], x["valor"], x["desc"]), x)  # misma compra a cuotas aparece en varios extractos
     return list(d.values())
 
+def cuenta_nu():
+    """Saldo de la Cuenta Nu (ahorros) y sus cajitas según el último extracto mensual, o None si no hay extractos."""
+    fs = sorted(glob.glob("pdfs/nu/*CuentaNu_*.txt"))
+    if not fs: return None
+    t = open(fs[-1]).read()
+    g = lambda k: (lambda m: co(m.group(1)) if m else 0.0)(re.search(k + r"\n?\$([\d\.]+,\d{2})", t))
+    per = re.search(r"Período\n\d{2} - (\d{2}) ([A-Z]{3}) (\d{4})", t)
+    fecha = f"{per.group(3)}-{M3[per.group(2)]:02d}-{per.group(1)}" if per else ""
+    return {"cuenta": g("Dinero en tu Cuenta Nu"), "cajitas": g("Dinero en tus cajitas"), "fecha": fecha,
+            "movimientos": "No hiciste movimientos" not in t, "archivo": fs[-1]}
+
 def bancolombia(path="data/otros.jsonl"):
     out = []
     for l in open(path):

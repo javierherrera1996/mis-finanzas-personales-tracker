@@ -160,7 +160,7 @@ Eso es todo. Claude te entrevista, corre los comandos y te guía en lo que haya 
 | Banco / billetera | Qué lee | Estado |
 |---|---|---|
 | **Davivienda** | Extractos de ahorros, tarjeta y créditos (PDF) + alertas | ✅ |
-| **Nu** | Extractos de tarjeta (PDF) | ✅ |
+| **Nu** | Extractos de tarjeta (PDF) y saldo de la Cuenta Nu + cajitas | ✅ |
 | **Bancolombia** | Alertas por correo (compras, transferencias, QR) | ✅ |
 | **Addi** | Extractos | ✅ |
 | RappiCuenta, Nequi, Lulo, BBVA, otros | — | 🛠️ Claude lo agrega durante la instalación |

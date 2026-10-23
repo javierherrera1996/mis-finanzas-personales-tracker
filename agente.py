@@ -192,6 +192,13 @@ def estado():
     manual = json.load(open("data/saldos_manual.json")) if os.path.exists("data/saldos_manual.json") else {}
     hace7 = (HOY - datetime.timedelta(days=7)).isoformat()
     otros = {k: v for k, v in manual.items() if v.get("fecha", "") >= hace7 and v.get("valor") is not None}
+    try:   # Cuenta Nu (ahorros + cajitas) del último extracto, si tiene plata y el extracto es reciente
+        from parse_otros import cuenta_nu
+        cn = cuenta_nu()
+        if cn and cn["cuenta"] + cn["cajitas"] > 0 and cn["fecha"] >= (HOY - datetime.timedelta(days=40)).isoformat() and "Cuenta Nu" not in otros:
+            otros["Cuenta Nu (extracto)"] = {"valor": cn["cuenta"] + cn["cajitas"], "fecha": cn["fecha"]}
+    except Exception:
+        pass
     liquido_otros = sum(v["valor"] for k, v in otros.items() if not re.search(r"tarjeta|deuda", k, re.I))
     deuda_tc_otros = sum(v["valor"] for k, v in otros.items() if re.search(r"tarjeta|deuda", k, re.I))
     libre = c["disponible"] + liquido_otros - deuda_tc_otros - comprometido
