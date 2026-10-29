@@ -54,6 +54,22 @@ def construir():
         ["Gasto variable últimos 7 días", f(e["gasto_semana"]), f"techo semanal {f(e['techo_semana'])}"],
     ]))
 
+    # 1b. Estado general: cuentas, tarjetas en vivo, créditos con seguros, cerrados y en qué se va la plata
+    try:
+        import estado_general
+        eg = estado_general.construir()
+        add("<h2>1b. Estado general: cuentas, tarjetas y créditos</h2><h3>Cuentas</h3>" + tabla(["Cuenta", "Saldo", "Detalle"], eg["cuentas"]))
+        add("<h3>Tarjetas de crédito (en vivo: extracto + compras nuevas − pagos)</h3>" + tabla(["Tarjeta", "Debes hoy", "Vencido", "Próximo pago", "Detalle"], eg["tarjetas"]))
+        add("<h3>Créditos activos (lo que de verdad cobran)</h3>" + tabla(["Crédito", "Saldo", "Tasa E.A.", "Te cobran al mes", "Intereses del mes", "Seguros/otros cargos", "Termina", "Cómo se paga"], eg["creditos"])
+            + f"<p>{esc(eg['creditos_resumen'])}</p>")
+        if eg["cerrados"]: add("<h3>Créditos ya cerrados o prepagados</h3>" + tabla(["Crédito", "Último extracto", "Saldo entonces", "Tasa"], eg["cerrados"]))
+        add("<h3>En qué se te va la plata</h3><p>" + esc(eg["gasto_resumen"]) + "</p>" + tabla(["Categoría"] + eg["gasto_meses"] + ["Promedio"], eg["gasto"]))
+        if eg.get("gasto_grandes"): add("<h3>Pagos grandes de una sola vez (≥ $1 M) en esos meses</h3>" + tabla(["Fecha", "Monto", "Categoría", "Qué"], eg["gasto_grandes"]))
+        if eg["recurrentes_nuevos"]:
+            add("<h3>Cobros que se repiten y no están registrados</h3>" + tabla(["Comercio", "Al mes", "Meses"], [[r["comercio"], f(r["mensual"]), r["meses"]] for r in eg["recurrentes_nuevos"]]))
+    except Exception as ex:
+        add(f"<p>(estado general no disponible: {esc(ex)})</p>")
+
     # 2. Pagos
     add("<h2>2. Pagos: qué vence y cuándo</h2><h3>Próximos 30 días</h3>")
     prox = agente.proximos_pagos(movs, dias=30)

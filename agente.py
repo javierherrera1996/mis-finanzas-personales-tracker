@@ -100,6 +100,23 @@ def tarjeta_davivienda(movs):
     return None
 
 
+def monto_real(p, movs, n=4):
+    """Monto típico de un pago (o cobro) según los últimos pagos reales: mediana de los últimos n en 150 días.
+    Así los montos se actualizan solos (arriendo, servicios, lo que te pasa el roomie) sin tocar la configuración."""
+    if not p.get("buscar") or p["tipo"] in ("tarjeta", "ahorro") or p.get("solo_mes"): return None
+    if p["tipo"] == "ingreso": n = 1   # el sueldo cambia cuando entra una libranza nueva: vale el último
+    signo = 1 if p["tipo"] in ("cobro", "ingreso") else -1
+    desde = (HOY - datetime.timedelta(days=150)).isoformat()
+    ref = p.get("monto") or 0
+    vals = [abs(m["Valor"]) for m in sorted(movs, key=lambda m: m["Fecha"]) if m["Fecha"] >= desde and m["Valor"] * signo > 0
+            and m["Tipo"] != "Interno" and not m["Fuente"].startswith("Descuento de nómina")
+            and re.search(p["buscar"], m["Descripción"] + " " + m.get("Subcategoría", ""), re.I)]
+    vals = [v for v in vals if not ref or v >= 0.3 * ref][-n:]
+    if not vals: return None
+    vals.sort()
+    return vals[len(vals) // 2]
+
+
 def proximos_pagos(movs, dias=21):
     cfg = json.load(open("data/pagos_config.json"))
     tc = tarjeta_davivienda(movs)
@@ -113,6 +130,9 @@ def proximos_pagos(movs, dias=21):
                 ini = (f - datetime.timedelta(days=20)).isoformat()
                 # pagado = hay un pago que coincide desde 20 días antes del vencimiento (también si pagaste por adelantado)
                 item = {**p, "fecha": f, "pagado": pagado(p, movs, ini, min(f + datetime.timedelta(days=15), HOY).isoformat()) if p["tipo"] != "cobro" or f <= HOY + datetime.timedelta(days=3) else False}
+                mr = monto_real(p, movs)
+                if mr and abs(mr - (p.get("monto") or 0)) > 0.02 * mr:
+                    item["monto"], item["monto_fuente"] = round(mr), "según tus últimos pagos"
                 if p["tipo"] == "tarjeta" and not (p["nombre"].startswith("Tarjeta Davivienda") and tc and tc["limite"] and abs((tc["limite"] - f).days) <= 10):
                     # ciclos futuros: monto estimado con las compras que ya hiciste (tarjetas.py)
                     try:
@@ -145,6 +165,32 @@ def suscripciones(movs):
         out.append({**s, "mensual": round(-sum(m["Valor"] for m in rec) / 6), "ultimo": rs[-1]["Fecha"], "ultimo_monto": round(-rs[-1]["Valor"]),
                     "activa": rs[-1]["Fecha"] >= (HOY - datetime.timedelta(days=45)).isoformat() and not (s.get("cancelada") and not tarde),
                     "cobro_tras_cancelar": [(m["Fecha"], round(-m["Valor"])) for m in tarde]})
+    return sorted(out, key=lambda x: -x["mensual"])
+
+
+def recurrentes_nuevos(movs, meses=4):
+    """Cobros que se repiten casi cada mes con monto parecido (mismo comercio) y que NO están en pagos_config ni en
+    suscripciones: suscripciones nuevas, planes, cuotas. Así el usuario no tiene que contarlos."""
+    cfg = json.load(open("data/pagos_config.json"))
+    subs = json.load(open("data/suscripciones.json"))["items"] if os.path.exists("data/suscripciones.json") else []
+    pats = [p["buscar"] for p in cfg["pagos"] if p.get("buscar")] + [s["buscar"] for s in subs if s.get("buscar")]
+    desde = (HOY - datetime.timedelta(days=31 * meses)).isoformat()
+    grupos = collections.defaultdict(list)
+    for m in movs:
+        if m["Tipo"] != "Gasto" or m["Valor"] >= 0 or m["Fecha"] < desde: continue
+        if m["Categoría"] in ("Transferencias a terceros", "Otros", "Efectivo", "Gastos vía Daviplata (sin detalle)", "Comida", "Transporte"): continue
+        palabras = re.sub(r"[^A-Za-zÁÉÍÓÚÑ ]", " ", m["Comercio"] or m["Descripción"]).upper().split()
+        if palabras: grupos[" ".join(palabras[:2])].append(m)
+    out = []
+    for k, ms in grupos.items():
+        meses_v = sorted({m["Mes"] for m in ms})
+        vals = [-m["Valor"] for m in ms]
+        prom = sum(vals) / len(vals)
+        parecidos = max(vals) <= 1.6 * min(vals)
+        if len(meses_v) >= 3 and len(ms) <= 2 * len(meses_v) and parecidos and \
+           not any(re.search(p, " ".join(m["Descripción"] for m in ms), re.I) for p in pats):
+            out.append({"comercio": k, "meses": len(meses_v), "monto": round(prom), "mensual": round(sum(vals) / len(meses_v)),
+                        "ultimo": max(m["Fecha"] for m in ms), "categoria": ms[-1]["Categoría"]})
     return sorted(out, key=lambda x: -x["mensual"])
 
 
@@ -241,7 +287,7 @@ def estado():
         "top_semana": sorted([m for m in movs if m["Tipo"] == "Gasto" and m["Fecha"] >= semana_ini and not re.search(EXCLUIR_VARIABLE, m["Categoría"] + " " + m["Subcategoría"])], key=lambda m: m["Valor"])[:8],
         "categorias_ciclo": sorted(collections.Counter({k: v for k, v in _por_cat(movs, ciclo_ini).items()}).items(), key=lambda i: -i[1]),
         "proximos": prox, "suscripciones": suscripciones(movs), "deuda": total_deuda, "creditos": creditos,
-        "preguntas": pendientes(),
+        "preguntas": pendientes(), "recurrentes_nuevos": recurrentes_nuevos(movs),
     }
 
 

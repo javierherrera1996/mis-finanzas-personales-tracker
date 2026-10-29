@@ -11,6 +11,15 @@ Toma la iniciativa: saluda, explica en 2 líneas qué hace el sistema y arranca 
 ## Deudas, tasas y día de pago
 `tarjetas.py` (deuda EN VIVO de cada tarjeta = extracto + compras de las alertas − pagos; vencido y próximo pago estimado; alimenta deudas.py, agente.proximos_pagos, el informe y el día de pago), `deudas.py` (deudas de mayor a menor tasa, intereses al mes, dónde abonar; tasas leídas de extractos Davivienda y Nu), `dia_de_pago.py` (al llegar el sueldo: correo + notificación con qué pagar, qué apartar y cuánto queda libre por día; `--simular=AAAA-MM-DD` para vista previa) y `calendario.py` (eventos "💳 Vence" con aviso 3 y 1 día antes). Skill `finanzas-deudas-y-pagos`. Lo extra siempre va a la deuda de MAYOR tasa.
 
+## Procesos que se mantienen solos (no pedirle al usuario que repita cada mes)
+- **Montos**: `agente.monto_real()` toma la mediana de los últimos pagos reales (el sueldo: el último) para cada pago/cobro de `pagos_config.json`. La configuración es solo el punto de partida.
+- **Pagado**: un pago cuenta como hecho si aparece desde 20 días antes del vencimiento (también si lo pagó por adelantado).
+- **Cobros** (`tipo: cobro`, ej. roomie): suman a lo libre mientras no lleguen.
+- **Tarjetas** en vivo (`tarjetas.py`) y **Bancolombia ahorros** en vivo (saldo confirmado una vez + alertas).
+- **Cobros recurrentes nuevos**: `agente.recurrentes_nuevos()` los detecta y salen en el Doc.
+- **Permiso de Google vencido**: notificación del Mac en cualquier corrida.
+- `estado_general.py`: cuentas, tarjetas, créditos (intereses y seguros reales del extracto), cerrados y gasto día a día vs pagos grandes.
+
 ## Reglas que ya costaron errores (no repetirlas)
 - **Caja**: el saldo de la cuenta principal de Davivienda en el extracto YA INCLUYE el bolsillo. Nunca sumes el bolsillo aparte. Caja hoy = saldo del último extracto + movimientos posteriores; los traslados bolsillo↔cuenta son internos.
 - **No contar dos veces**: las compras con tarjeta cuentan el día de la compra; el pago de la tarjeta, los avances, los traslados entre cuentas propias y los rediferidos son "Interno".

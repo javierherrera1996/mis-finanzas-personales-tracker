@@ -281,6 +281,7 @@ Desactivar el servicio automático: `launchctl unload ~/Library/LaunchAgents/com
 | `dia_de_pago.py` | El correo "hoy te pagaron: paga esto y te queda tanto libre" |
 | `deudas.py` | Tus deudas con tasas, intereses al mes y dónde abonar |
 | `tarjetas.py` | Cuánto debes hoy en cada tarjeta (extracto + compras nuevas − pagos) |
+| `estado_general.py` | Todo junto: cuentas, tarjetas, créditos (con intereses y seguros reales), créditos cerrados y en qué se te va la plata |
 | `calendario.py` | Tus pagos en Google Calendar con avisos antes de vencer |
 | `detectar_bancos.py` | Qué bancos te escriben y cuáles faltan |
 | `parse_*.py` | Lectores de cada banco |

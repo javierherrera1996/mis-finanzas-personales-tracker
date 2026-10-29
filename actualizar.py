@@ -157,6 +157,8 @@ if __name__ == "__main__":
                 if n: avisar(f"Recibí tu respuesta del correo y actualicé tu Sheet ✅")
         except Exception as ex:
             open(LOG, "a").write(f"{datetime.datetime.now():%Y-%m-%d %H:%M} | respuestas: ERROR {str(ex)[:200]}\n")
+            if "invalid_grant" in str(ex):   # sin esto, el permiso vencido no avisaba hasta el lunes
+                avisar("Venció el permiso de Google: abre Claude y pide 'reautorizar finanzas' (y publica la app en Google Cloud)", limitar_horas=6)
         toca = toca_semanal()
         diaria = not toca and toca_diaria()
         pago = not toca and not diaria and toca_dia_pago()

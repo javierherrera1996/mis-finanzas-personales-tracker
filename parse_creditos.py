@@ -20,9 +20,15 @@ def creditos():
             # tasa que de verdad cobran (E.A.): "Cte.Cobrada Periodo 18.99% E.A" (consumo) o "Cte.Cobrada 11.50 Efectivo Anual" (vivienda)
             ta = re.search(r"Cte\.Cobrada(?: Periodo)?\s+([\d.]+)\s*%?\s*(?:E\.A|Efectivo Anual)", t)
             cu = re.search(r"Valor Cuota Mes \$([\d,\.]+)", t)
+            g = lambda pat: (lambda r: num(r.group(1)) if r else 0.0)(re.search(pat, t))
+            pend = re.search(r"No\. Cuotas Pdtes\. Pago Total\s+(\d+)", t) or re.search(r"No\. Cuotas Pdtes\.[^\n]*?(\d+)\s*$", t, re.M)
             if k not in out or fecha >= out[k]["fecha"]:
                 out[k] = {"saldo": num(val), "fecha": fecha, "archivo": f,
-                          "tasa_ea": float(ta.group(1)) / 100 if ta else None, "cuota": num(cu.group(1)) if cu else None}
+                          "tasa_ea": float(ta.group(1)) / 100 if ta else None, "cuota": num(cu.group(1)) if cu else None,
+                          "seguro_vida": g(r"Seguro de Vida e ITP \$([\d,\.]+)"), "otros_cargos": g(r"Otros Cargos \* \$([\d,\.]+)"),
+                          "intereses_mes": g(r"Intereses Corrientes \$([\d,\.]+)"), "abono_capital": g(r"Abonos a Capital \$([\d,\.]+)"),
+                          "total_abonado": g(r"Total Abonado: \$([\d,\.]+)"), "anticipado": g(r"Valor Pagado Por Anticipado \$([\d,\.]+)"),
+                          "cuotas_pendientes": int(pend.group(1)) if pend else None}
     return out
 
 
