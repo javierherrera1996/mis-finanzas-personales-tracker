@@ -33,6 +33,9 @@ if os.path.exists(ID_FILE):
     sid = open(ID_FILE).read().strip()
     meta = call(svc.spreadsheets().get(spreadsheetId=sid))
     existentes = {s["properties"]["title"] for s in meta["sheets"]}
+    # Solo se toma del Sheet lo que el usuario cambió desde la última vez que se escribió (data/plan_escrito.json);
+    # así los cambios hechos en plan.json (por Claude) no se pisan con valores viejos del Sheet.
+    escrito = json.load(open("data/plan_escrito.json")) if os.path.exists("data/plan_escrito.json") else {}
     for tab, (clave, llave) in EDITABLES.items():   # Estado / Nota que el usuario cambió en el Sheet -> plan.json
         if tab not in existentes: continue
         filas = call(svc.spreadsheets().values().get(spreadsheetId=sid, range=f"'{tab}'!A1:Z")).get("values", [])
@@ -44,7 +47,8 @@ if os.path.exists(ID_FILE):
                 if d.get(llave.upper() if llave == "id" else "Ítem") == it[llave]:
                     for campo in ("estado", "nota"):
                         v = d.get(campo.capitalize())
-                        if v is not None and campo in it: it[campo] = v
+                        antes = escrito.get(tab, {}).get(str(it[llave]), {}).get(campo)
+                        if v is not None and campo in it and (antes is None or v != antes): it[campo] = v
     json.dump(plan, open(PLAN, "w"), ensure_ascii=False, indent=1)
     faltan = [t for t in TABS if t not in existentes]
     if faltan: call(svc.spreadsheets().batchUpdate(spreadsheetId=sid, body={"requests": [{"addSheet": {"properties": {"title": t}}} for t in faltan]}))
@@ -138,6 +142,8 @@ put("Escenarios", [["Escenario", "Gasto día a día al mes", "Ingreso extra neto
     [[s["escenario"], s["dia_a_dia_mes"], s["extra_neto_mes"], s["probabilidad"]] for s in plan["escenarios"]])
 put("Mercado salarial", [["Mercado", "Rango", "Lectura"]] + [[m["mercado"], m["rango"], m["lectura"]] for m in plan["mercado"]])
 put("Perfil", [["Ítem", "Estado"]] + [[p["item"], p["estado"]] for p in plan["perfil_checklist"]])
+json.dump({tab: {str(it[llave]): {"estado": it.get("estado"), "nota": it.get("nota")} for it in plan[clave]} for tab, (clave, llave) in EDITABLES.items()},
+          open("data/plan_escrito.json", "w"), ensure_ascii=False, indent=1)
 put("SECOP", [["Hallazgo", "Ejemplos", "Qué hacer"]] + [[s["hallazgo"], s["ejemplos"], s["accion"]] for s in plan["secop"]])
 ideas = json.load(open("data/ideas_ingreso.json")) if os.path.exists("data/ideas_ingreso.json") else []
 for i in ideas:
