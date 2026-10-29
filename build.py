@@ -58,7 +58,7 @@ REGLAS = [tuple(r) for r in C.get("reglas_personales", [])] + [
     (r"TEMBICI", "Gasto", "Transporte", "Bicicletas"),
     (r"FONDO ROTATORIO DEL MIN", "Gasto", "Trámites", "Pasaporte / Cancillería"),
     (r"\bADDI\b|addi\.com", "Gasto", "Compras", "Compra a cuotas con Addi"),
-    (r"Planilla Unica|PILA", "Gasto", "Seguridad social (PILA)", "Aportes como independiente"),
+    (r"Planilla Unica|\bPILA\b", "Gasto", "Seguridad social (PILA)", "Aportes como independiente"),
     (r"Retiro|Retiraste|\bATM\b|Cajero", "Gasto", "Efectivo", "Retiros"),
     (r"Transferencia|Transferiste|transferiste|Transf |Llave|llave|Transfiya|codigo QR|por QR|Compra A Comercio Llave|Pago A Llave", "Gasto", "Transferencias a terceros", ""),
 ]
@@ -97,6 +97,10 @@ def main():
             c = idx.get((x["fecha"], round(-x["valor"]))) or []
             if c and c[0]["lugar"] and not c[0]["lugar"].startswith("0000"):
                 x["desc"] = f"Compra {c[0]['lugar']}" + (" (PSE)" if "0000000" in x["desc"] else " (internacional)")
+        # Compras con llave (Bre-B) en el extracto no dicen el comercio; la alerta sí ("Lugar de Transacción: SURF HOUSE…")
+        elif re.search(r"Compra A Comercio Llave", x["desc"]) and x["valor"] < 0:
+            c = [a for a in (idx.get((x["fecha"], round(-x["valor"]))) or []) if a["lugar"] and "App Davivienda" not in a["lugar"]]
+            if c: x["desc"] = f"Compra con llave {c[0]['lugar']}"
 
     movs = []
     for x in ahorros:
