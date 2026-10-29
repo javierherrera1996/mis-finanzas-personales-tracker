@@ -14,6 +14,8 @@ REGLAS = [tuple(r) for r in C.get("reglas_personales", [])] + [
     (r"MERCADO ?PAGO\*MERCADOLI|MERCADOLIBRE|MERCADO LIBRE", "Gasto", "Compras", "Mercado Libre"),
     (r"MERCADO ?PAGO|MERCADOPAGO", "Gasto", "Compras", "Pago por Mercado Pago (tienda online, sin detalle)"),
     (r"LICORERA|LICORES", "Gasto", "Ocio", "Licor"),
+    # un retiro en cajero es efectivo, sin importar el lugar del cajero (Portal 170, Lourdes, Zipaquirá…)
+    (r"Retiro en Cajero|Retiro con Tarjeta Cajero|Retiraste \$|Retiro Efectivo", "Gasto", "Efectivo", "Retiros"),
     (r"REDIFE CAPITAL|NC REDIFERIDO", "Interno", "Rediferido tarjeta (deuda pasada a cuotas, no es gasto nuevo)", ""),
     (r"REDIFE INTER", "Gasto", "Intereses y comisiones", "Intereses tarjeta"),
     # --- movimientos internos ---
