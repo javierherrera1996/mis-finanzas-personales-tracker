@@ -1,5 +1,5 @@
 {
- "_nota": "Pagos recurrentes. dia = día del mes o 'penultimo_habil'. 'buscar' = texto (regex) que aparece en el movimiento cuando ya pagaste. automatico = sale solo. tipo: ingreso | ahorro | vivienda | deuda | tarjeta | servicio. solo_mes = 'AAAA-MM' para pagos de una sola vez.",
+ "_nota": "Pagos recurrentes. dia = día del mes o 'penultimo_habil'. 'buscar' = texto (regex) que aparece en el movimiento cuando ya pagaste. automatico = sale solo. tipo: ingreso | ahorro | vivienda | deuda | tarjeta | servicio. solo_mes = 'AAAA-MM' para pagos de una sola vez. tipo 'cobro' = plata que te entra (roomie, arriendos que cobras): suma a lo libre mientras no llegue.",
  "pagos": [
   {
    "nombre": "💰 Llega el sueldo",
@@ -9,6 +9,15 @@
    "automatico": true,
    "tipo": "ingreso",
    "buscar": "Nomina|NOMINA"
+  },
+  {
+   "nombre": "(EJEMPLO) Roomie te pasa su parte del arriendo",
+   "dia": 25,
+   "monto": 0,
+   "como": "Transferencia",
+   "automatico": false,
+   "tipo": "cobro",
+   "buscar": "NOMBRE DEL ROOMIE"
   },
   {
    "nombre": "Arriendo (EJEMPLO, cámbialo)",

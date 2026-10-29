@@ -32,7 +32,8 @@ def plan(movs, sueldo):
     dias = max(1, (sig - hoy).days)
     prox = agente.proximos_pagos(movs, dias=dias)
     pend = [p for p in prox if hoy - datetime.timedelta(days=40) <= p["fecha"] < sig and not p["pagado"] and not p.get("automatico")
-            and p["tipo"] not in ("ingreso",)]
+            and p["tipo"] not in ("ingreso", "cobro")]
+    recibir = [p for p in prox if p["tipo"] == "cobro" and not p["pagado"] and hoy <= p["fecha"] < sig and p.get("monto")]
     pagar = [p for p in pend if p["tipo"] != "ahorro"]
     apartar = [p for p in pend if p["tipo"] == "ahorro"]
     auto = [p for p in prox if hoy <= p["fecha"] < sig and p.get("automatico") and p["tipo"] not in ("ingreso",)]
@@ -49,9 +50,11 @@ def plan(movs, sueldo):
     disponible = e["caja"]["disponible"] + e["liquido_otros"] - e["deuda_tc_otros"]
     total_pagar = sum(p.get("monto") or 0 for p in pagar)
     total_apartar = sum(p.get("monto") or 0 for p in apartar)
-    libre = disponible - total_pagar - total_apartar
+    total_recibir = sum(p["monto"] for p in recibir)
+    libre = disponible - total_pagar - total_apartar + total_recibir
     return {"sueldo": sueldo, "siguiente": sig, "dias": dias, "pagar": pagar, "apartar": apartar, "automaticos": auto,
             "disponible": disponible, "total_pagar": total_pagar, "total_apartar": total_apartar, "libre": libre,
+            "recibir": recibir, "total_recibir": total_recibir,
             "por_dia": libre / dias, "sin_monto": [p for p in pagar if not p.get("monto")], "deudas": deudas.resumen()}
 
 
@@ -73,7 +76,7 @@ def html(pl):
 <div style="background:#f6f8fa;border-radius:10px;padding:16px;margin:16px 0">
   <div style="font-size:15px;color:#555">Después de pagar y apartar te queda libre</div>
   <div style="font-size:34px;font-weight:700;color:{color}">{f(pl['libre'])} → {f(pl['por_dia'])} por día</div>
-  <div style="font-size:13px;color:#555">{f(pl['disponible'])} disponibles − {f(pl['total_pagar'])} de pagos − {f(pl['total_apartar'])} para apartar. No cuenta lo reservado para inversión.</div>
+  <div style="font-size:13px;color:#555">{f(pl['disponible'])} disponibles − {f(pl['total_pagar'])} de pagos − {f(pl['total_apartar'])} para apartar{(' + ' + f(pl['total_recibir']) + ' que te van a entrar (' + ', '.join(p['nombre'] for p in pl['recibir']) + ')') if pl.get('recibir') else ''}. No cuenta lo reservado para inversión.</div>
 </div>
 <h3>Tus deudas</h3>
 {deudas.tabla_html(pl['deudas']['deudas'])}

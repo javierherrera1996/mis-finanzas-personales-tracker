@@ -111,7 +111,8 @@ def proximos_pagos(movs, dias=21):
             f = fecha_pago(p, y, m)
             if HOY - datetime.timedelta(days=10) <= f <= HOY + datetime.timedelta(days=dias):
                 ini = (f - datetime.timedelta(days=20)).isoformat()
-                item = {**p, "fecha": f, "pagado": pagado(p, movs, ini, (f + datetime.timedelta(days=15)).isoformat()) if f <= HOY + datetime.timedelta(days=3) else False}
+                # pagado = hay un pago que coincide desde 20 días antes del vencimiento (también si pagaste por adelantado)
+                item = {**p, "fecha": f, "pagado": pagado(p, movs, ini, min(f + datetime.timedelta(days=15), HOY).isoformat()) if p["tipo"] != "cobro" or f <= HOY + datetime.timedelta(days=3) else False}
                 if p["tipo"] == "tarjeta" and not (p["nombre"].startswith("Tarjeta Davivienda") and tc and tc["limite"] and abs((tc["limite"] - f).days) <= 10):
                     # ciclos futuros: monto estimado con las compras que ya hiciste (tarjetas.py)
                     try:
@@ -136,7 +137,7 @@ def suscripciones(movs):
     ini = (HOY - datetime.timedelta(days=183)).isoformat()
     out = []
     for s in cfg["items"]:
-        rs = [m for m in movs if m["Valor"] < 0 and m["Tipo"] == "Gasto" and re.search(s["buscar"], m["Descripción"])]
+        rs = [m for m in movs if m["Valor"] < 0 and m["Tipo"] == "Gasto" and re.search(s["buscar"], m["Descripción"], re.I)]
         rec = [m for m in rs if m["Fecha"] >= ini]
         if not rs: continue
         # suscripción cancelada que sigue cobrando (después del último cobro esperado)
@@ -203,8 +204,11 @@ def estado():
     dias = max(1, (pp - HOY).days)
     prox = proximos_pagos(movs, dias=max(21, (pp - HOY).days + 1))
     # lo que hay que pagar o apartar (provisión de renta) antes del próximo sueldo, incluido lo vencido
-    por_pagar = [p for p in prox if not p["pagado"] and not p.get("automatico") and p["fecha"] < pp and p["tipo"] != "ingreso" and p.get("monto")]
+    por_pagar = [p for p in prox if not p["pagado"] and not p.get("automatico") and p["fecha"] < pp and p["tipo"] not in ("ingreso", "cobro") and p.get("monto")]
     comprometido = sum(p["monto"] for p in por_pagar)
+    # plata que te va a entrar antes del sueldo (ej. roomie): suma a lo libre mientras no haya llegado
+    por_recibir = [p for p in prox if p["tipo"] == "cobro" and not p["pagado"] and HOY <= p["fecha"] < pp and p.get("monto")]
+    recibir = sum(p["monto"] for p in por_recibir)
     # saldos que el usuario confirma por correo/WhatsApp (Bancolombia, Nequi, Daviplata, efectivo) de los últimos 7 días
     manual = json.load(open("data/saldos_manual.json")) if os.path.exists("data/saldos_manual.json") else {}
     hace7 = (HOY - datetime.timedelta(days=7)).isoformat()
@@ -218,13 +222,13 @@ def estado():
         pass
     liquido_otros = sum(v["valor"] for k, v in otros.items() if not re.search(r"tarjeta|deuda", k, re.I))
     deuda_tc_otros = sum(v["valor"] for k, v in otros.items() if re.search(r"tarjeta|deuda", k, re.I))
-    libre = c["disponible"] + liquido_otros - deuda_tc_otros - comprometido
+    libre = c["disponible"] + liquido_otros - deuda_tc_otros - comprometido + recibir
     semana_ini = (HOY - datetime.timedelta(days=7)).isoformat()
     ciclo_ini = up.isoformat()
     total_deuda, creditos = deuda()
     return {
         "hoy": HOY, "caja": c, "otros_saldos": otros, "liquido_otros": liquido_otros, "deuda_tc_otros": deuda_tc_otros, "proximo_pago": pp, "ultimo_pago": up, "dias_al_pago": dias,
-        "por_pagar_antes_del_sueldo": por_pagar, "comprometido": comprometido, "libre": libre, "por_dia": round(libre / dias),
+        "por_pagar_antes_del_sueldo": por_pagar, "comprometido": comprometido, "por_recibir": por_recibir, "recibir": recibir, "libre": libre, "por_dia": round(libre / dias),
         "gasto_semana": gasto(movs, semana_ini, HOY.isoformat(), True), "techo_semana": round(TECHO_VARIABLE_MES * 7 / 30),
         "gasto_ciclo": gasto(movs, ciclo_ini, HOY.isoformat(), True), "techo_ciclo": TECHO_VARIABLE_MES,
         "fijos_semana": gasto(movs, semana_ini, HOY.isoformat()) - gasto(movs, semana_ini, HOY.isoformat(), True),
