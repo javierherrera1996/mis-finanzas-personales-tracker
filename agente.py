@@ -213,6 +213,11 @@ def estado():
     manual = json.load(open("data/saldos_manual.json")) if os.path.exists("data/saldos_manual.json") else {}
     hace7 = (HOY - datetime.timedelta(days=7)).isoformat()
     otros = {k: v for k, v in manual.items() if v.get("fecha", "") >= hace7 and v.get("valor") is not None}
+    # Bancolombia ahorros EN VIVO: último saldo que confirmaste + todo lo que entró/salió después según las alertas (no vence)
+    for k, v in manual.items():
+        if re.search(r"^bancolombia", k, re.I) and not re.search(r"tarjeta|deuda", k, re.I) and v.get("valor") is not None:
+            flujo = sum(m["Valor"] for m in movs if m["Fuente"].startswith("Bancolombia Ahorros") and m["Fecha"] > v.get("fecha", ""))
+            otros[k] = {"valor": v["valor"] + flujo, "fecha": HOY.isoformat(), "base": v["valor"], "base_fecha": v.get("fecha"), "flujo": flujo}
     try:   # Cuenta Nu (ahorros + cajitas) del último extracto, si tiene plata y el extracto es reciente
         from parse_otros import cuenta_nu
         cn = cuenta_nu()
