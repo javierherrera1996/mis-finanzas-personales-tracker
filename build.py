@@ -162,6 +162,18 @@ def main():
         if r["Tipo"] != "Interno" and re.search(regex_celulares(), r["Descripción"]):
             r["Categoría"], r["Subcategoría"] = "Gastos vía Daviplata (sin detalle)", "A mi Nequi/Daviplata (gastado desde allá)"
 
+    # Contactos: números de cuenta/celular o llaves a los que el usuario les puso nombre y categoría (data/contactos.json)
+    #   {"3015255261": {"nombre": "María Kamyla", "categoria": "Regalos", "subcategoria": "..."}}
+    contactos = json.load(open("data/contactos.json")) if os.path.exists("data/contactos.json") else {}
+    for r in out:
+        if r["Tipo"] == "Interno": continue
+        for num, cdat in contactos.items():
+            if num.startswith("_"): continue
+            if re.search(r"(?<!\d)0*" + re.escape(num.lstrip("0")) + r"(?!\d)" if num.isdigit() else re.escape(num), r["Descripción"], re.I):
+                r["Categoría"] = cdat.get("categoria") or r["Categoría"]
+                r["Subcategoría"] = cdat.get("subcategoria") or cdat.get("nombre", "")
+                break
+
     # ID estable por movimiento (para conservar categorías manuales y notas entre actualizaciones)
     seen = collections.Counter()
     for r in out:
