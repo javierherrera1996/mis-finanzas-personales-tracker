@@ -67,6 +67,8 @@ Y como todo vive en tu Google Sheet, **también puedes chatear desde el celular*
 
 *(cifras de ejemplo)*
 
+**Sabe cuánto debes en cada tarjeta, hoy.** Suma el último extracto + cada compra que te llega en las alertas − lo que hayas pagado: te dice qué está vencido y cuánto te van a cobrar en el próximo pago, sin esperar el extracto.
+
 **Y conoce tus deudas mejor que tú.** Lee las tasas directamente de tus extractos y te dice cuánto te cuesta cada una:
 
 | Deuda | Saldo | Tasa E.A. | Intereses al mes |
@@ -278,6 +280,7 @@ Desactivar el servicio automático: `launchctl unload ~/Library/LaunchAgents/com
 | `informe_semanal.py` / `respuestas.py` | El correo del lunes y la lectura de tus respuestas |
 | `dia_de_pago.py` | El correo "hoy te pagaron: paga esto y te queda tanto libre" |
 | `deudas.py` | Tus deudas con tasas, intereses al mes y dónde abonar |
+| `tarjetas.py` | Cuánto debes hoy en cada tarjeta (extracto + compras nuevas − pagos) |
 | `calendario.py` | Tus pagos en Google Calendar con avisos antes de vencer |
 | `detectar_bancos.py` | Qué bancos te escriben y cuáles faltan |
 | `parse_*.py` | Lectores de cada banco |

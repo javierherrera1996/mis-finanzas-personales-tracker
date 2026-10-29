@@ -28,17 +28,18 @@ def analisis():
                     "interes_mes": c["saldo"] * mv(ea), "cuota": c.get("cuota_total") or cuota, "meses": n,
                     "intereses_restantes": (cuota * n - c["saldo"]) if n else None, "nomina": c.get("descuento_nomina", False),
                     "nota": c.get("nota", "")})
-    try:   # tarjetas: si pagas el total cada mes no pagas intereses; si difieres a cuotas, sí
-        from parse_creditos import tarjetas
-        for nombre, t in tarjetas().items():
-            if not t.get("tasa_ea"): continue
-            saldo = t.get("deuda_total") or t.get("pago_total") or 0
-            out.append({"nombre": nombre, "tipo": "tarjeta", "saldo": saldo, "tasa_ea": t["tasa_ea"], "tasa_mv": mv(t["tasa_ea"]),
-                        "interes_mes": None, "cuota": t.get("pago_total"), "meses": None, "intereses_restantes": None, "nomina": False,
-                        "nota": ("⚠️ Te cobraron intereses de mora: pagaste tarde. " if t.get("intereses_mora") else "")
-                                + "Paga siempre el TOTAL: las compras a cuotas pagan esta tasa." + (f" Vence el {t['fecha_limite']}." if t.get("fecha_limite") else "")})
-    except Exception:
-        pass
+    try:   # tarjetas EN VIVO (extracto + compras nuevas − pagos); tasa del extracto. Si pagas el total no pagas intereses.
+        from parse_creditos import tarjetas as _pdf
+        import tarjetas as _tv
+        tasas = {k: v.get("tasa_ea") for k, v in _pdf().items()}
+        for t_ in _tv.en_vivo():
+            ea = tasas.get(t_["nombre"]) or 0.285   # Bancolombia no manda extracto: tasa típica de tarjeta ≈ 28,5% E.A.
+            out.append({"nombre": t_["nombre"], "tipo": "tarjeta", "saldo": t_["debes_hoy"] if t_["debes_hoy"] is not None else 0,
+                        "saldo_desconocido": t_["debes_hoy"] is None, "tasa_ea": ea, "tasa_mv": mv(ea), "interes_mes": None,
+                        "cuota": t_.get("proximo_pago"), "proximo_fecha": t_.get("proximo_fecha"), "vencido": t_.get("vencido", 0),
+                        "meses": None, "intereses_restantes": None, "nomina": False, "nota": t_["nota"]})
+    except Exception as ex:
+        print("(tarjetas en vivo falló:", ex, ")")
     out.sort(key=lambda d: -d["tasa_ea"])
     creditos = [d for d in out if d["tipo"] == "crédito"]
     # dónde abonar: el crédito de mayor tasa (las tarjetas se pagan completas, no se "abonan")
@@ -63,13 +64,14 @@ def resumen(ds=None):
 def tabla_html(ds=None):
     r = resumen(ds)
     fila = lambda d: (f"<tr><td style='padding:4px 8px'>{'👉 ' if d.get('abonar_aqui') else ''}{d['nombre']}</td>"
-                      f"<td style='padding:4px 8px;text-align:right'>{f(d['saldo'])}</td>"
+                      f"<td style='padding:4px 8px;text-align:right'>{'¿?' if d.get('saldo_desconocido') else f(d['saldo'])}</td>"
                       f"<td style='padding:4px 8px;text-align:right'>{pct(d['tasa_ea'])}</td>"
                       f"<td style='padding:4px 8px;text-align:right'>{f(d['interes_mes']) if d['interes_mes'] is not None else '—'}</td>"
                       f"<td style='padding:4px 8px'>{(str(d['meses']) + ' meses') if d['meses'] else ''}</td></tr>")
     return (f"<table style='border-collapse:collapse;font-size:14px;width:100%'><tr style='text-align:left'><th>Deuda</th><th>Saldo</th><th>Tasa E.A.</th><th>Intereses/mes</th><th>Termina en</th></tr>"
             + "".join(fila(d) for d in r["deudas"]) + "</table>"
-            + f"<p style='font-size:14px'>Te cuestan ≈ <b>{f(r['interes_mes'])} al mes en intereses</b>. {r['consejo']}</p>")
+            + f"<p style='font-size:14px'>Te cuestan ≈ <b>{f(r['interes_mes'])} al mes en intereses</b>. {r['consejo']}</p>"
+            + "".join(f"<p style='font-size:13px'>💳 <b>{d['nombre']}</b>: {d['nota']}</p>" for d in r["deudas"] if d["tipo"] == "tarjeta"))
 
 
 if __name__ == "__main__":

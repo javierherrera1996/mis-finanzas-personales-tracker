@@ -8,6 +8,7 @@ description: Deudas, tasas y pagos del usuario. Úsala cuando pregunte por sus d
 ## Las herramientas
 | Comando | Qué da |
 |---|---|
+| `.venv/bin/python tarjetas.py` | **Cuánto debes HOY en cada tarjeta**: último extracto + compras nuevas de las alertas − pagos después del corte. Marca lo vencido y estima el próximo pago (lo que compres hasta el corte suma). Bancolombia no manda extractos: parte del saldo que el usuario confirme (`tarjeta bancolombia: X` por correo) |
 | `.venv/bin/python deudas.py` | Todas las deudas de mayor a menor tasa: saldo, tasa E.A., intereses al mes, cuota, meses que faltan y dónde abonar (👉) |
 | `.venv/bin/python dia_de_pago.py --simular=AAAA-MM-DD` | Vista previa del correo del día de pago: qué pagar, qué apartar, qué sale solo y cuánto queda libre por día |
 | `.venv/bin/python dia_de_pago.py --forzar` | Lo mismo con el último sueldo real |

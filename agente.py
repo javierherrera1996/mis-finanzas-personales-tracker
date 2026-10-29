@@ -112,6 +112,18 @@ def proximos_pagos(movs, dias=21):
             if HOY - datetime.timedelta(days=10) <= f <= HOY + datetime.timedelta(days=dias):
                 ini = (f - datetime.timedelta(days=20)).isoformat()
                 item = {**p, "fecha": f, "pagado": pagado(p, movs, ini, (f + datetime.timedelta(days=15)).isoformat()) if f <= HOY + datetime.timedelta(days=3) else False}
+                if p["tipo"] == "tarjeta" and not (p["nombre"].startswith("Tarjeta Davivienda") and tc and tc["limite"] and abs((tc["limite"] - f).days) <= 10):
+                    # ciclos futuros: monto estimado con las compras que ya hiciste (tarjetas.py)
+                    try:
+                        import tarjetas as _tv
+                        tv = {t_["nombre"]: t_ for t_ in _tv.en_vivo(movs)}
+                        clave = next((k for k in tv if k.split()[-1] in p["nombre"]), None)
+                        if clave and tv[clave].get("proximo_pago") and not item["pagado"]:
+                            # lo vencido del extracto anterior ya aparece como su propio pago pendiente: aquí solo lo nuevo
+                            monto = tv[clave].get("solo_nuevo", tv[clave]["proximo_pago"])
+                            item.update({"monto": round(monto), "como": p["como"] + " · estimado con las compras que ya hiciste desde el último corte (sube si sigues comprando)"})
+                    except Exception:
+                        pass
                 if p["nombre"].startswith("Tarjeta Davivienda") and tc and tc["limite"] and abs((tc["limite"] - f).days) <= 10:
                     item.update({"fecha": tc["limite"], "monto": round(tc["a_pagar"]), "pagado": tc["a_pagar"] <= 1000,
                                  "como": f"Extracto corte {tc['corte']}: pago total ${tc['pago_total']:,.0f}".replace(",", ".") + (f" − devoluciones ${tc['creditos_despues']:,.0f}".replace(",", ".") if tc["creditos_despues"] else "") + ". Verifica el valor en la app."})
@@ -184,9 +196,14 @@ def estado():
     movs = json.load(open("data/movimientos.json"))
     c = caja(movs)
     pp, up = proximo_pago(), ultimo_pago()
+    # el día de pago, si el sueldo ya llegó, el "próximo sueldo" es el del mes siguiente
+    if pp == HOY and any(m["Fecha"] == HOY.isoformat() and m["Tipo"] == "Ingreso" and m["Categoría"] == "Salario"
+                         and not m["Fuente"].startswith("Descuento de nómina") for m in movs):
+        pp = proximo_pago(HOY + datetime.timedelta(days=1))
     dias = max(1, (pp - HOY).days)
-    prox = proximos_pagos(movs)
-    por_pagar = [p for p in prox if not p["pagado"] and not p.get("automatico") and p["fecha"] < pp and p["tipo"] not in ("ingreso", "ahorro") and p.get("monto")]
+    prox = proximos_pagos(movs, dias=max(21, (pp - HOY).days + 1))
+    # lo que hay que pagar o apartar (provisión de renta) antes del próximo sueldo, incluido lo vencido
+    por_pagar = [p for p in prox if not p["pagado"] and not p.get("automatico") and p["fecha"] < pp and p["tipo"] != "ingreso" and p.get("monto")]
     comprometido = sum(p["monto"] for p in por_pagar)
     # saldos que el usuario confirma por correo/WhatsApp (Bancolombia, Nequi, Daviplata, efectivo) de los últimos 7 días
     manual = json.load(open("data/saldos_manual.json")) if os.path.exists("data/saldos_manual.json") else {}

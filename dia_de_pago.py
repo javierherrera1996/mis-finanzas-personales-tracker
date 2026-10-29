@@ -31,7 +31,7 @@ def plan(movs, sueldo):
     sig = agente.proximo_pago(hoy + datetime.timedelta(days=1))
     dias = max(1, (sig - hoy).days)
     prox = agente.proximos_pagos(movs, dias=dias)
-    pend = [p for p in prox if hoy - datetime.timedelta(days=3) <= p["fecha"] < sig and not p["pagado"] and not p.get("automatico")
+    pend = [p for p in prox if hoy - datetime.timedelta(days=40) <= p["fecha"] < sig and not p["pagado"] and not p.get("automatico")
             and p["tipo"] not in ("ingreso",)]
     pagar = [p for p in pend if p["tipo"] != "ahorro"]
     apartar = [p for p in pend if p["tipo"] == "ahorro"]
@@ -56,7 +56,7 @@ def plan(movs, sueldo):
 
 
 def html(pl):
-    fila = lambda p: (f"<tr><td style='padding:4px 8px'>{d(p['fecha'])}</td><td style='padding:4px 8px'>{p['nombre']}</td>"
+    fila = lambda p: (f"<tr><td style='padding:4px 8px'>{d(p['fecha'])}{' ⚠️ VENCIDO' if p['fecha'] < agente.HOY else ''}</td><td style='padding:4px 8px'>{p['nombre']}</td>"
                       f"<td style='padding:4px 8px;text-align:right'>{f(p['monto']) if p.get('monto') else 'ver extracto'}</td>"
                       f"<td style='padding:4px 8px;color:#555'>{p['como']}</td></tr>")
     tabla = lambda ps: "<table style='border-collapse:collapse;font-size:14px;width:100%'>" + "".join(fila(p) for p in sorted(ps, key=lambda p: p["fecha"])) + "</table>"
