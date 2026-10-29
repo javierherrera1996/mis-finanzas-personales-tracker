@@ -63,6 +63,7 @@ def construir():
         add("<h3>Créditos activos (lo que de verdad cobran)</h3>" + tabla(["Crédito", "Saldo", "Tasa E.A.", "Te cobran al mes", "Intereses del mes", "Seguros/otros cargos", "Termina", "Cómo se paga"], eg["creditos"])
             + f"<p>{esc(eg['creditos_resumen'])}</p>")
         if eg["cerrados"]: add("<h3>Créditos ya cerrados o prepagados</h3>" + tabla(["Crédito", "Último extracto", "Saldo entonces", "Tasa"], eg["cerrados"]))
+        if eg.get("por_cobrar"): add("<h3>Plata que te deben</h3>" + tabla(["Persona", "Prestaste", "Te devolvió", "Te debe", "Fecha", "Nota"], eg["por_cobrar"]))
         add("<h3>En qué se te va la plata</h3><p>" + esc(eg["gasto_resumen"]) + "</p>" + tabla(["Categoría"] + eg["gasto_meses"] + ["Promedio"], eg["gasto"]))
         if eg.get("gasto_grandes"): add("<h3>Pagos grandes de una sola vez (≥ $1 M) en esos meses</h3>" + tabla(["Fecha", "Monto", "Categoría", "Qué"], eg["gasto_grandes"]))
         if eg["recurrentes_nuevos"]:

@@ -74,6 +74,12 @@ def construir():
                 for k, v in sorted(ext.items(), key=lambda i: i[1]["fecha"]) if k not in usados and v["fecha"] < (agente.HOY - datetime.timedelta(days=25)).isoformat()]
     out["cerrados"] = cerrados
 
+    # ---------- plata que te deben (data/por_cobrar.json) ----------
+    import os
+    pc = json.load(open("data/por_cobrar.json"))["prestamos"] if os.path.exists("data/por_cobrar.json") else []
+    out["por_cobrar"] = [[p["persona"], f(p["prestado"]), f(p.get("devuelto", 0)), f(p["prestado"] - p.get("devuelto", 0)), p.get("fecha", ""), p.get("nota", "")]
+                         for p in pc if p["prestado"] - p.get("devuelto", 0) > 0]
+
     # ---------- en qué se te va la plata ----------
     meses = sorted({m["Mes"] for m in movs})[-4:]
     cat = collections.defaultdict(collections.Counter)
@@ -104,6 +110,8 @@ def texto(o=None):
     lin += ["", "== CRÉDITOS ACTIVOS ==", f"  {'Crédito':<16}{'Saldo':>14}{'Tasa':>8}{'Te cobran':>13}{'Intereses':>12}{'Seguros':>10}  Termina · Cómo"]
     lin += [f"  {a[:16]:<16}{b:>14}{c:>8}{d:>13}{e:>12}{g:>10}  {h} · {i}" for a, b, c, d, e, g, h, i in o["creditos"]]
     lin += ["  " + o["creditos_resumen"], "", "== CRÉDITOS CERRADOS / PREPAGADOS =="] + [f"  {a} último extracto {b} (saldo {c}, tasa {d})" for a, b, c, d in o["cerrados"]]
+    if o.get("por_cobrar"):
+        lin += ["", "== TE DEBEN =="] + [f"  {a}: prestaste {b}, te devolvió {c} → te debe {d} ({g})" for a, b, c, d, e, g in o["por_cobrar"]]
     lin += ["", "== EN QUÉ SE TE VA LA PLATA ==", "  " + o["gasto_resumen"]]
     lin += [f"  {r[0][:34]:<34}" + "".join(f"{x:>13}" for x in r[1:]) for r in o["gasto"][:14]]
     if o["recurrentes_nuevos"]:
