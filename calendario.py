@@ -3,6 +3,7 @@ import datetime, json
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from auth import get_creds, SCOPES
+import agente
 
 CAL = "primary"
 
@@ -45,7 +46,7 @@ def evento(p, inicio, cfg=None):
 
 def sync():
     svc = build("calendar", "v3", credentials=get_creds(SCOPES))
-    cfg = json.load(open("data/pagos_config.json"))
+    cfg = agente.pagos_config()
     hoy = datetime.date.today().replace(day=1)
     n_new = n_upd = 0
     for p in cfg["pagos"]:

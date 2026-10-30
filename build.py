@@ -39,6 +39,7 @@ REGLAS = [tuple(r) for r in C.get("reglas_personales", [])] + [
     (r"CUOTA DE MANEJO|CUOTA DE SEGURO|COMISION|Comision|Gravamen|4x1000|Cuota de manejo", "Gasto", "Intereses y comisiones", "Comisiones / 4x1000"),
     # --- ingresos ---
     (r"Abono Nomina|Abono en Cuenta ADMON DE PERSONAL", "Ingreso", "Salario", "Nómina Davivienda"),
+    (r"Recibiste un pago de n[oó]mina|Abono pago n[oó]mina", "Ingreso", "Salario", "Nómina"),
     (r"^LIBRANZA NOMINA", "Ingreso", "Salario", "Libranza descontada de nómina (estimado)"),
     (r"^CUOTA LIBRANZA NOMINA", "Deuda", "Créditos de consumo / libranza", "Libranza descontada de nómina"),
     (r"Rendimientos|Abono X Gravamen", "Ingreso", "Rendimientos", ""),
@@ -124,6 +125,11 @@ def main():
         tcb, aho = BANCO.get("tarjeta_credito", ""), BANCO.get("ahorros", "")
         cta = x["cuenta"] if x["cuenta"] in (tcb, aho) and x["cuenta"] else (aho or x["cuenta"])
         movs.append({**x, "fuente": f"Bancolombia {'TC' if cta == tcb and tcb else 'Ahorros'} *{cta} (alerta)"})
+
+    # Movimientos que no salen de un lector de este repo, ya leídos por otro lado (la skill de claude.ai pone aquí los de
+    # bancos sin lector): [{"fuente": "Nequi Ahorros *3109998877", "cuenta": "3109998877", "fecha", "valor", "desc"}]
+    if os.path.exists("data/movimientos_extra.json"):
+        movs += json.load(open("data/movimientos_extra.json"))
 
     # Libranzas que se descuentan de la nómina (no pasan por la cuenta): se agregan como ingreso (salario bruto) y como
     # pago de deuda para que ambos queden completos. Se configuran en config.json -> libranzas_nomina: [crédito, cuota, [meses]].

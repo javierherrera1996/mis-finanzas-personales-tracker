@@ -78,7 +78,7 @@ def construir():
                          for p in pc if p["prestado"] - p.get("devuelto", 0) > 0]
 
     # ---------- en qué se te va la plata ----------
-    meses = sorted({m["Mes"] for m in movs})[-4:]
+    meses = sorted({m["Mes"] for m in movs})[-4:] or [agente.HOY.strftime("%Y-%m")]   # usuario nuevo sin movimientos
     cat = collections.defaultdict(collections.Counter)
     for m in movs:
         if m["Tipo"] == "Gasto" and m["Mes"] in meses: cat[m["Categoría"]][m["Mes"]] -= m["Valor"]

@@ -12,7 +12,7 @@ d = lambda x: f"{x.day} {MESES[x.month - 1]}"
 
 
 def sueldo_esperado():
-    cfg = json.load(open("data/pagos_config.json"))
+    cfg = agente.pagos_config()
     p = next((p for p in cfg["pagos"] if p.get("tipo") == "ingreso"), None)
     if not p: return 0
     return agente.monto_real(p, json.load(open("data/movimientos.json"))) or p.get("monto") or 0

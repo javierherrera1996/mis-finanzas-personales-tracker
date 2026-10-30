@@ -42,6 +42,18 @@ def ultimo_pago(desde=HOY):
     return dia_sueldo(y, m)
 
 
+def pagos_config():
+    """data/pagos_config.json con el sueldo de config.json: el día y el monto del sueldo viven en un solo lugar
+    (config.json -> sueldo), así el calendario, el informe y el aviso del día de pago no se contradicen.
+    Si hay varios ingresos (p. ej. quincenas), se dejan como están."""
+    cfg = json.load(open("data/pagos_config.json"))
+    ing = [p for p in cfg["pagos"] if p.get("tipo") == "ingreso" and not p.get("solo_mes")]
+    if len(ing) == 1:
+        if SUELDO.get("dia_pago"): ing[0]["dia"] = SUELDO["dia_pago"]
+        if not ing[0].get("monto") and SUELDO.get("neto_que_llega"): ing[0]["monto"] = SUELDO["neto_que_llega"]
+    return cfg
+
+
 def fecha_pago(p, y, m):
     """Fecha concreta de un pago recurrente en el mes y/m."""
     if p["dia"] == "penultimo_habil": return penultimo_habil(y, m)
@@ -160,7 +172,7 @@ def monto_real(p, movs, n=4):
 
 
 def proximos_pagos(movs, dias=21):
-    cfg = json.load(open("data/pagos_config.json"))
+    cfg = pagos_config()
     tc = tarjeta_davivienda(movs)
     out = []
     for k in range(0, 2):
@@ -213,7 +225,7 @@ def suscripciones(movs):
 def recurrentes_nuevos(movs, meses=4):
     """Cobros que se repiten casi cada mes con monto parecido (mismo comercio) y que NO están en pagos_config ni en
     suscripciones: suscripciones nuevas, planes, cuotas. Así el usuario no tiene que contarlos."""
-    cfg = json.load(open("data/pagos_config.json"))
+    cfg = pagos_config()
     subs = json.load(open("data/suscripciones.json"))["items"] if os.path.exists("data/suscripciones.json") else []
     pats = [p["buscar"] for p in cfg["pagos"] if p.get("buscar")] + [s["buscar"] for s in subs if s.get("buscar")]
     desde = (HOY - datetime.timedelta(days=31 * meses)).isoformat()

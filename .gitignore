@@ -4,7 +4,7 @@ credentials.json
 token.json
 data/
 pdfs/
-claude_ai_skills/
+claude_ai_skills/*.zip
 *.env
 .venv/
 __pycache__/

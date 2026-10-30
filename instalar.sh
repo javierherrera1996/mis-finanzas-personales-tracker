@@ -6,12 +6,18 @@ set -e
 cd "$(dirname "$0")"
 DIR="$PWD"
 
-if ! command -v python3 >/dev/null; then
-  echo "Falta Python 3. Instálalo desde https://www.python.org/downloads/ (o: brew install python) y vuelve a correr esto."; exit 1
+# el Python más nuevo que haya (sirve desde 3.9, el que trae el Mac con las herramientas de Apple)
+PY=""
+for v in python3.14 python3.13 python3.12 python3.11 python3.10 python3; do
+  if command -v "$v" >/dev/null && "$v" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)' 2>/dev/null; then PY="$v"; break; fi
+done
+if [ -z "$PY" ]; then
+  echo "Falta Python 3. En un Mac corre:  xcode-select --install  (instala las herramientas de Apple, que traen Python y git; ≈ 5 min) y vuelve a correr esto."
+  exit 1
 fi
-python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)' || { echo "Necesitas Python 3.10 o superior (tienes $(python3 --version))."; exit 1; }
+echo "Python: $($PY --version)"
 
-[ -d .venv ] || python3 -m venv .venv
+[ -d .venv ] || "$PY" -m venv .venv
 .venv/bin/pip install -q --upgrade pip
 .venv/bin/pip install -q -r requirements.txt
 mkdir -p data pdfs

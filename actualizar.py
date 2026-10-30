@@ -22,9 +22,12 @@ def run(*args):
 
 
 def desde(path, dias=3):
-    """Fecha (YYYY/MM/DD) desde la que hay que buscar correos nuevos."""
-    if not os.path.exists(path): return "2025/01/01"
-    ult = max(json.loads(l)["date"] for l in open(path))
+    """Fecha (YYYY/MM/DD) desde la que hay que buscar correos nuevos. La primera vez (o si ese banco aún no ha escrito
+    nada y el archivo quedó vacío): config.json -> desde."""
+    fechas = [json.loads(l)["date"] for l in open(path) if l.strip()] if os.path.exists(path) else []
+    if not fechas:
+        return json.load(open("config.json")).get("desde", "2025-01-01").replace("-", "/")
+    ult = max(fechas)
     return (datetime.date.fromtimestamp(ult) - datetime.timedelta(days=dias)).strftime("%Y/%m/%d")
 
 

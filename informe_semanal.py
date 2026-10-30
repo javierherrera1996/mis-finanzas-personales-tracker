@@ -20,8 +20,10 @@ def html(e):
     c = e["caja"]
     color = "#1a7f37" if e["por_dia"] > 150000 else "#b35900" if e["por_dia"] > 60000 else "#c62828"
     sem_ok = e["gasto_semana"] <= e["techo_semana"]
-    filas = lambda rows: "".join(f"<tr>{''.join(f'<td style=\"padding:4px 10px;border-bottom:1px solid #eee\">{x}</td>' for x in r)}</tr>" for r in rows)
-    tabla = lambda cab, rows: (f"<table style='border-collapse:collapse;font-size:14px;width:100%'><tr>{''.join(f'<th style=\"text-align:left;padding:4px 10px;border-bottom:2px solid #ccc\">{h}</th>' for h in cab)}</tr>{filas(rows)}</table>")
+    td = '<td style="padding:4px 10px;border-bottom:1px solid #eee">'
+    th = '<th style="text-align:left;padding:4px 10px;border-bottom:2px solid #ccc">'
+    filas = lambda rows: "".join("<tr>" + "".join(f"{td}{x}</td>" for x in r) + "</tr>" for r in rows)
+    tabla = lambda cab, rows: ("<table style='border-collapse:collapse;font-size:14px;width:100%'><tr>" + "".join(f"{th}{h}</th>" for h in cab) + f"</tr>{filas(rows)}</table>")
     por_pagar = [[d(p["fecha"]) + (" ⚠️ vencido" if p["fecha"] < HOY else ""), p["nombre"], f(p["monto"]), p["como"]] for p in e["por_pagar_antes_del_sueldo"]]
     proximos = [[d(p["fecha"]), ("✅" if p["pagado"] else "🔁" if p.get("automatico") else "⏳") + " " + p["nombre"], f(p["monto"]) if p.get("monto") else "ver extracto"]
                 for p in e["proximos"] if p["fecha"] >= HOY - datetime.timedelta(days=3)]

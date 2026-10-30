@@ -9,12 +9,11 @@ TITULO = "Finanzas Personales"
 ID_FILE = "data/sheet_id.txt"
 movs = json.load(open("data/movimientos.json"))
 preguntas = json.load(open("data/preguntas.json"))
-deudas = json.load(open("data/deudas.json"))
 OV = json.load(open("data/overrides.json")) if os.path.exists("data/overrides.json") else {"movimientos": {}, "respuestas": {}}
 CFG = json.load(open("data/deudas_config.json"))
 svc = build("sheets", "v4", credentials=get_creds())
 
-meses = sorted({m["Mes"] for m in movs})
+meses = sorted({m["Mes"] for m in movs}) or [datetime.date.today().strftime("%Y-%m")]   # usuario nuevo sin movimientos: el mes actual
 nm = len(meses)
 TABS = ["Tablero", "Calendario de pagos", "Suscripciones", "Proyección deudas", "Proyección caja", "Línea de tiempo", "Resumen mensual", "Evolución ingresos", "Gastos por categoría", "Top comercios", "Deudas", "Historial saldos", "Preguntas", "Movimientos"]
 
@@ -147,7 +146,7 @@ ev += [[], ["Notas"],
 put(f"'{E}'!A1", ev)
 
 # ---------- Gastos por categoría ----------
-C = "Gastos por categoría"
+GC = "Gastos por categoría"   # (no C: C es la configuración)
 tot = collections.defaultdict(float)
 for m in movs:
     if m["Tipo"] in ("Gasto", "Deuda", "Inversión"): tot[(m["Tipo"], m["Categoría"])] += -m["Valor"]
@@ -161,7 +160,7 @@ for j, (tipo, cat) in enumerate(cats):
     cg.append(fila)
 r = len(cats) + 2
 cg.append(["TOTAL", ""] + [f"=SUM({col(k)}2:{col(k)}{r-1})" for k in range(3, nm + 5)] + [""])
-put(f"'{C}'!A1", cg)
+put(f"'{GC}'!A1", cg)
 
 # ---------- Top comercios ----------
 T = "Top comercios"
@@ -177,6 +176,17 @@ put(f"'{T}'!A1", tc, raw=True)
 
 # ---------- Deudas ----------
 D = "Deudas"
+if os.path.exists("data/deudas.json"):   # tabla armada a mano (instalaciones viejas)
+    deudas = json.load(open("data/deudas.json"))
+else:                                     # todas las deudas de mayor a menor tasa (deudas.py), con lo que te cuesta cada una
+    import deudas as _deudas
+    _r = _deudas.resumen()
+    deudas = [["Tus deudas, de mayor a menor tasa (tarjetas en vivo + créditos de data/deudas_config.json)"], [],
+              ["Deuda", "Saldo", "Tasa E.A.", "Intereses al mes", "Cuota", "Meses que faltan", "Nota"]]
+    deudas += [[("👉 " if d.get("abonar_aqui") else "") + d["nombre"], round(d["saldo"]), round(d["tasa_ea"], 4),
+                round(d["interes_mes"]) if d["interes_mes"] is not None else "", round(d["cuota"]) if d["cuota"] else "",
+                d["meses"] or "", d["nota"]] for d in _r["deudas"]]
+    deudas += [[], [f"Total {round(_r['total'])} · intereses ≈ {round(_r['interes_mes'])} al mes"], [_r["consejo"]]]
 put(f"'{D}'!A1", deudas, raw=True)
 
 # ---------- Preguntas ----------
@@ -187,7 +197,7 @@ put(f"'{P}'!A1", pq, raw=True)
 # ---------- Calendario de pagos ----------
 import agente
 CP = "Calendario de pagos"
-pcfg = json.load(open("data/pagos_config.json"))
+pcfg = agente.pagos_config()
 cp = [["Calendario de pagos — qué pagar y cuándo (también en tu Google Calendar)"], [],
       ["Día del mes", "Pago", "Monto aprox.", "Cómo se paga", "Automático", "Próxima fecha", "Estado este mes"]]
 estado_mes = {(p["nombre"], p["fecha"]): p["pagado"] for p in agente.proximos_pagos(movs, dias=40)}
@@ -471,15 +481,15 @@ reqs.append({"addChart": {"chart": {"spec": {"title": "Salario mensual (incluye 
     "headerCount": 0}},
     "position": {"overlayPosition": {"anchorCell": {"sheetId": SID[E], "rowIndex": len(fuentes) + 10, "columnIndex": 0}, "widthPixels": 900, "heightPixels": 320}}}}})
 # Categorías
-fmt(C, 0, 1, 0, nm + 5, hdr, "textFormat,backgroundColor")
-fmt(C, 1, len(cg), 2, nm + 4, money, "numberFormat")
-fmt(C, 1, len(cg), nm + 4, nm + 5, {"numberFormat": {"type": "PERCENT", "pattern": "0.0%"}}, "numberFormat")
-fmt(C, len(cg) - 1, len(cg), 0, nm + 5, {"textFormat": {"bold": True}}, "textFormat")
-fmt(C, 1, len(cg), nm + 2, nm + 4, {"textFormat": {"bold": True}}, "textFormat")
-reqs.append({"addConditionalFormatRule": {"rule": {"ranges": [{"sheetId": SID[C], "startRowIndex": 1, "endRowIndex": len(cg) - 1, "startColumnIndex": 2, "endColumnIndex": nm + 2}],
+fmt(GC, 0, 1, 0, nm + 5, hdr, "textFormat,backgroundColor")
+fmt(GC, 1, len(cg), 2, nm + 4, money, "numberFormat")
+fmt(GC, 1, len(cg), nm + 4, nm + 5, {"numberFormat": {"type": "PERCENT", "pattern": "0.0%"}}, "numberFormat")
+fmt(GC, len(cg) - 1, len(cg), 0, nm + 5, {"textFormat": {"bold": True}}, "textFormat")
+fmt(GC, 1, len(cg), nm + 2, nm + 4, {"textFormat": {"bold": True}}, "textFormat")
+reqs.append({"addConditionalFormatRule": {"rule": {"ranges": [{"sheetId": SID[GC], "startRowIndex": 1, "endRowIndex": len(cg) - 1, "startColumnIndex": 2, "endColumnIndex": nm + 2}],
              "gradientRule": {"minpoint": {"color": {"red": 1, "green": 1, "blue": 1}, "type": "MIN"},
                               "maxpoint": {"color": {"red": 0.96, "green": 0.6, "blue": 0.5}, "type": "PERCENTILE", "value": "95"}}}, "index": 0}})
-freeze(C, 1, 2); widths(C, [200, 70] + [95] * nm + [120, 120, 80])
+freeze(GC, 1, 2); widths(GC, [200, 70] + [95] * nm + [120, 120, 80])
 # Top
 fmt(T, 0, 1, 0, 6, hdr, "textFormat,backgroundColor"); fmt(T, 1, len(tc), 2, 3, money, "numberFormat"); fmt(T, 1, len(tc), 5, 6, money, "numberFormat")
 freeze(T, 1); widths(T, [280, 170, 120, 90, 110, 140])

@@ -1,5 +1,5 @@
 {
- "_nota": "Pagos recurrentes. dia = día del mes o 'penultimo_habil'. 'buscar' = texto (regex) que aparece en el movimiento cuando ya pagaste. automatico = sale solo. tipo: ingreso | ahorro | vivienda | deuda | tarjeta | servicio. solo_mes = 'AAAA-MM' para pagos de una sola vez. tipo 'cobro' = plata que te entra (roomie, arriendos que cobras): suma a lo libre mientras no llegue.",
+ "_nota": "Pagos recurrentes. dia = día del mes o 'penultimo_habil'. 'buscar' = texto (regex) que aparece en el movimiento cuando ya pagaste. automatico = sale solo. tipo: ingreso | ahorro | vivienda | deuda | tarjeta | servicio. solo_mes = 'AAAA-MM' para pagos de una sola vez. tipo 'cobro' = plata que te entra (roomie, arriendos que cobras): suma a lo libre mientras no llegue. El día y el monto del sueldo salen de config.json -> sueldo (aquí solo se usa 'buscar').",
  "pagos": [
   {
    "nombre": "💰 Llega el sueldo",
@@ -9,9 +9,11 @@
    "automatico": true,
    "tipo": "ingreso",
    "buscar": "Nomina|NOMINA"
-  },
+  }
+ ],
+ "_ejemplos": [
   {
-   "nombre": "(EJEMPLO) Roomie te pasa su parte del arriendo",
+   "nombre": "Roomie te pasa su parte del arriendo",
    "dia": 25,
    "monto": 0,
    "como": "Transferencia",
@@ -20,7 +22,7 @@
    "buscar": "NOMBRE DEL ROOMIE"
   },
   {
-   "nombre": "Arriendo (EJEMPLO, cámbialo)",
+   "nombre": "Arriendo",
    "dia": 5,
    "monto": 0,
    "como": "Transferencia",
@@ -36,5 +38,6 @@
    "mes": 8,
    "como": "DIAN"
   }
- ]
+ ],
+ "_ejemplos_leeme": "Copia a 'pagos' los que apliquen, con tus montos y el texto que aparece en el movimiento ('buscar')."
 }

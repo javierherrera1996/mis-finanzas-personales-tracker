@@ -81,7 +81,7 @@ def construir():
     prox = agente.proximos_pagos(movs, dias=30)
     add(tabla(["Fecha", "Pago", "Monto", "Estado", "Cómo"], [[p["fecha"].isoformat(), p["nombre"], f(p["monto"]) if p.get("monto") else "ver extracto",
          "pagado" if p["pagado"] else ("automático" if p.get("automatico") else "pendiente"), p["como"]] for p in prox]))
-    cfg = json.load(open("data/pagos_config.json"))
+    cfg = agente.pagos_config()
     add("<h3>Calendario mensual completo</h3>")
     add(tabla(["Día", "Pago", "Monto", "Tipo", "Automático", "Cómo"], [["penúltimo día hábil" if p["dia"] == "penultimo_habil" else p["dia"], p["nombre"],
          f(p["monto"]) if p.get("monto") else "según extracto", p["tipo"], "sí" if p.get("automatico") else "no", p["como"]]
@@ -120,7 +120,7 @@ def construir():
     # 6. Ingresos por fuente
     add("<h2>6. Ingresos por fuente (últimos 12 meses)</h2>")
     ing = collections.Counter()
-    desde12 = sorted(pm)[-12:][0]
+    desde12 = (sorted(pm)[-12:] or [""])[0]
     for m in movs:
         if m["Tipo"] == "Ingreso" and m["Mes"] >= desde12 and m["Categoría"] != "Devoluciones": ing[(m["Categoría"], m["Subcategoría"])] += m["Valor"]
     add(tabla(["Categoría", "Fuente", "Total 12 meses"], [[k[0], k[1] or "—", f(v)] for k, v in ing.most_common(25)]))
@@ -132,7 +132,7 @@ def construir():
 
     # 8. Top comercios
     add("<h2>8. Dónde más gasta (últimos 6 meses)</h2>")
-    desde6 = sorted(pm)[-6:][0]
+    desde6 = (sorted(pm)[-6:] or [""])[0]
     com = collections.Counter()
     for m in movs:
         if m["Tipo"] == "Gasto" and m["Mes"] >= desde6: com[(m["Comercio"] or m["Descripción"])[:40]] -= m["Valor"]

@@ -24,7 +24,7 @@ Eres quien instala el sistema con el usuario. Él NO es programador necesariamen
    - **Inversiones**: Trii, Tyba, Littio, Hapi, fondos, acciones.
    - **CDTs** (dónde, cuánto, cuándo vence) y **créditos** (incluidas compras de cartera).
    ¿Le mandan extractos o comprobantes por correo? Muchas mandan extracto mensual en PDF (RappiCuenta, Nu, Lulo) y se pueden leer igual que los de un banco; si no le llegan, dile cómo activarlos en la app (normalmente en Perfil → Extractos / Notificaciones por correo). Lo que no escribe al correo igual va al mapa de cuentas (Fase 3): así sus traslados a esos productos no cuentan como gasto.
-Luego corre `./instalar.sh` y confirma que dice "Entorno listo". Si falta Python, guíalo para instalarlo.
+Luego corre `./instalar.sh` y confirma que dice "Entorno listo". Sirve el Python que trae el Mac (3.9+); si dice que falta, que corra `xcode-select --install` (herramientas de Apple, ≈ 5 min) y repite. Con Python 3.9 las librerías de Google muestran avisos `FutureWarning`: ignóralos, no son errores.
 
 ## Fase 1 — Datos básicos → config.json
 Copia `config.ejemplo.json` a `config.json` y ve llenando:
@@ -65,7 +65,7 @@ Agrupa los movimientos grandes sin clasificar ("Otros", "Transferencias a tercer
 Pregunta y llena:
 - **Créditos** activos: nombre, saldo, tasa E.A., cuota, día de pago, ¿se descuenta de nómina? → `data/deudas_config.json`. Corre primero `.venv/bin/python deudas.py`: las tasas de Davivienda y Nu salen solas de los extractos; pregunta solo las que falten (si no la sabe, que la busque en la app o en el certificado del crédito).
 - **Tarjetas de crédito**: ¿paga el total cada mes o difiere a cuotas? Agrégalas a `pagos_config.json` con su día límite (tipo `tarjeta`).
-- **Pagos fijos** del mes: arriendo, servicios, celular, administración, cursos… (día, monto, cómo se paga) → `data/pagos_config.json`.
+- **Pagos fijos** del mes: arriendo, servicios, celular, administración, cursos… (día, monto, cómo se paga) → `data/pagos_config.json` (hay modelos en `_ejemplos`). Antes de preguntar, muéstrale lo que el sistema ya detectó (`agente.recurrentes_nuevos(movs)`) para que confirme en vez de recordar. El día y el monto del sueldo NO van ahí: salen de `config.json → sueldo`.
 - **Suscripciones**: confirma las detectadas y agrega las que falten → `data/suscripciones.json`.
 - **Plata apartada** que no se debe gastar (ahorro, inversión) → `data/reservas.json`.
 - **Inversiones y CDTs**: confirma que cada uno tenga `saldo` y fecha en `config.json → cuentas` (salen en el informe como "Inversiones y CDTs", aparte de la caja).

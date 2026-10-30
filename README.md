@@ -125,6 +125,8 @@ Todo corre **en tu computador** con **tu cuenta de Google**. No hay servidores d
 
 **Necesitas:** un Mac · un Gmail donde te lleguen los correos de tus bancos · [Claude Code](https://claude.com/claude-code) (plan Pro o Max).
 
+> La primera vez que corras `git`, el Mac te pide instalar las **herramientas de línea de comandos** de Apple: acepta (≈ 5 min). Traen git y Python, que es todo lo que necesitas.
+
 **1. Instala Claude Code** (si no lo tienes)
 ```bash
 curl -fsSL https://claude.ai/install.sh | bash
