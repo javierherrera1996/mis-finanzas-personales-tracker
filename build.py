@@ -118,16 +118,16 @@ def main():
             signo = 1 if re.match(r"Abono|Deposito|Compra Reversada|Correccion|Anulaci", a["clase"]) else -1
             desc = f"{a['clase']} {a['lugar']}".strip()
             movs.append({"fuente": f"Davivienda {'TC' if a['producto'].startswith('Tarjeta') else 'Ahorros'} *{a['cuenta']} (alerta)",
-                         "cuenta": a["cuenta"], "fecha": a["fecha"], "valor": signo * a["valor"], "desc": desc})
+                         "cuenta": a["cuenta"], "fecha": a["fecha"], "valor": signo * a["valor"], "desc": desc, "correo": a["id"]})
     for x in nu_todos():
         movs.append({**x, "fuente": "Nu TC"})
     for x in (bancolombia() if os.path.exists("data/otros.jsonl") else []):
         tcb, aho = BANCO.get("tarjeta_credito", ""), BANCO.get("ahorros", "")
         cta = x["cuenta"] if x["cuenta"] in (tcb, aho) and x["cuenta"] else (aho or x["cuenta"])
-        movs.append({**x, "fuente": f"Bancolombia {'TC' if cta == tcb and tcb else 'Ahorros'} *{cta} (alerta)"})
+        movs.append({**x, "fuente": f"Bancolombia {'TC' if cta == tcb and tcb else 'Ahorros'} *{cta} (alerta)", "correo": x["id"]})
 
     # Movimientos que no salen de un lector de este repo, ya leídos por otro lado (la skill de claude.ai pone aquí los de
-    # bancos sin lector): [{"fuente": "Nequi Ahorros *3109998877", "cuenta": "3109998877", "fecha", "valor", "desc"}]
+    # bancos sin lector): [{"fuente": "Nequi Ahorros *3109998877", "cuenta": "3109998877", "fecha", "valor", "desc", "correo"}]
     if os.path.exists("data/movimientos_extra.json"):
         movs += json.load(open("data/movimientos_extra.json"))
 
@@ -151,7 +151,7 @@ def main():
         mes = m["fecha"][:7]
         out.append({"Fecha": m["fecha"], "Mes": mes, "Fuente": m["fuente"], "Descripción": m["desc"],
                     "Comercio": comercio(m["desc"]), "Valor": round(m["valor"], 2), "Tipo": tipo,
-                    "Categoría": cat, "Subcategoría": sub, "Cuotas": m.get("cuotas", "")})
+                    "Categoría": cat, "Subcategoría": sub, "Cuotas": m.get("cuotas", ""), "Correo": m.get("correo", "")})
     out.sort(key=lambda r: (r["Fecha"], r["Fuente"], r["Descripción"], r["Valor"]))
     # Plata entre MIS productos (mapa de cuentas en config.json): compra de cartera, contraparte propia y traslados emparejados
     transferencias.marcar(out, PRODUCTOS, regex_propio())

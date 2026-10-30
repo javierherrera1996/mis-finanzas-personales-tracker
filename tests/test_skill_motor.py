@@ -55,6 +55,21 @@ class MotorSkill(unittest.TestCase):
         trii = next(m for m in s["nuevos"] if "TRII" in m["Descripción"])
         self.assertEqual((trii["Tipo"], trii["Contraparte"]), ("Interno", "Trii"))
 
+    def test_primer_uso_sin_cuentas(self):
+        # antes de saber qué tiene el usuario, el motor corre igual y dice qué productos se ven en sus alertas
+        s = self.correr({"config": {"sueldo": {}}, "correos": correos()})
+        vistos = {(p["institucion"], p["terminacion"]): p["pista"] for p in s["productos_vistos"]}
+        self.assertEqual(vistos, {("Bancolombia", "4455"): "cuenta", ("Bancolombia", "1234"): "tarjeta débito",
+                                  ("Bancolombia", "8899"): "tarjeta de crédito"})
+
+    def test_correo_repetido_y_cuantos_llegaron(self):
+        # el mismo correo en dos páginas o dos hilos no puede volverse dos movimientos
+        s = self.correr({"config": CONFIG, "correos": correos() + correos()[:2]})
+        self.assertEqual(len(s["nuevos"]), len(ALERTAS))
+        self.assertEqual(s["lectura"]["repetidos_descartados"], 2)
+        self.assertEqual(s["lectura"]["por_banco"], {"bancolombia": len(ALERTAS)})
+        self.assertEqual(sum(s["lectura"]["por_semana_desde_el_lunes"].values()), len(ALERTAS))
+
     def test_dos_tandas_que_se_solapan(self):
         todos = correos()
         una = self.correr({"config": CONFIG, "correos": todos})
@@ -95,6 +110,114 @@ class MotorSkill(unittest.TestCase):
         traslado = [m for m in s["nuevos"] if abs(m["Valor"]) == 200000]
         self.assertEqual([m["Tipo"] for m in traslado], ["Interno", "Interno"])
         self.assertEqual([x["id"] for x in s["no_leidos"]], ["x1"])
+
+    def test_deudas_calendario_e_informe(self):
+        cfg = copy.deepcopy(CONFIG)
+        tc = next(c for c in cfg["cuentas"] if c["tipo"] == "tarjeta_credito")
+        tc.update(saldo={"valor": 1000000, "fecha": "2026-09-29"}, dia_pago=15, tasa_ea="28,5")
+        creditos = [{"nombre": "Libre inversión", "entidad": "Banco", "saldo": 10000000, "tasa_ea": 18.99, "cuota": 500000, "dia_pago": 5,
+                     "buscar": "PAGO CREDITO"},
+                    {"nombre": "ICETEX", "entidad": "ICETEX", "saldo": 20000000, "tasa_ea": 0.051, "cuota": 400000, "dia_pago": 5},
+                    {"nombre": "Libranza", "entidad": "Banco", "saldo": 5000000, "tasa_ea": 15, "cuota": 300000, "dia_pago": 28, "descuento_nomina": True}]
+        fijos = [{"nombre": "Arriendo", "dia": 1, "monto": 1200000, "tipo": "pago", "buscar": "ARRIENDO"}]
+        s = self.correr({"config": cfg, "correos": correos(), "creditos": creditos, "fijos": fijos, "apartado": 1000000})
+        # deudas de mayor a menor tasa; se abona al crédito más caro, no a la tarjeta ni al más barato
+        deu = s["deudas"]
+        self.assertEqual([x["nombre"] for x in deu["deudas"]], ["Bancolombia tarjeta *8899", "Libre inversión", "Libranza", "ICETEX"])
+        self.assertEqual([x["nombre"] for x in deu["deudas"] if x.get("abonar_aqui")], ["Libre inversión"])
+        self.assertEqual(deu["deudas"][0]["saldo"], 1000000 + 120000)
+        self.assertEqual(deu["total_creditos"], 35000000)
+        self.assertIn("ICETEX", deu["consejo"])
+        # un evento mensual por pago, cuota y tarjeta; lo de nómina sale solo y no avisa
+        ev = {x["id"]: x for x in s["calendario"]}
+        self.assertEqual(ev["mis-finanzas:pago-arriendo"]["recurrencia"], "RRULE:FREQ=MONTHLY;BYMONTHDAY=1")
+        self.assertEqual(len(ev["mis-finanzas:pago-arriendo"]["avisos_minutos_antes"]), 2)
+        self.assertEqual(ev["mis-finanzas:tarjeta-8899"]["recurrencia"], "RRULE:FREQ=MONTHLY;BYMONTHDAY=15")
+        self.assertIn("sale solo", ev["mis-finanzas:pago-cuota-libranza"]["titulo"])
+        self.assertEqual(ev["mis-finanzas:pago-cuota-libranza"]["avisos_minutos_antes"], [])
+        self.assertIn("Arriendo", ev["mis-finanzas:sueldo"]["descripcion"])
+        self.assertEqual(s["resumen"]["apartado"], 1000000)
+        # el informe del lunes trae las secciones de la versión instalada
+        t = s["informe"]["texto"]
+        for parte in ("POR DÍA", "ANTES DEL SUELDO", "ESTA SEMANA", "PRÓXIMOS PAGOS", "DEUDAS", "👉 Libre inversión", "¿QUÉ FUE ESTO?"):
+            self.assertIn(parte, t)
+        self.assertIn("/día", s["informe"]["asunto"])
+
+    def test_analisis_descubrimientos_y_lo_que_falta(self):
+        cfg = copy.deepcopy(CONFIG)
+        cfg["sueldo"]["neto_que_llega"] = 4600000   # le llegaron 4.500.000: el sueldo cambió
+        def alerta(i, fecha, texto):
+            return {"id": f"z{i}", "fecha": fecha + "T12:00:00", "de": BANCOLOMBIA, "asunto": "Alertas y Notificaciones",
+                    "texto": f"Bancolombia: {texto}. ¿Dudas? llamanos"}
+        mas = [alerta(1, "2026-10-05", "Transferiste $80.000,00 desde tu cuenta *4455 a la llave 0099887766 el 05/10/2026 a las 10:00"),
+               alerta(2, "2026-10-19", "Transferiste $70.000,00 desde tu cuenta *4455 a la llave 0099887766 el 19/10/2026 a las 10:00"),
+               alerta(3, "2026-10-21", "Compraste $30.000,00 en NETFLIX.COM con tu T.Cred *7070, el 21/10/2026 a las 08:00")]
+        s = self.correr({"config": cfg, "correos": correos() + mas, "notas_ids": ["suscripcion:netflix"]})
+        a = s["analisis"]
+        self.assertEqual(a["por_mes"]["2026-09"]["ingresos"], 4500000)
+        self.assertEqual(a["por_mes"]["2026-10"]["gastos"], 85000 + 120000 + 200000 + 80000 + 70000 + 30000)
+        self.assertEqual(a["suscripciones"], [{"nombre": "Netflix", "mensual": 30000, "ultimo": "2026-10-21"}])
+        d = {x["id"]: x for x in s["descubrimientos"]}
+        self.assertIn("2 veces", d["destino:0099887766"]["texto"])           # transferencias repetidas al mismo destino
+        self.assertIn("producto:bancolombia-7070", d)                       # una tarjeta que no está en sus cuentas
+        self.assertIn("sueldo:2026-09-30", d)                               # el sueldo llegó distinto
+        self.assertFalse(d["suscripcion:netflix"]["nuevo"])                 # ya estaba en Notas
+        self.assertTrue(d["destino:0099887766"]["nuevo"])
+        falta = [x["que_falta"] for x in s["faltantes"] if x["prioridad"] == 1]
+        self.assertIn("Cuánto tienes hoy en Nequi", falta)
+        self.assertIn("Cuánto debes hoy en Bancolombia tarjeta *8899", falta)
+        self.assertIn("LO QUE DESCUBRÍ", s["informe"]["texto"])
+        self.assertIn("ME FALTA SABER", s["informe"]["texto"])
+
+    def test_registro_de_correos(self):
+        codigo = {"id": "c1", "fecha": "2026-10-23T09:00:00", "de": BANCOLOMBIA, "asunto": "Código",
+                  "texto": "Este es tu código Bancolombia: 181569. No lo compartas."}
+        descartado = dict(codigo, id="c2", estado="no es movimiento")
+        nequi = {"id": "n1", "fecha": "2026-10-23T10:00:00", "de": "Nequi <notificaciones@nequi.com.co>", "asunto": "Pagaste",
+                 "texto": "Pagaste $30.000 en TIENDA D1", "extraido": {"fecha": "2026-10-23", "valor": -30000, "descripcion": "Pago en TIENDA D1",
+                                                                      "institucion": "Nequi", "producto": "3109998877"}}
+        s = self.correr({"config": CONFIG, "correos": correos() + [codigo, descartado, nequi]})
+        reg = {x["ID del correo"]: x for x in s["correos_registro"]}
+        self.assertEqual(len(reg), len(ALERTAS) + 3)
+        self.assertEqual(reg["m0"]["Estado"], "movimiento")
+        self.assertEqual(reg["c1"]["Estado"], "sin leer")
+        self.assertEqual(reg["c2"]["Estado"], "no es movimiento")
+        self.assertEqual(reg["n1"]["Estado"], "lo leyó Claude")
+        self.assertEqual([x["id"] for x in s["no_leidos"]], ["c1"])   # lo que Claude ya descartó no se vuelve a preguntar
+        # cada movimiento queda ligado a su correo, y el correo a sus movimientos
+        for m in s["nuevos"]:
+            self.assertIn(m["ID"], reg[m["Correo"]]["Movimientos"])
+        self.assertEqual(next(m for m in s["nuevos"] if m["Correo"] == "n1")["Valor"], -30000)
+
+    def test_reclasificar_todo_conserva_tus_correcciones(self):
+        primera = self.correr({"config": CONFIG, "correos": correos()})
+        exito = next(m for m in primera["nuevos"] if "EXITO" in m["Descripción"])
+        nequi = next(m for m in primera["nuevos"] if m["Valor"] == -200000)
+        corr = {exito["ID"]: {"categoria": "Mercado", "subcategoria": "Mercado del mes", "nota": "lo de la semana"},
+                nequi["ID"]: {"categoria": "Entre mis cuentas", "tipo": "Interno"}}
+        # reclasificar: toda la pestaña Correos, sin movimientos previos, con las columnas tuyas de Movimientos
+        s = self.correr({"config": CONFIG, "correos": correos(), "correcciones": corr})
+        m = {x["ID"]: x for x in s["movimientos"]}
+        self.assertEqual(len(m), len(ALERTAS))
+        self.assertEqual((m[exito["ID"]]["Categoría"], m[exito["ID"]]["Categoría manual"], m[exito["ID"]]["Tu nota"]),
+                         ("Mercado", "Mercado", "lo de la semana"))
+        self.assertEqual((m[nequi["ID"]]["Tipo"], m[nequi["ID"]]["Tipo manual"]), ("Interno", "Interno"))
+        self.assertEqual(s["analisis"]["por_mes"]["2026-10"]["gastos"], 85000 + 120000)   # lo interno ya no es gasto
+
+    def test_traslado_que_encuentra_su_pareja_despues(self):
+        cfg = copy.deepcopy(CONFIG)
+        next(c for c in cfg["cuentas"] if c["institucion"] == "Nequi").update(saldo={"valor": 100000, "fecha": "2026-10-21"})
+        d1 = self.correr({"config": cfg, "correos": correos()})
+        antes = next(m for m in d1["nuevos"] if m["Valor"] == -200000)
+        self.assertEqual(antes["Tipo"], "Gasto")   # todavía nadie lee Nequi: la plata que va allá se da por gastada
+        # al día siguiente Claude lee la alerta de Nequi; se vuelven a pasar los correos de los últimos días
+        nequi = {"id": "n1", "fecha": "2026-10-22T09:05:00", "de": "Nequi", "asunto": "Recibiste", "texto": "Recibiste $200.000 de LAURA PRUEBA",
+                 "extraido": {"fecha": "2026-10-22", "valor": 200000, "descripcion": "Recibiste de LAURA PRUEBA", "institucion": "Nequi",
+                              "producto": "3109998877"}}
+        d2 = self.correr({"config": cfg, "correos": correos()[-2:] + [nequi], "movimientos_previos": d1["nuevos"]})
+        self.assertEqual([m["ID"] for m in d2["actualizar"]], [antes["ID"]])
+        self.assertEqual(d2["actualizar"][0]["Tipo"], "Interno")
+        self.assertEqual([m["Tipo"] for m in d2["nuevos"]], ["Interno"])
 
     def test_davivienda_con_el_texto_en_una_linea(self):
         cfg = copy.deepcopy(CONFIG)
