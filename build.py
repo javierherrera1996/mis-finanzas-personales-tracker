@@ -3,7 +3,8 @@ import json, re, collections, hashlib, os
 from parse_extractos import todos
 from parse_otros import nu_todos, bancolombia
 from parse_davi import parse as alertas_davi
-from config import C, BANCO, regex_propio, regex_celulares
+from config import C, BANCO, PRODUCTOS, regex_propio
+import transferencias
 
 DESDE = C.get("desde", "2025-01-01")
 
@@ -19,11 +20,12 @@ REGLAS = [tuple(r) for r in C.get("reglas_personales", [])] + [
     (r"REDIFE CAPITAL|NC REDIFERIDO", "Interno", "Rediferido tarjeta (deuda pasada a cuotas, no es gasto nuevo)", ""),
     (r"REDIFE INTER", "Gasto", "Intereses y comisiones", "Intereses tarjeta"),
     # --- movimientos internos ---
+    # (la plata entre tus productos que se reconoce por el mapa de cuentas, como un PSE a tu Trii, va en transferencias.py)
     (r"Pago Tarj\. Credito|Pago Tarjeta de Credito|Pago en Aliado 5523\d{12}", "Interno", "Pago tarjeta Davivienda", ""),
     (r"Abono por avance|Abono Avance Tc|Abono Uso Tarjeta de Credito|^AVANCE APP|Hiciste un avance|^Avance", "Interno", "Avance tarjeta de crédito", ""),
     (r"Bolsillo", "Interno", "Bolsillo Davivienda", ""),
     (r"NU Compa|NU Colombia Compa", "Interno", "Pago tarjeta Nu", ""),
-    (r"Daviplata|DAVIPLATA", "Gasto", "Gastos vía Daviplata (sin detalle)", ""),
+    (r"Daviplata|DAVIPLATA", "Gasto", "Gastos vía billetera (sin detalle)", "Daviplata"),
     (r"pagaste \$[\d,\.]+ por codigo QR|pagaste \$[\d,\.]+ por QR", "Gasto", "Otros", "Pago con QR (Bancolombia)"),
     (regex_propio(), "Interno", "Entre mis cuentas", ""),   # transferencias a mi nombre (config.json)
     (r"Debitamos de tu cuenta/bolsillo .* tarjeta de credito|abonar a la deuda", "Interno", "Pago tarjeta Bancolombia", ""),
@@ -69,7 +71,7 @@ REGLAS = [tuple(r) for r in C.get("reglas_personales", [])] + [
 def clasificar(desc, valor):
     for pat, tipo, cat, sub in REGLAS:
         if re.search(pat, desc, re.I):
-            if tipo in ("Gasto", "Deuda") and valor > 0 and not re.search("|".join(["Daviplata"] + C.get("netear_con", [])), sub + cat, re.I):
+            if tipo in ("Gasto", "Deuda") and valor > 0 and not re.search("|".join(["vía billetera"] + C.get("netear_con", [])), sub + cat, re.I):
                 if cat == "Transferencias a terceros":
                     return "Ingreso", "Transferencias recibidas", ""
                 return "Ingreso", "Devoluciones", cat
@@ -145,24 +147,8 @@ def main():
                     "Comercio": comercio(m["desc"]), "Valor": round(m["valor"], 2), "Tipo": tipo,
                     "Categoría": cat, "Subcategoría": sub, "Cuotas": m.get("cuotas", "")})
     out.sort(key=lambda r: (r["Fecha"], r["Fuente"], r["Descripción"], r["Valor"]))
-    # Traslados entre MIS cuentas (Davivienda, Bancolombia, Nequi/Daviplata).
-    # Se emparejan por mismo valor y fecha (±1 día): la salida de un banco con la entrada a mi nombre en el otro.
-    import datetime as _dt
-    def _d(s): return _dt.date.fromisoformat(s)
-    ent = [r for r in out if r["Valor"] > 0 and re.search(regex_propio() + r"|Transferencia De Otra Entidad A Llave|Transferencia Recibidas Con Llave", r["Descripción"], re.I)]
-    sal = [r for r in out if r["Valor"] < 0 and r["Tipo"] != "Interno" and re.search(r"Llave|llave|Transf|Transferiste", r["Descripción"])]
-    usados = set()
-    for e in ent:
-        for s in sal:
-            if id(s) in usados or s["Fuente"][:6] == e["Fuente"][:6]: continue
-            if abs(s["Valor"] + e["Valor"]) < 1 and abs((_d(s["Fecha"]) - _d(e["Fecha"])).days) <= 1:
-                for r, sub in ((s, f"{s['Fuente'][:11].strip()} → {e['Fuente'][:11].strip()}"), (e, f"{s['Fuente'][:11].strip()} → {e['Fuente'][:11].strip()}")):
-                    r["Tipo"], r["Categoría"], r["Subcategoría"] = "Interno", "Entre mis cuentas", sub
-                usados.add(id(s)); break
-    # Mis celulares (Nequi / Daviplata propios): plata mía que luego gasto desde allá (sin detalle)
-    for r in out:
-        if r["Tipo"] != "Interno" and re.search(regex_celulares(), r["Descripción"]):
-            r["Categoría"], r["Subcategoría"] = "Gastos vía Daviplata (sin detalle)", "A mi Nequi/Daviplata (gastado desde allá)"
+    # Plata entre MIS productos (mapa de cuentas en config.json): compra de cartera, contraparte propia y traslados emparejados
+    transferencias.marcar(out, PRODUCTOS, regex_propio())
 
     # Contactos: números de cuenta/celular o llaves a los que el usuario les puso nombre y categoría (data/contactos.json)
     #   {"3015255261": {"nombre": "María Kamyla", "categoria": "Regalos", "subcategoria": "..."}}

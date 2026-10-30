@@ -100,7 +100,7 @@ def resumen_gasto():
     extra = cargar(SALDOS, {})
     otros = "\n".join(f"• {k}: {f(v['valor'])} ({v['fecha']})" for k, v in extra.items() if v.get("valor"))
     return (f"💸 Puedes gastar *{f(e['por_dia'])} por día* hasta el sueldo ({e['proximo_pago'].day}/{e['proximo_pago'].month}, en {e['dias_al_pago']} días).\n"
-            f"Libre: {f(e['libre'])} · Davivienda disponible {f(e['caja']['disponible'])} · bolsillo {f(e['caja']['bolsillo'])}\n\n"
+            f"Libre: {f(e['libre'])} · disponible en tus cuentas {f(e['caja']['disponible'])} · bolsillo {f(e['caja']['bolsillo'])}\n\n"
             f"Antes del sueldo debes pagar:\n{pend}" + (f"\n\nOtros saldos que me diste:\n{otros}" if otros else ""))
 
 

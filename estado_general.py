@@ -2,12 +2,11 @@
 capital y seguros), créditos cerrados y en qué se te va la plata. Lo usa contexto_doc.py (Claude web) y se puede correr solo.
 Uso: .venv/bin/python estado_general.py"""
 import collections, datetime, json, re
-import agente, deudas, tarjetas
-from parse_creditos import creditos, saldos_cuentas
-from config import C, DAVI
+import agente, cuentas, deudas, tarjetas
+from parse_creditos import creditos
 
 f = lambda v: "$" + f"{round(v):,}".replace(",", ".")
-SIN_IDENTIFICAR = ("Transferencias a terceros", "Otros", "Gastos vía Daviplata (sin detalle)", "Efectivo", "Por aclarar")
+SIN_IDENTIFICAR = ("Transferencias a terceros", "Otros", "Gastos vía billetera (sin detalle)", "Efectivo", "Por aclarar")
 
 
 def _mas_meses(fecha, n):
@@ -22,27 +21,25 @@ def construir():
     c = e["caja"]
     out = {}
 
-    # ---------- cuentas ----------
-    sc = saldos_cuentas()
-    ult = max([x[0] for x in sc] or [""])
-    pri = DAVI.get("cuenta_principal", "")
-    afc = next((x[2] for x in sc if x[0] == ult and x[1] != pri), None)
-    cuentas = [[f"Davivienda *{pri} (incluye bolsillo)", f(c["total"] - (afc or 0)), f"extracto {c['extracto']} + movimientos hasta {c['hasta']}"],
-               ["   · bolsillo: reservado", f(c["reservado_inversion"]), "no se gasta (data/reservas.json)"],
-               ["   · bolsillo: colchón", f(c["emergencia"]), "emergencias"],
-               ["   · disponible en la cuenta", f(c["disponible"]), ""]]
-    if afc is not None: cuentas.append([f"AFC *{DAVI.get('cuenta_afc', '')}", f(afc), f"extracto {ult}"])
-    banc = next((v for k, v in e["otros_saldos"].items() if k.lower().startswith("bancolombia")), None)
-    cuentas.append([f"Bancolombia *{C.get('bancolombia', {}).get('ahorros', '')}", f(banc["valor"]) if banc else "sin confirmar",
-                    f"saldo confirmado {banc.get('base_fecha')} + alertas" if banc and banc.get("base_fecha") else "dime el saldo de la app y lo llevo solo"])
-    try:
-        from parse_otros import cuenta_nu
-        cn = cuenta_nu()
-        if cn: cuentas.append(["Cuenta Nu + cajitas", f(cn["cuenta"] + cn["cajitas"]), f"extracto {cn['fecha']}"])
-    except Exception:
-        pass
-    cuentas.append(["Nequi / Daviplata", "sin datos", "no mandan extractos al correo"])
-    out["cuentas"] = cuentas
+    # ---------- cuentas (mapa de cuentas: config.json -> cuentas, vía agente.caja) ----------
+    ORIGEN = {"extracto": "extracto", "confirmado": "saldo que confirmaste", "config": "saldo en config.json"}
+    filas = []
+    for x in c["cuentas"]:
+        if x["tipo"] == "bolsillo": continue
+        if x["saldo"] is None:
+            filas.append([x["nombre"], "sin datos", "lo que le mandas cuenta como gastado; dime el saldo si quieres que lo sume"
+                          if x["tipo"] == "billetera" else "dime el saldo de la app y lo llevo solo"])
+            continue
+        det = f"{ORIGEN.get(x['origen'], x['origen'])} {x['desde']}" + (f" + movimientos hasta {x['hasta']}" if x["hasta"] > x["desde"] else "")
+        if x["tipo"] in cuentas.INVERSIONES: det += " · inversión, no es caja"
+        bol = [b for b in c["cuentas"] if b["tipo"] == "bolsillo" and b["saldo"] is not None and b["dentro_de"] and b["dentro_de"] == x["terminacion"]]
+        filas.append([x["nombre"] + (" (incluye bolsillo)" if bol else ""), f(x["saldo"]), det])
+        if bol:
+            filas += [["   · bolsillo: reservado", f(c["reservado_inversion"]), "no se gasta (data/reservas.json)"],
+                      ["   · bolsillo: colchón", f(c["emergencia"]), "emergencias"]]
+    filas += [["Total en cuentas (caja)", f(c["total"]), "sin inversiones ni CDTs"],
+              ["Disponible para gastar", f(c["disponible"]), "caja − bolsillo/reservado"]]
+    out["cuentas"] = filas
 
     # ---------- tarjetas ----------
     out["tarjetas"] = [[t["nombre"], "¿?" if t["debes_hoy"] is None else f(t["debes_hoy"]), f(t["vencido"]) if t.get("vencido") else "—",

@@ -1,5 +1,6 @@
 """Datos personales del usuario (config.json). Todo lo que cambia de persona a persona sale de aquí."""
 import json, os
+import cuentas
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
 _P = os.path.join(_DIR, "config.json")
@@ -7,8 +8,11 @@ if not os.path.exists(_P):
     raise SystemExit("Falta config.json: copia config.ejemplo.json como config.json y llénalo (o pídele a Claude que lo haga contigo).")
 C = json.load(open(_P))
 
-DAVI = C.get("davivienda", {})
-BANCO = C.get("bancolombia", {})
+# Mapa de cuentas (config.json -> cuentas). Los lectores de Davivienda y Bancolombia siguen usando los dicts viejos:
+# si el usuario ya tiene "cuentas", se derivan de ahí; si no, se usan sus llaves "davivienda"/"bancolombia" de siempre.
+PRODUCTOS = cuentas.normalizar(C)
+DAVI = cuentas.legado_davivienda(PRODUCTOS) if C.get("cuentas") else C.get("davivienda", {})
+BANCO = cuentas.legado_bancolombia(PRODUCTOS) if C.get("cuentas") else C.get("bancolombia", {})
 SUELDO = C.get("sueldo", {})
 
 

@@ -12,7 +12,7 @@
 | 2 | `fetch.py` | Baja solo los correos nuevos de tus bancos a `data/*.jsonl` |
 | 3 | `attachments.py` + `pdftext.py` | Descarga los extractos en PDF y los abre con tu `clave_pdf` |
 | 4 | `parse_creditos.py` | Actualiza el saldo de tus créditos con el último extracto |
-| 5 | `build.py` | Une todas las fuentes y clasifica cada movimiento → `data/movimientos.json` |
+| 5 | `build.py` + `transferencias.py` | Une todas las fuentes y clasifica cada movimiento → `data/movimientos.json`; con tu mapa de cuentas (`cuentas.py`) marca como internos los PSE a tus inversiones, los pagos a tus tarjetas en otros bancos, las compras de cartera y los traslados entre tus cuentas |
 | 6 | `agente.py` | Detecta lo que no entiende y lo agrega a tus preguntas |
 | 7 | `make_sheet.py` | Regenera tu Google Sheet |
 | 8 | `plan_sheet.py` + `contexto_doc.py` | Regenera el Sheet "Plan y estrategia" y el Google Doc "Mi economía — contexto para Claude" (lo que lee Claude web) |
@@ -68,8 +68,9 @@ Nequi: 120 mil
 | `data/plan.json` | Objetivos y hoja de ruta (Sheet "Plan y estrategia") |
 
 ## Reglas de oro (ya costaron errores)
-- El saldo de la cuenta principal **ya incluye el bolsillo**: nunca sumarlo aparte.
+- La caja suma **todas tus cuentas** con saldo conocido (extracto o el saldo que confirmaste); el saldo de una cuenta **ya incluye su bolsillo**: nunca sumarlo aparte. Inversiones y CDTs van aparte: no son plata para gastar.
 - Las compras con tarjeta cuentan el día de la compra; **el pago de la tarjeta no es gasto** (es interno), igual que los avances y traslados entre tus cuentas.
+- **PSE es un medio de pago, no un comercio**: un PSE a tu Trii o a Littio, sacar plata de tus inversiones y una compra de cartera son internos (ni gasto ni ingreso), siempre que el producto esté en `config.json → cuentas`.
 - Un desembolso de crédito **no es ingreso**: es financiamiento.
 - Si te descuentan libranzas de nómina, tu salario real es mayor que lo que llega: configúralo en `libranzas_nomina`.
 

@@ -12,7 +12,7 @@ def grupo(r):
     if re.search(r"HOTEL|HOSTEL|BOOKING|AIRBNB|HILTON|MARRIOTT|Trip\.com|EXPEDIA", d, re.I): return "Alojamiento"
     if c == "Comida" or "QR" in r["Subcategoría"]: return "Comida y pagos locales"
     if c == "Transporte": return "Transporte local"
-    if c in ("Transferencias a terceros", "Gastos vía Daviplata (sin detalle)", "Efectivo"): return "Transferencias y efectivo"
+    if c in ("Transferencias a terceros", "Gastos vía billetera (sin detalle)", "Efectivo"): return "Transferencias y efectivo"
     if c == "Familia": return "Regalo"
     if re.search("HOLAFLY", d, re.I): return "Tours, compras y otros"
     return "Tours, compras y otros"

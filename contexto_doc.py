@@ -6,7 +6,7 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
 from auth import get_creds
 from fetch_util import call
-import agente, deudas
+import agente, cuentas, deudas
 
 ID_FILE = "data/contexto_doc_id.txt"
 TITULO = "Mi economía — contexto para Claude"
@@ -35,19 +35,24 @@ def construir():
     add("<h2>Cómo usar este documento (instrucciones para Claude)</h2><ul>"
         "<li>Responde en español, breve, con cifras en pesos ($1.234.567) y una recomendación concreta.</li>"
         "<li>Usa SOLO estas cifras; si algo no está aquí, dilo. Si la fecha de actualización tiene más de 3 días, avísalo.</li>"
-        "<li>La caja de la cuenta principal YA incluye el bolsillo: nunca lo sumes aparte. Lo reservado (data/reservas.json) NO es gastable.</li>"
-        "<li>Compras con tarjeta cuentan el día de la compra; pagos de tarjeta, avances y traslados entre cuentas propias son internos (no gasto).</li>"
+        "<li>La caja suma las cuentas y billeteras con saldo conocido. El saldo de una cuenta YA incluye su bolsillo: nunca lo sumes aparte. Lo reservado (data/reservas.json) NO es gastable.</li>"
+        "<li>Inversiones y CDTs no son caja: no los cuentes para gastar.</li>"
+        "<li>Compras con tarjeta cuentan el día de la compra; pagos de tarjeta, avances, traslados entre cuentas propias, plata hacia o desde sus inversiones y compras de cartera son internos (no gasto ni ingreso).</li>"
         "<li>Lo extra a deudas va a la de MAYOR tasa; las tarjetas se pagan completas.</li>"
         "<li>No compares promedios largos con un mes puntual; el mes en curso es parcial.</li></ul>")
 
     # 1. Foto de hoy
     add("<h2>1. Foto de hoy</h2>")
+    en = lambda tipos: "; ".join(f"{x['nombre']} {f(x['saldo'])} ({x['origen']} {x['desde']})" for x in c["cuentas"]
+                                 if x["saldo"] is not None and x["tipo"] in tipos) or "—"
     add(tabla(["Concepto", "Valor", "Detalle"], [
         ["Puede gastar por día hasta el sueldo", f(e["por_dia"]), f"{f(e['libre'])} libres ÷ {e['dias_al_pago']} días"],
         ["Próximo sueldo", e["proximo_pago"].isoformat(), f"último: {e['ultimo_pago'].isoformat()}"],
-        ["Caja total (incluye bolsillo)", f(c["total"]), f"extracto {c['extracto']} + movimientos posteriores"],
+        ["Caja total (todas sus cuentas)", f(c["total"]), en(cuentas.LIQUIDOS)],
         ["Bolsillo", f(c["bolsillo"]), f"{f(c['reservado_inversion'])} reservados + {f(c['emergencia'])} colchón"],
-        ["Disponible en cuenta", f(c["disponible"]), ""],
+        ["Disponible para gastar", f(c["disponible"]), ""],
+        ["Inversiones y CDTs (no son caja)", f(c["inversiones"]), en(cuentas.INVERSIONES)],
+        ["Cuentas sin saldo conocido", ", ".join(c["sin_saldo"]) or "—", "pregúntale cuánto tiene hoy" if c["sin_saldo"] else ""],
         ["Otros saldos confirmados", f(e["liquido_otros"]), ", ".join(f"{k}: {f(v['valor'])}" for k, v in e["otros_saldos"].items()) or "—"],
         ["Pagos pendientes antes del sueldo", f(e["comprometido"]), "; ".join(f"{p['fecha']} {p['nombre']} {f(p['monto'])}" for p in e["por_pagar_antes_del_sueldo"]) or "—"],
         ["Gasto variable desde el último sueldo", f(e["gasto_ciclo"]), f"techo del mes {f(e['techo_ciclo'])}"],

@@ -18,7 +18,12 @@ Eres quien instala el sistema con el usuario. Él NO es programador necesariamen
 1. ¿Usa Mac? (si es Windows/Linux: el sistema corre, pero el servicio automático usa launchd de Mac; avísale que esa parte habrá que adaptarla).
 2. ¿Las alertas y extractos de sus bancos le llegan a un **Gmail**? ¿A cuál correo? (si le llegan a otro correo, no funciona sin redirigirlos).
 3. ¿Le llegan los **extractos en PDF** por correo o solo alertas? (con extractos el sistema sabe saldos; con solo alertas, no).
-4. ¿Tiene **billeteras o cuentas digitales**: RappiCuenta, Nequi, Daviplata, Lulo, cuenta Nu, Global66, MOVii, dale!? ¿Le mandan extractos o comprobantes por correo? Muchas mandan extracto mensual en PDF (RappiCuenta, Nu, Lulo) y se pueden leer igual que los de un banco; si no le llegan, dile cómo activarlos en la app (normalmente en Perfil → Extractos / Notificaciones por correo).
+4. **Todo lo que tiene, en un solo mensaje** (no banco por banco: hay gente con 15+ productos). Pídele que liste por grupos, aunque el correo no los muestre:
+   - **Cuentas y billeteras**: bancos, RappiCuenta, Nequi, Daviplata, Lulo, cuenta Nu, Global66, MOVii, dale!, Falabella…
+   - **Tarjetas de crédito**: ojo, un mismo banco puede tener cuenta Y tarjeta (RappiCuenta y RappiCard, Nu, Lulo, Falabella). Pregunta las tarjetas aparte.
+   - **Inversiones**: Trii, Tyba, Littio, Hapi, fondos, acciones.
+   - **CDTs** (dónde, cuánto, cuándo vence) y **créditos** (incluidas compras de cartera).
+   ¿Le mandan extractos o comprobantes por correo? Muchas mandan extracto mensual en PDF (RappiCuenta, Nu, Lulo) y se pueden leer igual que los de un banco; si no le llegan, dile cómo activarlos en la app (normalmente en Perfil → Extractos / Notificaciones por correo). Lo que no escribe al correo igual va al mapa de cuentas (Fase 3): así sus traslados a esos productos no cuentan como gasto.
 Luego corre `./instalar.sh` y confirma que dice "Entorno listo". Si falta Python, guíalo para instalarlo.
 
 ## Fase 1 — Datos básicos → config.json
@@ -38,14 +43,14 @@ Sigue docs/google-cloud.md. Un paso por mensaje y espera su "listo":
 proyecto nuevo → habilitar Gmail, Sheets, Drive y Calendar API → pantalla de consentimiento (Externo, sus datos) → agregar los 5 permisos → **PUBLICAR la app** (insiste: en modo prueba el permiso vence cada 7 días) → cliente "App de escritorio" → descargar JSON → renombrar a `credentials.json` en la carpeta (ofrece moverlo tú desde Descargas con `mv ~/Downloads/client_secret_*.json credentials.json`).
 Luego corre `.venv/bin/python reautorizar.py` y explícale: aviso de "app no verificada" → Configuración avanzada → Ir a Finanzas Tracker → **marcar todas las casillas**. Si el navegador no abre, dale el enlace de `data/reautorizar.log`.
 
-## Fase 3 — Detectar sus bancos (pregunta menos, confirma más)
-Corre `.venv/bin/python detectar_bancos.py`. Muéstrale el resultado en una tabla corta y confirma:
-1. "Estos son los bancos/billeteras que te escriben. ¿Falta alguno? ¿Alguno ya no lo usas?"
-2. Con las terminaciones que aparecieron, pregunta cuáles son suyas y de qué tipo (cuenta de ahorros, tarjeta de crédito, tarjeta débito, bolsillo) → `davivienda` y `bancolombia` en config.json.
-3. Sus **celulares** de Nequi/Daviplata → `celulares_propios`.
+## Fase 3 — Mapa de cuentas (pregunta menos, confirma más)
+Corre `.venv/bin/python detectar_bancos.py` (dice remitentes, productos que se ven en cada uno y terminaciones). Cruza con lo que dijo en la Fase 0 y muéstrale **UNA sola tabla** con todo, agrupada por institución: producto (cuenta, tarjeta, billetera, inversión, CDT, crédito), terminación, si escribe al correo y si el sistema ya lo lee. Pídele que corrija o complete la tabla de una vez (no preguntes producto por producto). Luego escribe `config.json → cuentas` (formato en `config.ejemplo.json → _cuentas_ejemplo`):
+1. Un producto por fila con `institucion`, `tipo` (ahorros | corriente | billetera | bolsillo | tarjeta_credito | credito | inversion | cdt) y `terminacion` si la hay. Bolsillo: `dentro_de` = terminación de la cuenta que ya lo incluye en su saldo. Débito: `tarjeta_debito` en su cuenta de ahorros. Billeteras: `celular`.
+2. Inversiones, CDTs y cuentas que no mandan extracto: `saldo: {"valor", "fecha"}` con lo que vea hoy en la app (CDT: también `vence` y `tasa_ea`).
+3. Incluye TODO aunque el sistema no lo lea: el mapa es lo que evita que un PSE a su Trii, una recarga a Littio, el pago de su tarjeta en otro banco o una compra de cartera se cuenten como gasto o ingreso (`transferencias.py`).
 4. **Cómo aparece su nombre** en transferencias entre sus propias cuentas: búscalo tú en los correos (p. ej. "recibiste una transferencia de NOMBRE APELLIDO") y confírmalo con él → `nombre_en_bancos`.
-5. Compara con lo que dijo en la Fase 0 (bancos y billeteras): si mencionó alguna que no aparece en el correo, es porque no le llegan notificaciones; ayúdale a activarlas o anótala como "sin datos".
-Si usa bancos que el sistema no lee, anótalos para la Fase 5. Prioriza las que mandan **extractos en PDF** (traen todos los movimientos y el saldo).
+5. Si mencionó algo que no aparece en el correo, es porque no le llegan notificaciones; ayúdale a activarlas o déjalo en el mapa con su saldo a mano.
+Corre `.venv/bin/python -c "from config import PRODUCTOS; [print(p['nombre'], p['tipo'], 'se lee' if p['se_lee'] else '') for p in PRODUCTOS]"` y muéstrale cómo quedó. Si tiene muchísimos productos, prioriza para la Fase 5 los que más usa para gastar; los demás quedan en el mapa sin lector. Prioriza las que mandan **extractos en PDF** (traen todos los movimientos y el saldo).
 
 ## Fase 4 — Primera corrida
 Avísale que tarda (baja correos desde la fecha elegida) y corre `.venv/bin/python actualizar.py` con timeout largo. Al terminar: enlace del Sheet, movimientos por mes (entradas, salidas), % sin clasificar, y los 3 hallazgos más llamativos. Si algo falla, arréglalo tú antes de seguir.
@@ -63,6 +68,7 @@ Pregunta y llena:
 - **Pagos fijos** del mes: arriendo, servicios, celular, administración, cursos… (día, monto, cómo se paga) → `data/pagos_config.json`.
 - **Suscripciones**: confirma las detectadas y agrega las que falten → `data/suscripciones.json`.
 - **Plata apartada** que no se debe gastar (ahorro, inversión) → `data/reservas.json`.
+- **Inversiones y CDTs**: confirma que cada uno tenga `saldo` y fecha en `config.json → cuentas` (salen en el informe como "Inversiones y CDTs", aparte de la caja).
 Regenera el Sheet y muéstrale "cuánto puedes gastar por día hasta el sueldo" con el cálculo, y la tabla de `deudas.py` con dónde le conviene abonar.
 
 ## Fase 8 — Automático, calendario e informe

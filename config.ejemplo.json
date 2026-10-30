@@ -7,10 +7,20 @@
 
  "nombre_en_bancos": ["NOMBRE APELLIDO", "NOMBRE SEGUNDO APELLIDO1 APELLIDO2"],
  "documento": "TU_CEDULA",
- "celulares_propios": ["3000000000"],
 
- "davivienda": {"cuenta_principal": "", "cuenta_afc": "", "bolsillo": "", "tarjeta_credito": ""},
- "bancolombia": {"ahorros": "", "tarjeta_credito": "", "tarjeta_debito": ""},
+ "cuentas": [],
+ "_cuentas_leeme": "Todos tus productos, uno por línea, aunque el sistema no los lea: así la plata que mueves entre ellos (un PSE a tu Trii, el pago de tu tarjeta en otro banco, una compra de cartera) no cuenta como gasto ni ingreso. tipo: ahorros | corriente | billetera | bolsillo | tarjeta_credito | credito | inversion | cdt. Opcionales: nombre; terminacion; celular (billeteras); tarjeta_debito (de una cuenta de ahorros); dentro_de (bolsillo: terminación de la cuenta que YA lo incluye en su saldo); saldo {valor, fecha} para lo que no manda extracto (inversiones, CDTs, cuentas sin alertas); alias (regex con el que aparece en movimientos de otros bancos, si el sistema no lo reconoce solo).",
+ "_cuentas_ejemplo": [
+  {"institucion": "Davivienda", "tipo": "ahorros", "terminacion": "1234", "nombre": "Cuenta principal Davivienda"},
+  {"institucion": "Davivienda", "tipo": "bolsillo", "terminacion": "5678", "dentro_de": "1234"},
+  {"institucion": "Davivienda", "tipo": "tarjeta_credito", "terminacion": "4321"},
+  {"institucion": "Bancolombia", "tipo": "ahorros", "terminacion": "1111", "tarjeta_debito": "2222"},
+  {"institucion": "RappiPay", "tipo": "ahorros", "nombre": "RappiCuenta"},
+  {"institucion": "RappiCard", "tipo": "tarjeta_credito"},
+  {"institucion": "Nequi", "tipo": "billetera", "celular": "3000000000"},
+  {"institucion": "Trii", "tipo": "inversion", "saldo": {"valor": 5000000, "fecha": "2026-10-01"}},
+  {"institucion": "Banco Santander", "tipo": "cdt", "saldo": {"valor": 10000000, "fecha": "2026-09-15"}, "vence": "2027-03-15", "tasa_ea": 0.105}
+ ],
 
  "sueldo": {"dia_pago": "penultimo_habil", "neto_que_llega": 0, "otros_ingresos_mes": 0},
  "techo_gasto_mes": 6000000,

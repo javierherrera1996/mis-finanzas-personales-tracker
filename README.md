@@ -84,6 +84,7 @@ Y como todo vive en tu Google Sheet, **también puedes chatear desde el celular*
 
 - 📬 **Lee tu Gmail**: alertas y extractos de Davivienda, Nu, Bancolombia, Addi… (las claves de los PDF las abre solo).
 - 🗂️ **Clasifica todo**: comida, transporte, arriendo, viajes, deudas… y no cuenta dos veces los pagos de tarjeta ni los traslados entre tus cuentas.
+- 🧭 **Conoce todos tus productos**: cuentas, billeteras, tarjetas, inversiones (Trii, Littio, Tyba…) y CDTs. Un PSE a tu Trii o una compra de cartera no es gasto ni ingreso, y tus inversiones salen aparte de la caja.
 - 📊 **Arma tu Google Sheet**: resumen mensual, gastos por categoría, calendario de pagos, suscripciones, proyección de deudas y de caja.
 - 💌 **Te escribe cada lunes**: cuánto puedes gastar por día hasta el sueldo, qué tienes que pagar y en qué se te fue la plata esa semana.
 - 🙋 **Te pregunta lo que no entiende**: le respondes el correo (`3: mercado`) y aprende para la próxima.
@@ -166,6 +167,7 @@ Eso es todo. Claude te entrevista, corre los comandos y te guía en lo que haya 
 | **Bancolombia** | Alertas por correo (compras, transferencias, QR) | ✅ |
 | **Addi** | Extractos | ✅ |
 | RappiCuenta, Nequi, Lulo, BBVA, otros | — | 🛠️ Claude lo agrega durante la instalación |
+| Trii, Littio, Tyba, CDTs y productos sin correo | Van en tu mapa de cuentas con su saldo: reconoce la plata que les mandas o sacas | ✅ |
 
 ¿Tu banco no está? En la fase 4 Claude lo detecta y le escribe el lector.
 
@@ -275,6 +277,8 @@ Desactivar el servicio automático: `launchctl unload ~/Library/LaunchAgents/com
 | `actualizar.py` | El proceso completo: correos → PDFs → clasificación → Sheet → informe |
 | `build.py` | Reglas de clasificación (las tuyas van en `config.json → reglas_personales`) |
 | `agente.py` | Los cálculos: caja, días al sueldo, pagos pendientes, cuánto gastar por día |
+| `cuentas.py` / `transferencias.py` | Tu mapa de cuentas (saldos por cuenta, inversiones) y la plata que se mueve entre tus productos |
+| `tests/` | Pruebas con casos reales: `python -m unittest discover -s tests` |
 | `make_sheet.py` / `plan_sheet.py` | Los Google Sheets |
 | `contexto_doc.py` | El Google Doc con todo tu contexto para Claude web y el celular |
 | `informe_semanal.py` / `respuestas.py` | El correo del lunes y la lectura de tus respuestas |

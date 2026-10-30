@@ -3,6 +3,7 @@ lee la respuesta, aplica lo que dijo (categorías, notas, saldos), recalcula y l
 Lo llama actualizar.py cada 15 minutos (modo --semanal)."""
 import base64, datetime, json, os, re, subprocess
 from email.mime.text import MIMEText
+from cuentas import INVERSIONES, LIQUIDOS, norm
 
 LISTAS = "data/listas_preguntas.json"      # {tag: [items numerados]} de cada informe enviado
 PROCESADOS = "data/respuestas_procesadas.json"
@@ -33,6 +34,36 @@ def monto(texto):
     return n * 1000 if suf in ("mil", "k") else n
 
 
+def _nombres_saldo():
+    """{lo que escribe el usuario: nombre con el que se guarda el saldo}: los de siempre + los de su mapa de cuentas
+    (config.json -> cuentas), p. ej. "trii: 5 M" o "tarjeta lulo: 300 mil"."""
+    d = dict(CUENTAS)
+    try:
+        from config import PRODUCTOS
+        for p in PRODUCTOS:
+            inst = norm(p["institucion"]).lower()
+            if p["tipo"] in LIQUIDOS + INVERSIONES: d.setdefault(inst, p["institucion"])
+            elif p["tipo"] == "tarjeta_credito": d.setdefault("tarjeta " + inst, f"Tarjeta {p['institucion']} (deuda)")
+    except Exception:
+        pass
+    return d
+
+
+def _piden_saldo():
+    """(cuentas, tarjetas) cuyo saldo hay que pedirle al usuario: cuentas y billeteras que no tienen extracto, inversiones
+    sin saldo o con saldo viejo, y tarjetas cuyo extracto no llega al correo."""
+    try:
+        import agente
+        from config import PRODUCTOS
+        c = agente.caja(cargar("data/movimientos.json", []))
+        cu = [x["institucion"] for x in c["cuentas"] if x["tipo"] != "bolsillo"
+              and (x["tipo"] in LIQUIDOS and x["origen"] != "extracto" or x["saldo"] is None or x["viejo"])]
+        tc = [p["institucion"] for p in PRODUCTOS if p["tipo"] == "tarjeta_credito" and p["clave"] not in ("davivienda", "nu")]  # con extracto
+        return list(dict.fromkeys(cu)) + ["efectivo"], list(dict.fromkeys(tc))
+    except Exception:
+        return ["Bancolombia", "Nequi", "Daviplata", "efectivo"], ["Bancolombia"]
+
+
 def armar_lista(tag):
     """Preguntas pendientes (las más recientes primero, máx. 10) numeradas para el correo de esta semana."""
     pq = cargar("data/preguntas.json", [])
@@ -55,10 +86,13 @@ def texto_pregunta(q):
 def html_seccion(items, total):
     filas = "".join(f"<tr><td style='padding:4px 8px;font-weight:700'>{it['n']}</td><td style='padding:4px 8px'>{texto_pregunta(it['q'])[:170]}</td>"
                     f"<td style='padding:4px 8px;white-space:nowrap'>{it['monto']}</td></tr>" for it in items)
-    ejemplo = "<br>".join([f"{items[0]['n']}: mercado"] + ([f"{items[1]['n']}: préstamo a un amigo"] if len(items) > 1 else []) + ["Bancolombia: 850 mil", "Nequi: 120 mil"])
+    cu, tc = _piden_saldo()
+    ejemplo = "<br>".join([f"{items[0]['n']}: mercado"] + ([f"{items[1]['n']}: préstamo a un amigo"] if len(items) > 1 else [])
+                          + [f"{n}: {v}" for n, v in zip(cu[:2], ("850 mil", "120 mil"))])
+    deben = f" y lo que debes en: <b>{', '.join('tarjeta ' + t for t in tc)}</b>" if tc else ""
     return f"""<h3>✍️ Responde este correo ({total} pendientes{', aquí van las ' + str(len(items)) + ' más recientes' if total > len(items) else ''})</h3>
 <table style='border-collapse:collapse;font-size:14px;width:100%'>{filas}</table>
-<p style='font-size:14px'>Y cuéntame tus saldos de hoy en: <b>Bancolombia, Nequi, Daviplata, efectivo</b> y lo que debes en la <b>tarjeta Bancolombia</b>.</p>
+<p style='font-size:14px'>Y cuéntame tus saldos de hoy en: <b>{', '.join(cu)}</b>{deben}.</p>
 <p style='font-size:14px;background:#f6f8fa;padding:10px;border-radius:8px'>Dale <b>Responder</b> y escribe, una por línea:<br><code>{ejemplo}</code><br>
 <span style='color:#666'>Número: una categoría corta (Comida, Arriendo, Préstamo a un amigo…) o una explicación. "saltar" para dejarla. Te confirmo por correo lo que entendí.</span></p>"""
 
@@ -88,6 +122,8 @@ def _sin_citas(t):
 def interpretar(lineas, items):
     por_n = {it["n"]: it for it in items}
     respuestas, saldos, no_entendi = [], [], []
+    nombres = _nombres_saldo()
+    alt = "|".join(re.escape(k) for k in sorted(nombres, key=len, reverse=True))   # "tarjeta bancolombia" antes que "bancolombia"
     for l in lineas:
         l = l.strip()
         if not l: continue
@@ -96,11 +132,11 @@ def interpretar(lineas, items):
             if m.group(2).strip().lower() not in ("saltar", "skip", "no se", "no sé"):
                 respuestas.append((por_n[int(m.group(1))], m.group(2).strip()))
             continue
-        m = re.match(r"^(tarjeta bancolombia|bancolombia|nequi|daviplata|efectivo)\b\s*[:=\-]?\s*(.+)$", l, re.I)
+        m = re.match(rf"^({alt})(?!\w)\s*[:=\-]?\s*(.+)$", norm(l), re.I)
         if m:
             v = monto(m.group(2))
             if v is not None:
-                saldos.append((CUENTAS[m.group(1).lower()], v)); continue
+                saldos.append((nombres[m.group(1).lower()], v)); continue
         # texto libre: si menciona un monto igual al de una pregunta (±1%), es la respuesta a esa pregunta
         cifras = [monto(x) for x in re.findall(r"\$?\d[\d.,]*\s*(?:mil|millones|m|k)?", l, re.I)]
         cifras = [c for c in cifras if c and c >= 10000]

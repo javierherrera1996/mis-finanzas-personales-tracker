@@ -2,7 +2,8 @@
 Lo usan informe_semanal.py, calendario.py y make_sheet.py."""
 import calendar, datetime, json, os, re, collections
 import holidays
-from config import C, DAVI, SUELDO
+from config import C, PRODUCTOS, SUELDO
+import cuentas
 
 HOY = datetime.date.today()
 FEST = holidays.Colombia(years=range(2025, 2031))
@@ -11,7 +12,7 @@ FIJOS_MES = C.get("fijos_mes", 0)                # fijos que se pagan aparte, en
 TECHO_VARIABLE_MES = TECHO_MES - FIJOS_MES
 EXCLUIR_VARIABLE = C.get("excluir_del_variable", r"Vivienda|Impuestos")
 UMBRAL_PREGUNTA = 100000      # transacciones sin clasificar desde este monto se te preguntan
-CATS_DUDOSAS = {"Otros", "Transferencias a terceros", "Gastos vía Daviplata (sin detalle)", "Efectivo", "Por aclarar"}
+CATS_DUDOSAS = {"Otros", "Transferencias a terceros", "Gastos vía billetera (sin detalle)", "Efectivo", "Por aclarar"}
 
 
 def penultimo_habil(y, m):
@@ -47,27 +48,68 @@ def fecha_pago(p, y, m):
     return datetime.date(y, m, min(int(p["dia"]), calendar.monthrange(y, m)[1]))
 
 
-def caja(movs):
-    """Caja de hoy en Davivienda = saldo del último extracto (la cuenta principal YA incluye el bolsillo) + movimientos posteriores.
-    Los traslados bolsillo<->cuenta son internos: no cambian la caja, solo cuánto hay en el bolsillo.
-    Si el usuario no tiene extractos de Davivienda, la caja sale en 0 (adaptar a su banco con la skill finanzas-nueva-fuente)."""
+def _anclas(prods):
+    """Último saldo conocido de cada producto del mapa: extractos (Davivienda, Cuenta Nu), "saldo" en config.json -> cuentas
+    y saldos que el usuario confirmó por correo (data/saldos_manual.json). Un extracto con una cuenta que no está en el mapa
+    la agrega a `prods`: lo que muestra un extracto siempre cuenta.
+    Devuelve ({id: {"valor", "fecha", "origen"}}, nombres de saldos_manual que ya quedaron en una cuenta del mapa)."""
+    out, consumidos = {}, set()
+    def poner(p, valor, fecha, origen):
+        if p and (p["id"] not in out or fecha >= out[p["id"]]["fecha"]):
+            out[p["id"]] = {"valor": valor, "fecha": fecha, "origen": origen}
+    def implicito(**x):
+        p = cuentas.normalizar({"cuentas": [x]})[0]
+        prods.append(p)
+        return p
     from parse_creditos import saldos_cuentas
-    sc = saldos_cuentas()
-    if not sc:
-        return {"total": 0, "bolsillo": 0, "disponible": 0, "extracto": "sin extractos", "hasta": max([m["Fecha"] for m in movs] or [""]), "reservado_inversion": 0, "emergencia": 0}
-    ult = max(x[0] for x in sc)
-    principal, bolsillo = DAVI.get("cuenta_principal", ""), "*" + (DAVI.get("bolsillo") or "sin-bolsillo")
-    total0 = sum(x[2] for x in sc if x[0] == ult)
-    bol0 = sum(x[3] for x in sc if x[0] == ult and x[1] == principal)
-    fin = f"{ult}-31"
-    post = [m for m in movs if m["Fecha"] > fin and m["Fuente"].startswith("Davivienda Ahorros")]
-    total = total0 + sum(m["Valor"] for m in post if bolsillo not in m["Fuente"])
-    bol = bol0 + sum(m["Valor"] for m in post if bolsillo in m["Fuente"])
-    hasta = max([m["Fecha"] for m in post] or [fin])
+    for mes, term, saldo, bol in saldos_cuentas():   # el saldo de la cuenta YA incluye su bolsillo
+        fin = cuentas.fin_de_mes(mes)
+        p = next((q for q in prods if q["clave"] == "davivienda" and q["tipo"] in cuentas.LIQUIDOS and q["terminacion"] == term), None) \
+            or implicito(institucion="Davivienda", tipo="ahorros", terminacion=term)
+        poner(p, saldo, fin, "extracto")
+        b = next((q for q in prods if q["tipo"] == "bolsillo" and q["dentro_de"] == term), None)
+        if b is None and bol > 0:
+            b = implicito(institucion="Davivienda", tipo="bolsillo", dentro_de=term, nombre=f"Bolsillo de Davivienda *{term}")
+        poner(b, bol, fin, "extracto")
+    try:
+        from parse_otros import cuenta_nu
+        cn = cuenta_nu()
+    except Exception:
+        cn = None
+    if cn and cn["fecha"]:   # Cuenta Nu (ahorros + cajitas)
+        p = next((q for q in prods if q["clave"] == "nu" and q["tipo"] in cuentas.LIQUIDOS), None)
+        if p is None and cn["cuenta"] + cn["cajitas"] > 0:
+            p = implicito(institucion="Nu", tipo="ahorros", nombre="Cuenta Nu")
+        poner(p, cn["cuenta"] + cn["cajitas"], cn["fecha"], "extracto")
+    for p in prods:
+        s = p.get("saldo")
+        if isinstance(s, dict) and s.get("valor") is not None and s.get("fecha"):
+            poner(p, s["valor"], s["fecha"], "config")
+    manual = json.load(open("data/saldos_manual.json")) if os.path.exists("data/saldos_manual.json") else {}
+    for k, v in manual.items():
+        p = cuentas.para_saldo(k, prods)
+        if p and v.get("valor") is not None and v.get("fecha"):
+            poner(p, v["valor"], v["fecha"], "confirmado")
+            consumidos.add(k)
+    return out, consumidos
+
+
+def caja(movs):
+    """Caja de hoy = suma de tus cuentas y billeteras (mapa de cuentas, config.json -> cuentas), cada una desde su último
+    saldo conocido (extracto o saldo que confirmaste) + los movimientos posteriores (cuentas.saldos()).
+    El saldo de una cuenta YA incluye su bolsillo: el bolsillo se informa aparte pero nunca se suma al total.
+    Inversiones y CDTs no son caja: van en "inversiones". Las cuentas sin ningún saldo conocido quedan en "sin_saldo"
+    para preguntárselas al usuario."""
+    prods = list(PRODUCTOS)
+    anclas, consumidos = _anclas(prods)
+    filas = cuentas.saldos(movs, prods, anclas, HOY)
     res = json.load(open("data/reservas.json")) if os.path.exists("data/reservas.json") else {}
-    inv = min(res.get("inversion", 0), max(bol, 0))
-    return {"total": round(total), "bolsillo": round(bol), "disponible": round(total - bol), "extracto": ult, "hasta": hasta,
-            "reservado_inversion": round(inv), "emergencia": round(bol - inv)}
+    c = cuentas.resumir(filas, res.get("inversion", 0))
+    ext = [f["desde"] for f in filas if f["origen"] == "extracto"]
+    liq = [f["hasta"] for f in filas if f["saldo"] is not None and f["tipo"] in cuentas.LIQUIDOS]
+    c.update(extracto=max(ext)[:7] if ext else "sin extractos", hasta=max(liq or [max([m["Fecha"] for m in movs] or [""])]),
+             consumidos=consumidos)
+    return c
 
 
 def pagado(p, movs, desde, hasta):
@@ -178,7 +220,7 @@ def recurrentes_nuevos(movs, meses=4):
     grupos = collections.defaultdict(list)
     for m in movs:
         if m["Tipo"] != "Gasto" or m["Valor"] >= 0 or m["Fecha"] < desde: continue
-        if m["Categoría"] in ("Transferencias a terceros", "Otros", "Efectivo", "Gastos vía Daviplata (sin detalle)", "Comida", "Transporte"): continue
+        if m["Categoría"] in ("Transferencias a terceros", "Otros", "Efectivo", "Gastos vía billetera (sin detalle)", "Comida", "Transporte"): continue
         palabras = re.sub(r"[^A-Za-zÁÉÍÓÚÑ ]", " ", m["Comercio"] or m["Descripción"]).upper().split()
         if palabras: grupos[" ".join(palabras[:2])].append(m)
     out = []
@@ -255,22 +297,11 @@ def estado():
     # plata que te va a entrar antes del sueldo (ej. roomie): suma a lo libre mientras no haya llegado
     por_recibir = [p for p in prox if p["tipo"] == "cobro" and not p["pagado"] and HOY <= p["fecha"] < pp and p.get("monto")]
     recibir = sum(p["monto"] for p in por_recibir)
-    # saldos que el usuario confirma por correo/WhatsApp (Bancolombia, Nequi, Daviplata, efectivo) de los últimos 7 días
+    # saldos confirmados por correo/WhatsApp de los últimos 7 días que NO son de una cuenta del mapa (esos ya están en la caja):
+    # efectivo y lo que se debe en tarjetas sin extracto
     manual = json.load(open("data/saldos_manual.json")) if os.path.exists("data/saldos_manual.json") else {}
     hace7 = (HOY - datetime.timedelta(days=7)).isoformat()
-    otros = {k: v for k, v in manual.items() if v.get("fecha", "") >= hace7 and v.get("valor") is not None}
-    # Bancolombia ahorros EN VIVO: último saldo que confirmaste + todo lo que entró/salió después según las alertas (no vence)
-    for k, v in manual.items():
-        if re.search(r"^bancolombia", k, re.I) and not re.search(r"tarjeta|deuda", k, re.I) and v.get("valor") is not None:
-            flujo = sum(m["Valor"] for m in movs if m["Fuente"].startswith("Bancolombia Ahorros") and m["Fecha"] > v.get("fecha", ""))
-            otros[k] = {"valor": v["valor"] + flujo, "fecha": HOY.isoformat(), "base": v["valor"], "base_fecha": v.get("fecha"), "flujo": flujo}
-    try:   # Cuenta Nu (ahorros + cajitas) del último extracto, si tiene plata y el extracto es reciente
-        from parse_otros import cuenta_nu
-        cn = cuenta_nu()
-        if cn and cn["cuenta"] + cn["cajitas"] > 0 and cn["fecha"] >= (HOY - datetime.timedelta(days=40)).isoformat() and "Cuenta Nu" not in otros:
-            otros["Cuenta Nu (extracto)"] = {"valor": cn["cuenta"] + cn["cajitas"], "fecha": cn["fecha"]}
-    except Exception:
-        pass
+    otros = {k: v for k, v in manual.items() if k not in c["consumidos"] and v.get("fecha", "") >= hace7 and v.get("valor") is not None}
     liquido_otros = sum(v["valor"] for k, v in otros.items() if not re.search(r"tarjeta|deuda", k, re.I))
     deuda_tc_otros = sum(v["valor"] for k, v in otros.items() if re.search(r"tarjeta|deuda", k, re.I))
     libre = c["disponible"] + liquido_otros - deuda_tc_otros - comprometido + recibir

@@ -3,7 +3,7 @@ Uso: .venv/bin/python informe_semanal.py [--no-enviar]"""
 import base64, datetime, json, os, sys
 from email.mime.text import MIMEText
 from agente import estado, HOY
-import deudas
+import cuentas, deudas
 
 from config import C
 DEST = C["correo"]
@@ -33,6 +33,12 @@ def html(e):
     pq = [p for p in e["preguntas"] if p.get("nuevo")][:8]
     pq_rows = [[p["fechas"], p["monto"], p["q"].replace("[Nuevo] ", "")[:120]] for p in pq]
     cred = " · ".join(f"{c['nombre']} {f(c['saldo'])}" for c in e["creditos"])
+    en = lambda tipos: ", ".join(f"{x['nombre']} {f(x['saldo'])}" for x in c["cuentas"] if x["saldo"] is not None and x["tipo"] in tipos)
+    apartado = (f" En el bolsillo: {f(c['reservado_inversion'])} reservados para inversión" + (f" + {f(c['emergencia'])} de colchón" if c["emergencia"] > 0 else "")
+                + " (no se cuentan para gastar)." if c["bolsillo"] else
+                f" Apartado para inversión: {f(c['reservado_inversion'])} (no se cuenta para gastar)." if c["reservado_inversion"] else "")
+    inversiones = f" Inversiones y CDTs: {f(c['inversiones'])} ({en(cuentas.INVERSIONES)}), no se cuentan para gastar." if en(cuentas.INVERSIONES) else ""
+    sin_saldo = f" No sé cuánto hay en: {', '.join(c['sin_saldo'])} (respóndeme con el saldo de hoy)." if c["sin_saldo"] else ""
     return f"""<div style="font-family:-apple-system,Segoe UI,Arial,sans-serif;max-width:720px;color:#222">
 <h2 style="margin-bottom:0">Tu semana financiera — {d(HOY)} {HOY.year}</h2>
 <p style="color:#666;margin-top:4px">Datos hasta el {c['hasta']} · sueldo el {d(e['proximo_pago'])} (en {e['dias_al_pago']} días)</p>
@@ -40,8 +46,8 @@ def html(e):
 <div style="background:#f6f8fa;border-radius:10px;padding:16px;margin:12px 0">
   <div style="font-size:15px;color:#555">Puedes gastar hasta el sueldo</div>
   <div style="font-size:34px;font-weight:700;color:{color}">{f(e['por_dia'])} por día</div>
-  <div style="font-size:14px;color:#555">{f(e['libre'])} libres = {f(c['disponible'])} disponibles en Davivienda{(' + ' + f(e['liquido_otros']) + ' en otras cuentas (confirmados por WhatsApp)') if e['liquido_otros'] else ''}{(' − ' + f(e['deuda_tc_otros']) + ' de tarjeta Bancolombia') if e['deuda_tc_otros'] else ''} − {f(e['comprometido'])} de pagos pendientes antes del sueldo.<br>
-  Caja total Davivienda {f(c['total'])}. En el bolsillo: {f(c['reservado_inversion'])} reservados para inversión{(' + ' + f(c['emergencia']) + ' de colchón') if c['emergencia'] > 0 else ''} (no se cuentan para gastar).</div>
+  <div style="font-size:14px;color:#555">{f(e['libre'])} libres = {f(c['disponible'])} disponibles en tus cuentas{(' + ' + f(e['liquido_otros']) + ' en efectivo y otros saldos que confirmaste') if e['liquido_otros'] else ''}{(' − ' + f(e['deuda_tc_otros']) + ' que debes en tarjetas (lo confirmaste)') if e['deuda_tc_otros'] else ''} − {f(e['comprometido'])} de pagos pendientes antes del sueldo.<br>
+  Caja total {f(c['total'])} ({en(cuentas.LIQUIDOS) or 'sin saldos'}).{apartado}{inversiones}{sin_saldo}</div>
 </div>
 
 <h3>Antes del sueldo tienes que pagar</h3>

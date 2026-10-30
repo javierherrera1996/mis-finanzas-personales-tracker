@@ -298,17 +298,14 @@ PC = "Proyección caja"
 MES_RENTA = C.get("renta_anual", {}).get("mes", 10)
 from parse_creditos import saldos_cuentas
 sc_ = saldos_cuentas()
-ult = max([x[0] for x in sc_] or ["0000-00"])
-caja0 = sum(x[2] for x in sc_ if x[0] == ult)  # OJO: el saldo de la cuenta principal YA incluye el bolsillo
-fin_mes = f"{ult}-31"
-# salidas/entradas posteriores al extracto; los traslados bolsillo<->cuenta son internos y no cambian la caja
-_bol = "*" + (DAVI.get("bolsillo") or "sin-bolsillo")
-flujo = sum(m["Valor"] for m in movs if m["Fecha"] > fin_mes and m["Fuente"].startswith("Davivienda Ahorros") and _bol not in m["Fuente"])
-caja_hoy = round(caja0 + flujo)
-ult_fecha = max([m["Fecha"] for m in movs if m["Fuente"].startswith("Davivienda Ahorros")] or [datetime.date.today().isoformat()])
+# la misma caja del informe: todas tus cuentas con saldo conocido (el saldo de una cuenta YA incluye su bolsillo)
+_caja = agente.caja(movs)
+caja_hoy = _caja["total"]
+ult_fecha = _caja["hasta"] or datetime.date.today().isoformat()
+_nota = "; ".join(f"{x['nombre']} {x['saldo']:,.0f}".replace(",", ".") for x in _caja["cuentas"] if x["saldo"] is not None and x["tipo"] in ("ahorros", "corriente", "billetera"))
 pc = [["Proyección de caja — ¿hasta cuándo alcanza la plata?"], [],
       ["Parámetros (cámbialos)", "Valor", "Nota"],
-      ["Caja de hoy (Davivienda, incluye bolsillo)", caja_hoy, f"Extracto de {ult} menos salidas hasta {ult_fecha}. Sin Bancolombia/Nu/Daviplata."],
+      ["Caja de hoy (todas tus cuentas)", caja_hoy, f"{_nota or 'Sin saldos'} (hasta {ult_fecha})" + (f". Sin saldo: {', '.join(_caja['sin_saldo'])}" if _caja["sin_saldo"] else "")],
       ["Gasto que falta hasta el próximo pago", 2500000, "Lo que vas a gastar antes del penúltimo día hábil de este mes"],
       ["Sueldo que llega a la cuenta cada mes", SUELDO.get("neto_que_llega", 0), "Ya descontado lo que te quitan de nómina"],
       ["Otros ingresos (promedio mensual)", SUELDO.get("otros_ingresos_mes", 0), "Pon 0 si no quieres contarlos"],
