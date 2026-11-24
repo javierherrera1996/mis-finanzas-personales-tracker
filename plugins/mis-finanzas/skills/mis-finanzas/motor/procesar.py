@@ -413,9 +413,9 @@ def main(entrada, salida):
     res["acciones"] = reportes.acciones(e.get("objetivo"), res["analisis"], deu, hoy)
     res["comparacion_ofertas"] = reportes.comparar_ofertas(creditos, tarjetas, e.get("ofertas") or [], e.get("tasa_usura"))
     res["informe"] = reportes.informe(est, res, deu, proximos, preguntar, hoy)
-    # tablero (artifact del usuario): tres documentos para su almacén (tablero/resumen, tablero/compromisos, tablero/movimientos)
+    # tablero (artifact del usuario): un documento por sección para su almacén (colección tablero)
     import tablero
-    res["tablero"] = tablero.armar(res, hoy, e.get("sheet_url"))
+    res["tablero"] = tablero.armar(res, hoy, e.get("sheet_url"), e.get("metas"))
     os.chdir(os.path.dirname(os.path.abspath(salida)) or ".")
     json.dump(res, open(salida, "w"), ensure_ascii=False, indent=1, default=str)
     shutil.rmtree(trabajo, ignore_errors=True)

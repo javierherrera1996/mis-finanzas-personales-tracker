@@ -80,7 +80,17 @@ def clasificar(desc, valor):
     return ("Gasto", "Otros", "") if valor < 0 else ("Ingreso", "Otros ingresos", "Sin identificar")
 
 
+# Alertas de Bancolombia: "Compraste COP44.990,00 en PYU*TEMBICI con tu T.Cred *9562, el …" / "Pagaste $1.200.000,00 a
+# INMOBILIARIA X por PSE desde tu cuenta …": el comercio es lo que va entre "en"/"a" y "con tu", "desde tu", "por PSE", la coma
+# o la fecha. Antes se quitaba solo "Compra" y quedaba "ste COP44.990,00 en …" (arreglado el 24-nov-2026).
+_ALERTA_BANCOLOMBIA = re.compile(r"\b(?:Compraste|Pagaste)\s+(?:COP\s?)?\$?\s?[\d.,]+\s+(?:en|a)\s+(.+?)"
+                                 r"(?:\s+con tu|\s+desde tu|\s+por PSE|,|\s+el \d|\.\s|$)", re.I)
+
+
 def comercio(desc):
+    m = _ALERTA_BANCOLOMBIA.search(desc)
+    if m:
+        return re.sub(r"\s+", " ", m.group(1)).strip()[:60]
     d = re.sub(r"FRANQUICIA.*|Compras y Pagos PSE|Redeban BreB|App Davivienda|App Transaccional|PROCESOS ACH|BTA PROCESOS ESP\.?", "", desc)
     d = re.sub(r"^(Correccion Compra en Establecimiento,|Compra en Establecimiento,|Descuento en Internet,|Compra en comercio internacional|Compra Internacional|Compra|Descuento Por|Descuento|Transferencia)\s*", "", d)
     d = re.sub(r"^PSE\s+", "", d)

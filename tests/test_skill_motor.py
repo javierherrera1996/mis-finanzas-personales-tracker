@@ -379,7 +379,7 @@ class MotorSkill(unittest.TestCase):
         import re as _re
         s = self.correr({"config": copy.deepcopy(CONFIG), "correos": correos(), "sheet_url": "https://docs.google.com/spreadsheets/d/x"})
         t = s["tablero"]
-        self.assertEqual(set(t), {"resumen", "compromisos", "movimientos"})
+        self.assertEqual(set(t), {"resumen", "cuentas", "reportes", "compromisos", "movimientos", "metas"})
         for parte, doc in t.items():
             self.assertLess(len(json.dumps(doc, ensure_ascii=False).encode()), 200 * 1024, parte)
         self.assertEqual(t["resumen"]["kpis"]["por_dia"], s["resumen"]["por_dia"])
@@ -387,6 +387,29 @@ class MotorSkill(unittest.TestCase):
         for c in t["compromisos"]["items"]:
             self.assertRegex(c["clave"], r"^[A-Za-z0-9_.~:@+-]+$")
         self.assertEqual(t["movimientos"]["columnas"][:2], ["fecha", "valor"])
+        # cuentas: lo que tienes menos lo que debes; reportes: el flujo por mes sale del mismo análisis del motor
+        b = t["cuentas"]["balance"]
+        self.assertEqual(b["patrimonio"], b["activo"] - b["pasivo"])
+        self.assertEqual({f["mes"]: f["ingresos"] for f in t["reportes"]["flujo"]},
+                         {k: v["ingresos"] for k, v in list(s["analisis"]["por_mes"].items())[-12:]})
+        self.assertEqual(len(t["resumen"]["gasto_diario"]) >= 28, True)
+        # metas: el avance se mide con el saldo de la cuenta o el crédito que la mide
+        cfg = copy.deepcopy(CONFIG)
+        metas = [{"meta": "Viaje", "tipo": "ahorro", "monto": 6400000, "fecha": "2030-01-01", "medir": "Bancolombia ahorros *4455"},
+                 {"meta": "Algo", "tipo": "ahorro", "monto": 100, "medir": "Cuenta que no existe"}]
+        s2 = self.correr({"config": cfg, "correos": correos(), "metas": metas})
+        viaje, otra = s2["tablero"]["metas"]["items"]
+        saldo = next(c["saldo"] for c in s2["cuentas"] if c["nombre"] == "Bancolombia ahorros *4455")
+        self.assertAlmostEqual(viaje["progreso"], min(1, saldo / 6400000))
+        self.assertIn("No encuentro", otra["nota"])
+
+    def test_comercio_de_bancolombia(self):
+        """El comercio de "Compraste $85.000,00 en EXITO CALLE 80 con tu T.Deb …" es EXITO CALLE 80 (antes salía "ste $85.000,00 en …")."""
+        s = self.correr({"config": copy.deepcopy(CONFIG), "correos": correos()})
+        com = {r["Comercio"] for r in s["movimientos"]}
+        self.assertIn("EXITO CALLE 80", com)
+        self.assertIn("TRII SAS", com)
+        self.assertFalse([c for c in com if c.startswith(("ste ", "aste "))])
 
     def test_suscripciones_claras(self):
         def alerta(i, fecha, comercio, valor):

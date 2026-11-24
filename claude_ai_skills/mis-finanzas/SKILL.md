@@ -40,6 +40,7 @@ Cuatro grupos, en este orden de pestañas (lo que más mira va primero):
 | | **Créditos** | Nombre · Entidad · Saldo · Fecha del saldo · Tasa E.A. · Cuota · Día de pago · Se descuenta de nómina · Cómo aparece la cuota en el banco | Igual |
 | | **Fijos** | Solo pagos y cobros del mes: Nombre · Día · Monto · Tipo (pago o cobro) · Cómo aparece en el banco. El sueldo, lo apartado y el techo van en Perfil, no aquí | Igual |
 | | **Reglas** | Si aparece · Tipo · Categoría · Subcategoría | Igual |
+| | **Metas** | Meta · Tipo (ahorro · deuda · otro) · Monto · Fecha · Se mide con (nombre exacto de una cuenta o un crédito) · Saldo inicial (solo deudas) · Estado (solo otro) | El usuario (y tú cuando te lo cuenta) |
 | | **Notas** | Fecha · Qué descubrí · De dónde (correo, conversación, motor) · Estado (por confirmar, confirmado, descartado) · ID | Tú y el usuario |
 | Memoria del asesor | **Avisos** (la última) | Tipo (inicio · alerta · ingreso · correo) · ID · Primera · Última · Veces · Título · Cuenta · Valor · Fecha | Solo tú, con lo que devuelve el motor; nadie la edita a mano |
 
@@ -125,6 +126,7 @@ Antes de configurar, lee [version-instalada.md](version-instalada.md): cómo pro
     "marcas_compromisos": {"ID de Compromisos": {"estado": "pagado" | "saltado", "nota": "…"}},   ← filas con algo en Tu marca
     "avisos_memoria": [filas de Avisos: {"tipo", "id", "primera", "ultima", "veces", "titulo", "cuenta", "valor", "fecha"}],
     "sheet_url": "enlace del Sheet (el tablero lo muestra)",
+    "metas": [{"meta", "tipo", "monto", "fecha", "medir", "inicial", "estado"}],   ← de Metas
     "objetivo": "saber" | "gastar_menos" | "deudas" | "ahorrar",   ← de Perfil
     "ofertas": [{"credito", "entidad", "tasa_ea", "costos", "condiciones", "fuente", "fecha"}],   ← solo al buscar mejores tasas
     "tasa_usura": 28.59,
@@ -157,7 +159,7 @@ Antes de configurar, lee [version-instalada.md](version-instalada.md): cómo pro
 **Si corres desde una tarea programada (nadie te está leyendo):** no hagas preguntas. Los movimientos dudosos quedan con su nota "❓" y se los preguntas la próxima vez que te hable (también salen en el informe).
 
 ## Tu tablero
-Una página en su cuenta de Claude (un artifact) con lo de cada día: cuánto puede gastar, qué pagos piden atención (con botones "Ya lo pagué" y "No aplica este mes"), en qué se va la plata, tarjetas, deudas, suscripciones y los movimientos de los últimos 60 días. Lee sus datos de su propio almacén, sin servidores de nadie.
+Una página en su cuenta de Claude (un artifact) con menú: **Inicio** (cuánto puede gastar, indicadores, avisos, gasto acumulado del mes contra el anterior), **Cuentas** (saldos, lo que tiene menos lo que debe, cada tarjeta con lo comprado desde el corte, créditos), **Movimientos** (60 días, con buscador y "por revisar"), **Flujo** (entró y salió por mes), **Reportes** (la semana, grupos de gasto, categorías, comercios, ingresos, suscripciones, gastos grandes), **Compromisos** (con botones "Ya lo pagué" y "No aplica este mes") y **Metas**. Lee sus datos de su propio almacén, sin servidores de nadie.
 
 **Crearlo** (paso 7, `/mis-finanzas:tablero` o "crea mi tablero"):
 1. Lee el archivo `tablero.html` de esta skill y publícalo tal cual como una página nueva en su cuenta, con el título "Mis finanzas" y la capacidad de base de datos (`capabilities: {"db": {}}`). No le cambies el código: la página no trae datos de nadie.
@@ -168,7 +170,7 @@ Una página en su cuenta de Claude (un artifact) con lo de cada día: cuánto pu
 **En cada actualización** (paso 9a de "Actualizar"):
 - **Antes de correr el motor**, lee la colección `marcas` del almacén del tablero. Cada documento es `{id, nombre, estado, fecha}`, donde estado es pagado, recibido o saltado. Súmalos a `marcas_compromisos` como `{id: {"estado": estado, "nota": "marcado en el tablero el <fecha>"}}`.
 - **Después**, escribe en "Tu marca" de Compromisos el estado de esas filas por ID y borra esos documentos de `marcas`: desde ahí manda el Sheet.
-- Reemplaza en la colección `tablero` los documentos `resumen`, `compromisos` y `movimientos` con lo que trae `tablero` (si tu herramienta pide la versión de un documento antes de reemplazarlo, léela primero). No los recalcules ni les cambies cifras.
+- Reemplaza en la colección `tablero` un documento por cada llave de `tablero` (hoy: resumen, cuentas, reportes, compromisos, movimientos y metas), con el mismo nombre y tal cual (si tu herramienta pide la versión de un documento antes de reemplazarlo, léela primero). No los recalcules ni les cambies cifras.
 - Si escribir en el almacén falla con un error de acceso o público, dile al usuario que quite el enlace público del tablero; el resto de la actualización sigue igual.
 
 ## Reclasificar todo
@@ -222,6 +224,7 @@ En la app de escritorio de Claude (Cowork) créalas tú si puedes; si no, guíal
 - Si se va a repetir, agrega una fila a **Reglas** con el texto tal como sale en la Descripción. El motor la aplica antes que las reglas generales. Plata que alguien le devuelve de un gasto compartido va como Gasto de esa categoría, así resta en vez de contar como ingreso ("CARLOS PEREZ" → Gasto / Vivienda / Roomie paga su parte).
 - Si es una cuenta suya que faltaba, agrégala a **Cuentas**: así esos movimientos quedan como Interno.
 - Si es un crédito o un pago fijo nuevo, agrégalo a **Créditos** o **Fijos** y sincroniza Calendar.
+- Si es una meta ("quiero ahorrar $3 M para el viaje de marzo", "quiero bajar la tarjeta a cero en junio"), agrégala a **Metas**: tipo ahorro con la cuenta o bolsillo donde la guarda; tipo deuda con el crédito o la tarjeta y su saldo de hoy como Saldo inicial; si no se puede medir con un saldo, tipo otro. Si no dice dónde guarda la plata, pregúntaselo en una encuesta con sus cuentas.
 - Anótalo en **Notas** como confirmado.
 - Para preguntar qué fue un movimiento, usa una encuesta: una pregunta por movimiento ("1-oct · $1.000.000 · transferencia a la llave 0040…"), máximo 4 por encuesta, los de mayor valor primero, con las 3 o 4 respuestas más probables (p. ej. Plata a mi otra cuenta · Pago a una persona · Arriendo o servicios) y "Otro" para escribir.
 
@@ -256,4 +259,4 @@ Si hay `cuentas_sin_saldo`, dile que esas no están sumadas y pídele el saldo. 
 - Las tasas que encuentres en internet son las publicadas, no una oferta en firme.
 
 ---
-Versión 0.5.0 · 24-nov-2026
+Versión 0.6.0 · 24-nov-2026
