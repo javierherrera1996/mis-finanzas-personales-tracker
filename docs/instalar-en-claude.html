@@ -154,6 +154,18 @@ details > div { padding-bottom: 14px; color: var(--muted); font-size: 15px; disp
 
 .asks { display: flex; flex-wrap: wrap; gap: 8px; }
 .chat { display: grid; gap: 8px; max-width: 720px; }
+.sub { color: var(--muted); max-width: 70ch; }
+.h3 { font-size: 1.1rem; margin-top: 8px; }
+.sims { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.sim { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.sim span { color: var(--muted); font-size: 14px; }
+.sim .copy code { white-space: normal; }
+.resumen { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; display: grid; gap: 8px; max-width: 760px; }
+.resumen .pq { border-top: 1px solid var(--line); padding-top: 8px; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
+.pasos { margin: 0; padding-left: 22px; display: grid; gap: 10px; }
+.stack-sm { display: grid; gap: 12px; }
+.tile.warn { border-color: var(--warn); }
 .chat .q { justify-self: end; background: var(--accent); color: var(--accent-ink); border-radius: 14px 14px 4px 14px; padding: 9px 14px; max-width: 85%; }
 .chat .a { justify-self: start; background: var(--surface); border: 1px solid var(--line); border-radius: 14px 14px 14px 4px; padding: 9px 14px; max-width: 85%; }
 .ask { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 14px; }
@@ -273,7 +285,7 @@ html { scroll-behavior: smooth; }
       <section class="step" id="paso-4" data-paso="4">
         <div class="step-head">
           <span class="step-n">4</span>
-          <h2>Instala el plugin Mis finanzas</h2>
+          <h2>Instala CHARLIE</h2>
           <span class="time">1 min</span>
         </div>
         <div class="tabs" role="tablist" aria-label="Dónde usas Claude">
@@ -284,7 +296,7 @@ html { scroll-behavior: smooth; }
 
         <div class="panel" role="tabpanel" id="panel-web" aria-labelledby="tab-web">
           <p class="path">Personalizar<span class="sep">→</span>Plugins<span class="sep">→</span>Agregar<span class="sep">→</span>Agregar marketplace</p>
-          <p>Pega esto y luego instala <b>Mis finanzas</b> de la lista:</p>
+          <p>Pega esto y luego instala <b>CHARLIE</b> de la lista:</p>
           <div class="copy"><code id="c-market">javierherrera1996/mis-finanzas-personales-tracker</code><button type="button" data-copy="c-market">Copiar</button></div>
           <div class="links"><a class="btn" href="https://claude.ai/customize/plugins" target="_blank" rel="noopener">Abrir Plugins en Claude ↗</a></div>
           <p class="muted">Funciona igual en claude.ai y en la app de escritorio.</p>
@@ -319,13 +331,13 @@ html { scroll-behavior: smooth; }
         <div class="copy"><code id="c-start">/charlie:empezar</code><button type="button" data-copy="c-start">Copiar</button></div>
         <p class="muted">También sirve escribir "configura mis finanzas". Para probarlo como alguien nuevo: <code>/charlie:empezar prueba</code>.</p>
         <div class="flow">
-          <div><b>1</b>Tocas 4 opciones: bancos, deudas, qué quieres lograr e historial.</div>
+          <div><b>1</b>Tocas 4 opciones: tus bancos, si tienes deudas, qué quieres lograr y si te llegan alertas.</div>
           <div><b>2</b>Lee tus últimas 2 semanas de alertas; el resto, hasta 2 meses, lo completa solo cada día.</div>
           <div><b>3</b>Te enseña lo que vio: gasto por categoría, suscripciones, sueldo.</div>
           <div><b>4</b>Confirmas con toques y le das los saldos de hoy. Si no los sabes, escribe «no sé».</div>
-          <div><b>5</b>Crea tu Sheet y te dice cuánto puedes gastar por día.</div>
+          <div><b>5</b>Te entrega tu resumen financiero con unas pocas preguntas numeradas.</div>
         </div>
-        <label class="done-toggle"><input type="checkbox" id="hecho-5" data-paso="5"> Ya tengo mi Sheet</label>
+        <label class="done-toggle"><input type="checkbox" id="hecho-5" data-paso="5"> Ya tengo mi resumen</label>
       </section>
 
       <section class="step" id="paso-6" data-paso="6">
@@ -350,7 +362,7 @@ html { scroll-behavior: smooth; }
 
   <section class="section" aria-labelledby="t-habla">
     <h2 id="t-habla">Habla con tus cuentas</h2>
-    <p class="muted" style="color:var(--muted)">Lo más importante de CHARLIE es la conversación. Ejemplos con cifras inventadas:</p>
+    <p class="sub">Esto es CHARLIE. El Sheet, el tablero y los correos son su memoria y sus avisos; lo que importa es que le preguntes lo que quieras a tu plata y simules antes de decidir. Ejemplos con cifras inventadas:</p>
     <div class="chat">
       <div class="q">¿Me alcanza para un viaje de $3 M en marzo?</div>
       <div class="a">Al ritmo de los últimos 3 meses te quedan ≈ $2.800.000 al mes: para marzo tendrías ≈ $14 M. Te alcanza, aunque es un estimado, no una promesa.</div>
@@ -361,27 +373,50 @@ html { scroll-behavior: smooth; }
       <div class="q">Eso de $1.000.000 del 15 de octubre fue a mi Nequi.</div>
       <div class="a">Listo: lo pasé a "entre mis cuentas" y no cuenta como gasto. Ya no lo vuelvo a preguntar.</div>
     </div>
-    <p class="muted" style="color:var(--muted)">Al terminar la configuración te entrega tu resumen financiero (lo que tienes, lo que debes, cada mes, en qué se va, deudas y suscripciones) con unas pocas preguntas numeradas para que tus cifras queden exactas.</p>
+    <h3 class="h3">Simulaciones: pregúntale "¿y si…?"</h3>
+    <p class="sub">Las cifras salen de un motor que corre con tus datos, no de suposiciones. Copia una y cámbiale los números:</p>
+    <div class="sims">
+      <div class="sim"><b>¿Me alcanza?</b><span>Antes del sueldo o para una fecha: cuánto te queda y por día.</span><div class="copy"><code id="s1">¿Me alcanza para gastar $400.000 este fin de semana?</code><button type="button" data-copy="s1">Copiar</button></div></div>
+      <div class="sim"><b>Ahorrar para algo</b><span>Cuánto apartar al mes y si te alcanza con lo que te queda; si no, dónde recortar.</span><div class="copy"><code id="s2">Quiero tener $5 M para la maestría en junio, ¿cuánto aparto al mes?</code><button type="button" data-copy="s2">Copiar</button></div></div>
+      <div class="sim"><b>Abonar a una deuda</b><span>Cuántas cuotas menos y cuántos intereses te ahorras.</span><div class="copy"><code id="s3">¿Y si abono $300.000 al mes a la tarjeta?</code><button type="button" data-copy="s3">Copiar</button></div></div>
+      <div class="sim"><b>Salir de deudas</b><span>Cuándo terminas, poniendo lo extra a la de mayor tasa.</span><div class="copy"><code id="s4">¿Cuándo salgo de deudas si pongo $400.000 extra al mes?</code><button type="button" data-copy="s4">Copiar</button></div></div>
+      <div class="sim"><b>Recortar</b><span>Cuánto ahorras al mes y al año gastando menos en una categoría.</span><div class="copy"><code id="s5">¿Cuánto ahorro si gasto 30 % menos en restaurantes?</code><button type="button" data-copy="s5">Copiar</button></div></div>
+      <div class="sim"><b>Cancelar una suscripción</b><span>Cuánto ahorras y antes de qué día cancelarla.</span><div class="copy"><code id="s6">¿Y si cancelo Netflix?</code><button type="button" data-copy="s6">Copiar</button></div></div>
+    </div>
+    <p class="muted" style="color:var(--muted)">Y lo de todos los días: ¿cuánto puedo gastar?, ¿en qué se me fue la plata?, ¿qué me toca pagar?, ¿qué suscripciones tengo?, ¿me conviene comprar cartera? Cuando le explicas algo ("eso fue el arriendo"), lo corrige y lo aprende.</p>
+  </section>
+
+  <section class="section" aria-labelledby="t-primera">
+    <h2 id="t-primera">Tu primera vez: el resumen financiero</h2>
+    <p class="sub">La configuración termina con todo tu panorama en un solo mensaje, y unas pocas preguntas numeradas para que tus cifras queden exactas. Ejemplo con datos inventados:</p>
+    <div class="resumen">
+      <p><b>Hoy:</b> tienes $15.037.600 y debes $18.658.700. Puedes gastar <b>$187.000 por día</b> hasta el sueldo del 27-nov.</p>
+      <p><b>Cada mes</b> (promedio de agosto a octubre): entran $4.900.000, se van $2.092.133 en gastos; te quedan <b>$2.807.867</b>.</p>
+      <p><b>En qué se va:</b> Esencial $1.259.400 · Estilo de vida $441.067 · Sin destino identificado $391.667.</p>
+      <p><b>Deudas:</b> pagas ≈ $302.680 de intereses al mes. Si te sobra algo, abónalo a la libre inversión (la de mayor tasa).</p>
+      <p><b>Este mes:</b> 12 pagos listos, 4 para mirar; falta pagar $968.600. <b>Suscripciones:</b> 6 activas, $432.900 al mes.</p>
+      <p class="pq"><b>Preguntas</b> (responde con el número):<br>1. El 21-oct salieron $139.900 en FARMATODO. ¿Qué fue?<br>2. ¿Cuánto tienes hoy en Nequi?<br>3. ¿Ya pagaste el internet (26-oct)? No lo veo en tus alertas.</p>
+    </div>
+    <div class="grid3">
+      <div class="tile"><span class="when">Rápido</span><h3>Lee 2 semanas, completa 2 meses</h3><p>Arranca con tus últimas 2 semanas de alertas para no gastarte el cupo de Claude el primer día. Cada mañana suma una semana hacia atrás; en unos 8 días tiene tus 2 meses y ve lo que se repite.</p></div>
+      <div class="tile"><span class="when">Sin alertas</span><h3>Arranca igual</h3><p>Si tu banco no te manda alertas al correo, te pregunta lo básico (saldos, tarjetas, pagos fijos y sueldo), te explica cómo activarlas y desde ahí las lee solo. "No sé" vale.</p></div>
+      <div class="tile"><span class="when">Honesto</span><h3>Dice lo que no sabe</h3><p>Si le falta un saldo, la cifra sale con "≈" y te dice por qué. Lo que no puede comprobar en tus alertas te lo pregunta en vez de darlo por atrasado.</p></div>
+    </div>
   </section>
 
   <section class="section" aria-labelledby="t-solo">
     <h2 id="t-solo">Lo que hace solo</h2>
     <div class="grid3">
-      <div class="tile"><span class="when">Cada mañana</span><h3>Qué pagaste y qué falta</h3><p>Trae las alertas nuevas y revisa cada pago del mes: pagado, atrasado o por vencer, y cómo lo sabe. Con eso recalcula cuánto puedes gastar por día hasta el sueldo, y si algo está atrasado, vence pronto o te llegó plata, te escribe un correo corto.</p></div>
-      <div class="tile"><span class="when">Cada lunes</span><h3>Tu informe semanal</h3><p>Llega a tu correo: cuánto gastaste, en qué, lo que vence en las próximas dos semanas y las preguntas que tiene para ti.</p></div>
-      <div class="tile"><span class="when">El día 1</span><h3>El cierre del mes</h3><p>Cómo te fue, qué suscripción cambió de precio y si alguna deuda se puede pagar con una tasa más baja.</p></div>
+      <div class="tile"><span class="when">Cada mañana</span><h3>Qué pagaste y qué falta</h3><p>Trae las alertas nuevas y revisa cada pago del mes (fijos, cuotas, tarjetas, suscripciones): pagado, atrasado, por vencer o deducido por el monto, y cómo lo sabe. Recalcula cuánto puedes gastar por día.</p></div>
+      <div class="tile"><span class="when">Cuando algo pasa</span><h3>Un correo corto</h3><p>Si algo está atrasado o vence pronto, una suscripción subió o cobró doble, o te llegó plata. Lo urgente se repite cada 2 o 3 días hasta que se resuelva; lo demás, una vez. Máximo 2 correos al día.</p></div>
+      <div class="tile"><span class="when">Lunes y día 1</span><h3>Informe y cierre del mes</h3><p>Los lunes, cuánto gastaste, en qué y lo que viene. El día 1, cómo te fue, qué cambió de precio y si alguna deuda se puede pagar con una tasa más baja.</p></div>
     </div>
-    <p class="muted" style="color:var(--muted)">Y cuando quieras, pregúntale:</p>
-    <div class="asks">
-      <span class="ask">¿Cuánto puedo gastar?</span>
-      <span class="ask">¿En qué se me fue la plata?</span>
-      <span class="ask">¿Qué suscripciones tengo?</span>
-      <span class="ask">¿A cuál deuda abono?</span>
-      <span class="ask">¿Me conviene comprar cartera?</span>
-      <span class="ask">¿Cuándo salgo de deudas?</span>
-      <span class="ask">¿Y si cancelo Netflix?</span>
-      <span class="ask">Eso de $450.000 fue el arriendo</span>
-    </div>
+  </section>
+
+  <section class="section" aria-labelledby="t-tablero">
+    <h2 id="t-tablero">Tu tablero y tus metas</h2>
+    <p class="sub">Escribe <code>/charlie:tablero</code> y CHARLIE crea en tu cuenta de Claude una página para verlo desde el celular: <b>Inicio</b> (cuánto puedes gastar, indicadores, avisos, gasto del mes contra el anterior), <b>Cuentas</b> (saldos, lo que tienes menos lo que debes, tarjetas con lo comprado desde el corte, créditos), <b>Movimientos</b>, <b>Flujo</b> (entra y sale por mes), <b>Reportes</b>, <b>Compromisos</b> (con "Ya lo pagué") y <b>Metas</b>. Se llena con cada actualización y lo que marques pasa a tu Sheet.</p>
+    <p class="sub">Para una meta, díselo: <i>"quiero ahorrar $3 M para el viaje de marzo en mi bolsillo Viaje"</i> o <i>"quiero bajar la tarjeta a cero en junio"</i>. La mide sola con tus saldos y te dice cuánto apartar al mes.</p>
   </section>
 
   <section class="section" aria-labelledby="t-bancos">
@@ -390,8 +425,8 @@ html { scroll-behavior: smooth; }
       <table>
         <thead><tr><th>Banco o billetera</th><th>Cómo lo lee</th><th>Qué tener en cuenta</th></tr></thead>
         <tbody>
-          <tr><td>Bancolombia</td><td><span class="pill">Lector propio</span></td><td>Activa las notificaciones por correo en la app.</td></tr>
-          <tr><td>Davivienda</td><td><span class="pill">Lector propio</span></td><td>Las alertas llegan en conversaciones largas; el plugin las abre completas.</td></tr>
+          <tr><td>Bancolombia</td><td><span class="pill">Lector propio</span></td><td>Activa las notificaciones por correo en la app. Pronto, también sin correos, con Croma (abajo).</td></tr>
+          <tr><td>Davivienda</td><td><span class="pill">Lector propio</span></td><td>Las alertas llegan en conversaciones largas; CHARLIE las abre completas.</td></tr>
           <tr><td>Nu, Nequi, Daviplata, Lulo, RappiPay y otros</td><td><span class="pill soft">Los lee Claude</span></td><td>La tarjeta Nu no avisa cada compra: esas las ve con el extracto o cuando se las cuentas.</td></tr>
           <tr><td>Créditos, ICETEX, CDT e inversiones</td><td><span class="pill soft">Se los cuentas</span></td><td>Te pide saldo, tasa y cuota una vez; las cuotas las reconoce solo en tus cuentas.</td></tr>
         </tbody>
@@ -399,13 +434,33 @@ html { scroll-behavior: smooth; }
     </div>
   </section>
 
+  <section class="section" aria-labelledby="t-croma">
+    <div class="eyebrow"><span class="chip beta">Opcional · en preparación</span></div>
+    <h2 id="t-croma">Bancolombia sin depender de los correos: Croma</h2>
+    <p class="sub"><a href="https://docs.usecroma.com/mcp-server" target="_blank" rel="noopener">Croma</a> es un conector para Claude que consulta datos oficiales y, con tu autorización, tu cuenta de Bancolombia. Con él, CHARLIE leería tus saldos y movimientos directamente, sin esperar las alertas del correo. Todavía no está activo en CHARLIE: llega en una próxima versión. Así va a funcionar:</p>
+    <div class="grid2">
+      <ol class="pasos">
+        <li><b>Conecta Croma en Claude:</b> Personalizar → Conectores → agregar un conector personalizado con esta dirección, y entra con tu cuenta de Croma.
+          <div class="copy"><code id="c-croma">https://api.croma.run/mcp</code><button type="button" data-copy="c-croma">Copiar</button></div></li>
+        <li><b>Pídele a CHARLIE</b> "conecta mi Bancolombia". Te da un enlace a la consola de Croma, válido por 30 minutos.</li>
+        <li><b>En la consola de Croma</b> (no en el chat) pones tu usuario y clave de la Sucursal Virtual Personas y confirmas que la cuenta es tuya.</li>
+        <li><b>Listo:</b> en cada actualización CHARLIE trae tus saldos y movimientos de Bancolombia y los cruza con las alertas para no contar nada dos veces.</li>
+      </ol>
+      <div class="stack-sm">
+        <div class="tile"><h3>Lo que ganas</h3><p>Saldos reales (adiós al "no sé"), movimientos que el banco no avisa por correo, meses de historia en minutos y unas 10 veces menos trabajo para tu Claude que leer correos.</p></div>
+        <div class="tile warn"><h3>Lo que debes saber</h3><p>Croma guarda tu clave cifrada y entra al banco por ti cada día; puede ir contra las condiciones de Bancolombia o hacer que te pida verificación. Hay un límite de ingresos al día, necesitas tu propia cuenta de Croma (con su costo) y solo sirve para Bancolombia. Es tu decisión: CHARLIE nunca ve ni guarda tu clave.</p></div>
+      </div>
+    </div>
+  </section>
+
   <section class="section" aria-labelledby="t-datos">
     <h2 id="t-datos">Tus datos</h2>
     <div class="grid3">
-      <div class="tile"><h3>Qué lee</h3><p>Solo los correos de alertas de tus bancos en tu Gmail. No entra a la app del banco ni te pide claves.</p></div>
-      <div class="tile"><h3>Dónde queda</h3><p>En un Sheet "Mis finanzas" en tu Google Drive. El plugin no manda tus datos a ningún servidor propio.</p></div>
-      <div class="tile"><h3>Qué no es</h3><p>No es asesoría financiera ni de inversión: hace cuentas con tus datos y compara información pública, como las tasas de la Superfinanciera.</p></div>
+      <div class="tile"><h3>Qué lee</h3><p>Solo los correos de alertas de tus bancos en tu Gmail (y, si lo conectas, tu Bancolombia por Croma). CHARLIE nunca te pide claves.</p></div>
+      <div class="tile"><h3>Dónde queda</h3><p>En tu Sheet "Mis finanzas" en tu Google Drive y en tu tablero, en tu cuenta de Claude. No hay un servidor de CHARLIE con tus cifras.</p></div>
+      <div class="tile"><h3>La lista de usuarios</h3><p>Al final de la configuración te pregunta si te quieres anotar. Si dices que sí, llegan tu nombre, tu correo, tus bancos y lo que quieres lograr; nunca cifras. Te sales cuando quieras. <a href="https://github.com/javierherrera1996/mis-finanzas-personales-tracker/blob/main/docs/privacidad.md" target="_blank" rel="noopener">Aviso de privacidad</a>.</p></div>
     </div>
+    <p class="muted" style="color:var(--muted)">CHARLIE no es asesoría financiera ni de inversión: hace cuentas con tus datos y compara información pública, como las tasas de la Superfinanciera.</p>
   </section>
 
   <section class="section" aria-labelledby="t-faq">
@@ -444,8 +499,12 @@ html { scroll-behavior: smooth; }
         <div><p>Díselo en el chat: "eso fue el mercado". Lo corrige y crea una regla para la próxima vez. También puedes escribir en la columna "Categoría manual" del Sheet.</p></div>
       </details>
       <details>
+        <summary>Tenía la versión anterior ("Mis finanzas")</summary>
+        <div><p>Quita el plugin viejo en Personalizar → Plugins, vuelve a agregar el marketplace del paso 4 e instala CHARLIE. Tu Sheet "Mis finanzas" sigue igual y CHARLIE lo usa.</p></div>
+      </details>
+      <details>
         <summary>Quiero desinstalarlo</summary>
-        <div><p>Personalizar → Plugins → Mis finanzas → Quitar. Borra las tareas en Programadas. Tu Sheet queda en tu Drive hasta que lo borres.</p></div>
+        <div><p>Personalizar → Plugins → CHARLIE → Quitar. Borra las tareas en Programadas. Tu Sheet queda en tu Drive hasta que lo borres.</p></div>
       </details>
     </div>
   </section>

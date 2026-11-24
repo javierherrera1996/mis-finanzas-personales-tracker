@@ -32,6 +32,8 @@ Necesitas Claude **Pro o Max** y que tus bancos te manden las alertas de cada mo
 
 En Claude Code: `/plugin marketplace add javierherrera1996/mis-finanzas-personales-tracker` y `/plugin install charlie@charlie`.
 
+**Próximamente (opcional): Bancolombia sin correos con [Croma](https://docs.usecroma.com/mcp-server).** Conectas el conector de Croma en Claude, pones tu usuario y clave de la Sucursal Virtual en la consola de Croma (nunca en el chat) y CHARLIE lee tus saldos y movimientos directamente. Croma guarda tu clave cifrada y entra al banco por ti: es tu decisión.
+
 El plugin vive en [`plugins/charlie/`](plugins/charlie) (se arma con `python claude_ai_skills/empaquetar.py`). La versión completa para tu Mac, con extractos en PDF y años de historia, sigue abajo.
 
 ---
