@@ -396,7 +396,7 @@ def main(entrada, salida):
     # Compromisos: cada pago y cobro del mes con su estado y cómo se sabe (pestaña Compromisos; "Tu marca" vuelve en marcas_compromisos)
     import compromisos
     res["compromisos"] = compromisos.lista(todos, agente.pagos_config()["pagos"], tarjetas, res["analisis"].get("suscripciones") or [],
-                                           e.get("marcas_compromisos") or {}, hoy)
+                                           e.get("marcas_compromisos") or {}, hoy, historia_desde=e.get("historia_desde"))
     res["compromisos_resumen"] = compromisos.resumen(res["compromisos"], hoy)
     # Avisos: alertas de hoy y si sale correo (la memoria vive en la pestaña Avisos: entra en avisos_memoria)
     import avisos
@@ -415,7 +415,7 @@ def main(entrada, salida):
     res["informe"] = reportes.informe(est, res, deu, proximos, preguntar, hoy)
     # tablero (artifact del usuario): un documento por sección para su almacén (colección tablero)
     import tablero
-    res["tablero"] = tablero.armar(res, hoy, e.get("sheet_url"), e.get("metas"))
+    res["tablero"] = tablero.armar(res, hoy, e.get("sheet_url"), e.get("metas"), e.get("historia_desde"))
     os.chdir(os.path.dirname(os.path.abspath(salida)) or ".")
     json.dump(res, open(salida, "w"), ensure_ascii=False, indent=1, default=str)
     shutil.rmtree(trabajo, ignore_errors=True)

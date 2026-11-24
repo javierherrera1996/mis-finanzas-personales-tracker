@@ -178,14 +178,17 @@ def _cuentas(res, hoy, movs):
                         "nota": "Lo que tienes en cuentas e inversiones menos lo que debes. No incluye vivienda, carro, cesantías ni lo que no me has contado."}}
 
 
-def _reportes(res, hoy, movs):
+def _reportes(res, hoy, movs, historia_desde=None):
     an = res.get("analisis", {}) or {}
     mes = hoy.isoformat()[:7]
     previos = _meses_completos(hoy, 3)
     por_mes = an.get("por_mes") or {}
+    # un mes es parcial si está en curso o si la historia leída empieza después de su día 1 (configuración por etapas)
+    incompleto = lambda k: bool(historia_desde) and k + "-01" < historia_desde
     flujo = [{"mes": k, "ingresos": v.get("ingresos", 0), "gastos": v.get("gastos", 0), "cuotas_deuda": v.get("cuotas_deuda", 0),
-              "te_quedo": v.get("te_quedo", 0), "parcial": k == mes} for k, v in sorted(por_mes.items())][-12:]
-    meses_con_datos = [m for m in previos if m in por_mes]
+              "te_quedo": v.get("te_quedo", 0), "parcial": k == mes or incompleto(k), "incompleto": incompleto(k)}
+             for k, v in sorted(por_mes.items())][-12:]
+    meses_con_datos = [m for m in previos if m in por_mes and not incompleto(m)]
     ing_prom = sum(por_mes[m]["ingresos"] for m in meses_con_datos) / len(meses_con_datos) if meses_con_datos else 0
     umbral_unico = max(1_000_000, 0.25 * ing_prom)
     grupos, cats, com = {}, {}, {}
@@ -260,7 +263,7 @@ def _metas(metas, cuentas, hoy):
     return {"items": out}
 
 
-def armar(res, hoy=None, sheet_url=None, metas=None):
+def armar(res, hoy=None, sheet_url=None, metas=None, historia_desde=None):
     hoy = hoy or datetime.date.today()
     ahora = datetime.datetime.now().isoformat(timespec="minutes")
     movs = [m for m in res.get("movimientos") or [] if m.get("Fecha")]
@@ -279,5 +282,5 @@ def armar(res, hoy=None, sheet_url=None, metas=None):
                               str(m.get("Fuente", "")).replace(" (alerta)", ""), m.get("ID"),
                               1 if (m.get("ID") in revisar or "❓" in str(m.get("Tu nota") or "")) else 0] for m in recientes[:MAX_MOVS]]}
     return {"resumen": _resumen(res, hoy, sheet_url, movs, ahora), "cuentas": {"actualizado": ahora, **cuentas},
-            "reportes": {"actualizado": ahora, **_reportes(res, hoy, movs)}, "compromisos": compromisos,
+            "reportes": {"actualizado": ahora, "historia_desde": historia_desde, **_reportes(res, hoy, movs, historia_desde)}, "compromisos": compromisos,
             "movimientos": movimientos, "metas": {"actualizado": ahora, **_metas(metas, cuentas, hoy)}}

@@ -35,7 +35,7 @@ Cuatro grupos, en este orden de pestañas (lo que más mira va primero):
 | | **Suscripciones** | Servicio · Al mes · Al año · Cada cuánto · Día de cobro · Próximo cobro · Tarjeta o cuenta · Último cobro · Cambio de precio · Avisos (cobro doble, cobró después de cancelar) · **¿La usas?** (Sí · Cancelar · Cancelada AAAA-MM-DD) · Cómo cancelar | El motor; "¿La usas?" es del usuario |
 | Lo clasificado | **Movimientos** | Fecha · Valor · Descripción · Comercio · Fuente · Tipo · Categoría · Subcategoría · **Categoría manual · Tipo manual · Tu nota** · Contraparte · Correo · ID | El motor; las tres columnas en negrita son del usuario |
 | Lo que llega | **Correos** (registro crudo) | ID del correo · Fecha · Remitente · Asunto · Texto · Estado (movimiento, lo leyó Claude, no es movimiento, sin leer) · Movimientos (sus ID) · Lo que leyó Claude: Fecha · Valor · Descripción · Institución · Producto | Solo se agregan filas; nunca se borran |
-| Lo que el usuario le dice | **Perfil** | Dos columnas (Dato · Valor): día del sueldo (número o "penúltimo hábil") · cuánto le llega · plata apartada que no se gasta · techo de gasto del día a día al mes · cómo aparece su nombre en los bancos · cédula (opcional) · qué quiere lograr (saber, gastar menos, salir de deudas, ahorrar) | El usuario (y tú cuando te lo cuenta) |
+| Lo que el usuario le dice | **Perfil** | Dos columnas (Dato · Valor): Configuración (en curso · lista) · Historia desde · Historia meta · Tablero (enlace) · día del sueldo (número o "penúltimo hábil") · cuánto le llega · plata apartada que no se gasta · techo de gasto del día a día al mes · cómo aparece su nombre en los bancos · cédula (opcional) · qué quiere lograr (saber, gastar menos, salir de deudas, ahorrar) | El usuario (y tú cuando te lo cuenta) |
 | | | **Cuentas** | Institución · Tipo · Terminación o celular · Tarjeta débito · Dentro de (bolsillos) · Correo de las alertas · Saldo confirmado · Fecha del saldo · Día de corte, Día de pago y Tasa E.A. (tarjetas) · Saldo hoy | Igual |
 | | **Créditos** | Nombre · Entidad · Saldo · Fecha del saldo · Tasa E.A. · Cuota · Día de pago · Se descuenta de nómina · Cómo aparece la cuota en el banco | Igual |
 | | **Fijos** | Solo pagos y cobros del mes: Nombre · Día · Monto · Tipo (pago o cobro) · Cómo aparece en el banco. El sueldo, lo apartado y el techo van en Perfil, no aquí | Igual |
@@ -65,13 +65,19 @@ Arranca aquí cuando escriba `/mis-finanzas` solo, o con "start", "empezar" o "c
 | ¿Qué bancos y billeteras usas? | varias | Bancolombia · Davivienda · Nu · Nequi (en "Otro" escribe los demás: BBVA, Bogotá, Colpatria, Daviplata, Lulo, Rappi, Falabella…) |
 | ¿Tienes tarjetas de crédito, créditos o inversiones? | varias | Tarjeta de crédito · Crédito (libre inversión, vivienda, vehículo, compra de cartera) · ICETEX o libranza · Inversiones o CDTs (Trii, Tyba, Littio…) |
 | ¿Qué quieres lograr? | una | Saber en qué se me va la plata · Gastar menos · Salir de deudas · Ahorrar para algo |
-| ¿Cuánto historial leo? (mínimo 2 meses: así veo lo que se repite) | una | Los últimos 2 meses (recomendado) · Los últimos 3 meses (más lento, ve mejor los patrones) |
+| ¿Te llegan al correo las alertas de tus compras y transferencias? | una | Sí, de todos mis bancos · De algunos · No, o no sé |
 
 Si no elige nada en la segunda, es que no tiene. El objetivo va a `"objetivo"` en la entrada del motor: `saber`, `gastar_menos`, `deudas` o `ahorrar`.
 
-**2. Lee el historial** de los bancos que eligió, con las búsquedas de [bancos.md](bancos.md): 2 meses = desde el día 1 del mes anterior; 3 meses = desde el día 1 de hace dos meses. Trae **todas** las alertas ("Traer todos los correos"), semana por semana, mostrando el avance en una línea ("Davivienda: semana 3 de 9, 112 alertas"). **Al terminar cada semana, agrega esos correos a la pestaña Correos**: si la conversación se corta, la próxima vez se retoma desde ahí. Corre el motor dos veces:
+**2. Lee las últimas 2 semanas** de los bancos que eligió, con las búsquedas de [bancos.md](bancos.md) (si la primera semana ya trae más de 150 alertas, quédate con esa sola). El resto de la historia, hasta 2 meses, lo completa la actualización diaria una semana hacia atrás por vez ("Completar la historia", en Actualizar): así nadie se queda sin cupo el primer día. Escribe en Perfil "Historia desde" = el día más viejo que leíste y "Historia meta" = 60 días antes de hoy. Trae **todas** las alertas ("Traer todos los correos"), semana por semana, mostrando el avance en una línea ("Davivienda: semana 3 de 9, 112 alertas"). **Al terminar cada semana, agrega esos correos a la pestaña Correos**: si la conversación se corta, la próxima vez se retoma desde ahí. Corre el motor dos veces:
 - sin cuentas (`"config": {"sueldo": {}}`): `productos_vistos` dice qué cuentas y tarjetas aparecen;
 - con esos productos como cuentas provisionales (las alertas le llegan a él: son suyos) y su objetivo: así la plata entre sus cuentas ya no cuenta como gasto, y salen `analisis`, `sueldo_probable`, `cobertura` y `acciones`.
+
+**2b. Si no hay alertas en su correo** (contestó "No, o no sé", o no encontraste ninguna de un banco que eligió): no lo frenes; arma lo básico a mano y que de aquí en adelante se llene solo.
+- Dile en dos líneas cómo activarlas en la app de ese banco (Notificaciones o Alertas → por correo, cada compra y transferencia, sin monto mínimo; la nota de [bancos.md](bancos.md) si el banco tiene algo especial) y que desde que lleguen las vas leyendo solo.
+- Pregunta lo más importante, en este orden y en pocas encuestas: (1) sus cuentas y tarjetas, (2) cuáles pagos fijos tiene (encuesta de selección múltiple: Arriendo o administración · Servicios: luz, agua, gas, internet · Celular · Cuotas de créditos o tarjetas; "Otro" para escribir) y (3) en un solo mensaje de texto: el saldo de hoy de cada cuenta, cuánto debe en cada tarjeta y qué día paga, y el día y el monto de cada pago fijo y del sueldo. "No sé" vale.
+- Con eso ya hay Compromisos, cuánto puede gastar por día y tablero. Los pagos de antes quedan "sin confirmar" (no hay cómo verlos): que los marque en Tu marca o en el tablero.
+- Anota en Notas "Sin alertas de X desde AAAA-MM-DD". Si a los 7 días sigue sin llegar ninguna de ese banco, recuérdaselo una vez (en el informe o en la siguiente conversación). Mientras tanto, lo que él te cuente ("gasté $80.000 en el mercado") va a Correos con remitente "conversación".
 
 **3. Lo que vi** (el primer valor, sin que haya escrito nada), en un solo mensaje corto:
 - **Cómo están sus datos** (`lectura` y `cobertura`): cuántas alertas leíste de cada banco y en qué fechas, y lo que no ves ("Nu no manda una alerta por compra: sus compras no las veo"; "de Davivienda no llegó ninguna: actívalas en la app"). Si eligió un banco sin alertas, o aparecen alertas de uno que no mencionó, díselo aquí.
@@ -106,6 +112,7 @@ Antes de configurar, lee [version-instalada.md](version-instalada.md): cómo pro
 
 ## Actualizar ("actualiza mis finanzas")
 1. **Lee el Sheet**: Perfil, Cuentas, Créditos, Fijos, Reglas, las columnas ID y Tu marca de Compromisos, toda la pestaña Avisos, los ID de Notas, la columna ID de Correos, las filas de Correos de los últimos 3 días y las filas de Movimientos desde la fecha de saldo más antigua o desde el 1.° del mes anterior (la que sea primero). En la corrida del informe semanal, Movimientos de los últimos 4 meses: así el motor ve los cobros que se repiten.
+1b. **Completar la historia** (configuración por etapas): si Perfil dice "Historia desde" posterior a "Historia meta", trae también las alertas de la semana anterior a "Historia desde" (de los mismos remitentes, con "Traer todos los correos"), súmalas a los correos de esta corrida y, al terminar, mueve "Historia desde" 7 días atrás. Una semana por corrida, nunca más. Cuando llegue a la meta, la siguiente corrida hace "Reclasificar todo" y en el siguiente informe dile en una línea: "Ya tengo tus 2 meses: ahora veo lo que se repite (suscripciones y pagos fijos)". Pasa siempre `"historia_desde"` al motor.
 2. **Respuestas al informe**: busca en Gmail respuestas del usuario al último informe semanal (`subject:"informe semanal" newer_than:8d`). Si hay una que no has aplicado, aplícala como en "Cuando el usuario te explica algo" y anota en Resumen la fecha de la última respuesta aplicada.
 3. **Trae de Gmail los correos de alertas que no estén en Correos** (por ID), de los remitentes de "Correo de las alertas", desde el día antes del último correo guardado (la primera vez, desde la fecha de saldo más antigua). Sigue "Traer todos los correos" (abajo): es lo que más falla.
 4. **Arma `entrada.json`** con código:
@@ -126,6 +133,7 @@ Antes de configurar, lee [version-instalada.md](version-instalada.md): cómo pro
     "marcas_compromisos": {"ID de Compromisos": {"estado": "pagado" | "saltado", "nota": "…"}},   ← filas con algo en Tu marca
     "avisos_memoria": [filas de Avisos: {"tipo", "id", "primera", "ultima", "veces", "titulo", "cuenta", "valor", "fecha"}],
     "sheet_url": "enlace del Sheet (el tablero lo muestra)",
+    "historia_desde": "AAAA-MM-DD",   ← de Perfil: desde cuándo hay correos leídos (lo anterior no se da por atrasado)
     "metas": [{"meta", "tipo", "monto", "fecha", "medir", "inicial", "estado"}],   ← de Metas
     "objetivo": "saber" | "gastar_menos" | "deudas" | "ahorrar",   ← de Perfil
     "ofertas": [{"credito", "entidad", "tasa_ea", "costos", "condiciones", "fuente", "fecha"}],   ← solo al buscar mejores tasas
@@ -190,7 +198,7 @@ Un mes normal trae entre 50 y 250 alertas (una persona con mucho movimiento pued
 - **Gasta pocas llamadas**: busca con la vista más liviana (solo metadatos), abre un hilo solo si tiene mensajes nuevos y lee el texto completo solo de los mensajes que no están en Correos.
 - **Comprueba**: el motor devuelve `lectura` (correos por banco y por semana). Compárala con lo que viste en Gmail. Si una semana tiene muchas menos que las demás, o un banco con alertas diarias tiene días en blanco, vuelve a buscar esa semana.
 - **Nunca presentes un resumen parcial como si fuera completo.** Si no pudiste traer todo, dilo con números ("leí 35 alertas del 1 al 29 de octubre; faltan semanas, sigo") y termina antes de dar totales.
-- Si son muchísimas, avísale y ve por semanas mostrando el avance. Desde la configuración, con los saldos de hoy, cada actualización diaria solo trae las alertas del día (pocas).
+- Si son muchísimas, avísale y ve por semanas mostrando el avance. Después de la configuración, cada actualización diaria trae las alertas nuevas (unas 10 a 25 al día para alguien con mucho movimiento) y, mientras no llegue a los 2 meses, una semana más hacia atrás.
 
 ## Anotar lo que descubras
 Todo lo que aprendas de su plata queda en **Notas**, para que nadie tenga que volver a contarlo:
@@ -259,4 +267,4 @@ Si hay `cuentas_sin_saldo`, dile que esas no están sumadas y pídele el saldo. 
 - Las tasas que encuentres en internet son las publicadas, no una oferta en firme.
 
 ---
-Versión 0.6.0 · 24-nov-2026
+Versión 0.7.0 · 24-nov-2026

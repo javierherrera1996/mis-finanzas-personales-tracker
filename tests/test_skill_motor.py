@@ -411,6 +411,22 @@ class MotorSkill(unittest.TestCase):
         self.assertIn("TRII SAS", com)
         self.assertFalse([c for c in com if c.startswith(("ste ", "aste "))])
 
+    def test_historia_por_etapas(self):
+        """Configuración por etapas: con correos solo desde historia_desde, un pago cuya ventana empieza antes queda
+        sin_confirmar (no atrasado) y los meses incompletos no cuentan en los promedios."""
+        import datetime
+        hoy = datetime.date.today()
+        d_gym = hoy - datetime.timedelta(days=2)
+        fijos = [{"nombre": "Gimnasio", "dia": d_gym.day, "monto": 150000, "tipo": "pago", "buscar": "GYM EJEMPLO"}]
+        hd = (hoy - datetime.timedelta(days=5)).isoformat()
+        s = self.correr({"config": copy.deepcopy(CONFIG), "correos": correos(), "fijos": fijos, "historia_desde": hd})
+        gym = next(c for c in s["compromisos"] if c["nombre"] == "Gimnasio" and c["vence"] == d_gym.isoformat())
+        self.assertEqual(gym["estado"], "sin_confirmar")
+        rep = s["tablero"]["reportes"]
+        self.assertEqual(rep["historia_desde"], hd)
+        self.assertTrue(all(f["parcial"] for f in rep["flujo"] if f["mes"] + "-01" < hd))
+        self.assertFalse([m for m in rep["meses_base"] if m + "-01" < hd])
+
     def test_suscripciones_claras(self):
         def alerta(i, fecha, comercio, valor):
             return {"id": f"s{i}", "fecha": fecha + "T12:00:00", "de": BANCOLOMBIA, "asunto": "Alertas y Notificaciones",

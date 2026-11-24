@@ -7,9 +7,9 @@
   "plugins": [
     {
       "name": "mis-finanzas",
-      "displayName": "Mis finanzas",
+      "displayName": "CHARLIE · Mis finanzas",
       "source": "./plugins/mis-finanzas",
-      "version": "0.6.0",
+      "version": "0.7.0",
       "description": "Tus finanzas personales en Colombia a partir de las alertas de tus bancos en Gmail: cuánto puedes gastar por día hasta el sueldo, en qué se te va la plata, suscripciones, deudas por tasa y mejores ofertas, todo en un Google Sheet tuyo.",
       "category": "productivity",
       "homepage": "https://github.com/javierherrera1996/mis-finanzas-personales-tracker",

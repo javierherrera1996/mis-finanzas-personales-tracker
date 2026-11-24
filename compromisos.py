@@ -88,7 +88,7 @@ def _vence_tarjeta(t, hoy):
     return v
 
 
-def lista(movs, pagos, tarjetas=(), suscripciones=(), marcas=None, hoy=None, hasta=None):
+def lista(movs, pagos, tarjetas=(), suscripciones=(), marcas=None, hoy=None, hasta=None, historia_desde=None):
     """Compromisos del mes anterior, este y lo que vence en los próximos 10 días (o hasta `hasta`).
 
     movs: movimientos con las columnas del motor (Fecha, Valor, Descripción, Fuente, Categoría, ID…).
@@ -98,7 +98,9 @@ def lista(movs, pagos, tarjetas=(), suscripciones=(), marcas=None, hoy=None, has
     suscripciones: las de analisis.suscripciones (nombre, mensual, proximo_cobro, ultimo_cobro, ultimo_monto, activa).
     marcas: {id: {"estado": "pagado|saltado|…", "nota": "…"}}, lo que el usuario marcó a mano (gana siempre).
     Un movimiento cuenta para el periodo cuya ventana lo contiene: desde 10 días antes del vencimiento hasta 10 días
-    antes del siguiente (así un pago adelantado cuenta)."""
+    antes del siguiente (así un pago adelantado cuenta).
+    historia_desde: desde qué fecha hay correos leídos (la configuración empieza con 1–2 semanas y completa hacia atrás):
+      un periodo cuya ventana empieza antes no se puede afirmar como atrasado si no aparece el pago."""
     hoy = hoy or agente.HOY
     marcas = marcas or {}
     y, m = hoy.year, hoy.month
@@ -158,7 +160,7 @@ def lista(movs, pagos, tarjetas=(), suscripciones=(), marcas=None, hoy=None, has
                 est = "por_recibir" if entra else ("vence_pronto" if (f0 - hoy).days <= 3 else "pendiente")
             elif p.get("automatico"):
                 est = "automatico" if not p.get("buscar") else ("sin_confirmar" if (hoy - f0).days > 3 else "por_confirmar")
-            elif not p.get("buscar") or (not cand and (yy, mm) < (y, m)):
+            elif not p.get("buscar") or (not cand and (yy, mm) < (y, m)) or (historia_desde and _iso(ini) < historia_desde):
                 # No se puede saber: no dice cómo aparece en el banco, o es de un mes anterior y nunca se ha visto un pago
                 # de esto (lo acaba de registrar, o lo paga por un camino sin alertas). Se pregunta; no se alarma.
                 est = "sin_confirmar"
