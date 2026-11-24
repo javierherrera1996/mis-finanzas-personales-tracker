@@ -1,0 +1,511 @@
+<title>Instala Mis finanzas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: guía de una columna con un riel de avance fijo a la izquierda en pantallas anchas; en el celular, una sola columna. */
+:root {
+  --bg: #f5f7f4;
+  --surface: #ffffff;
+  --ink: #14201a;
+  --muted: #5a6b62;
+  --line: #dce3dd;
+  --accent: #0a7a54;
+  --accent-ink: #ffffff;
+  --accent-soft: #e2f1e9;
+  --warn: #9a5a12;
+  --warn-soft: #fbefdf;
+  --code: #edf2ee;
+  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1512; --surface: #151e1a; --ink: #e6eee9; --muted: #9aaba2; --line: #26332d;
+    --accent: #3cc48f; --accent-ink: #05200f; --accent-soft: #143027; --warn: #e6a65e; --warn-soft: #33261a; --code: #1c2722;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1512; --surface: #151e1a; --ink: #e6eee9; --muted: #9aaba2; --line: #26332d;
+  --accent: #3cc48f; --accent-ink: #05200f; --accent-soft: #143027; --warn: #e6a65e; --warn-soft: #33261a; --code: #1c2722;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 64px;
+}
+a { color: var(--accent); text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+p { margin: 0; }
+code, .mono { font-family: var(--font-mono); font-size: 0.88em; }
+.num { font-variant-numeric: tabular-nums; }
+
+.page { max-width: 1120px; margin: 0 auto; }
+
+/* Encabezado */
+.hero { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 40px; align-items: center; padding-block: 56px 40px; }
+.eyebrow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 18px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; padding: 3px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+.chip.beta { background: var(--warn-soft); color: var(--warn); }
+.hero h1 { font-size: clamp(2.4rem, 6vw, 3.6rem); font-weight: 700; letter-spacing: -0.02em; }
+.hero h1 span { color: var(--accent); }
+.lead { margin-top: 16px; font-size: 1.12rem; color: var(--muted); max-width: 34em; }
+.needs { margin-top: 24px; display: grid; gap: 8px; }
+.needs div { display: flex; gap: 10px; align-items: baseline; }
+.needs b { font-weight: 600; }
+.tick { flex: none; width: 18px; height: 18px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: inline-grid; place-items: center; font-size: 11px; transform: translateY(3px); }
+.cta { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 12px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; font: 600 15px var(--font-body); padding: 11px 18px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); text-decoration: none; cursor: pointer; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn:hover { filter: brightness(1.05); }
+
+/* Demo: alerta → fila del Sheet */
+.demo { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px; display: grid; gap: 14px; }
+.demo-label { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.mail { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font-size: 14px; }
+.mail .from { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.arrow { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; }
+.arrow::before, .arrow::after { content: ""; height: 1px; background: var(--line); flex: 1; }
+.sheet { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; font-size: 13px; }
+.sheet-row { display: grid; grid-template-columns: 62px minmax(0, 1fr) auto; gap: 10px; padding: 8px 12px; border-top: 1px solid var(--line); align-items: baseline; }
+.sheet-row:first-child { border-top: 0; background: var(--code); color: var(--muted); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
+.sheet-row .v { text-align: right; font-variant-numeric: tabular-nums; }
+.answer { background: var(--accent-soft); border-radius: 10px; padding: 12px 14px; font-size: 14px; }
+.answer b { color: var(--accent); font-variant-numeric: tabular-nums; }
+
+/* Cuerpo: riel + pasos */
+.body { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 48px; align-items: start; }
+.rail { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); display: grid; gap: 14px; }
+.meter { font-size: 14px; color: var(--muted); }
+.meter strong { color: var(--ink); font-variant-numeric: tabular-nums; }
+.bar { height: 6px; background: var(--line); border-radius: 999px; overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: inherit; transition: width .3s ease; }
+.rail ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.rail a { display: flex; gap: 10px; align-items: center; padding: 6px 8px; border-radius: 8px; color: var(--ink); text-decoration: none; font-size: 14px; }
+.rail a:hover { background: var(--surface); }
+.dot { flex: none; width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--line); display: grid; place-items: center; font: 500 11px var(--font-mono); color: var(--muted); }
+.rail li.done .dot { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
+.steps { display: grid; gap: 20px; min-width: 0; }
+.step { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 24px; display: grid; gap: 14px; min-width: 0; scroll-margin-top: 24px; }
+.step-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: start; }
+.step-n { width: 34px; height: 34px; border-radius: 10px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font: 700 16px var(--font-display); }
+.step.done .step-n { background: var(--accent); color: var(--accent-ink); }
+.step h2 { font-size: 1.35rem; font-weight: 700; padding-top: 3px; }
+.time { font-size: 13px; color: var(--muted); white-space: nowrap; padding-top: 6px; }
+.step p, .step li { color: var(--ink); }
+.step .muted { color: var(--muted); font-size: 14px; }
+.step ol, .step ul { margin: 0; padding-left: 22px; display: grid; gap: 6px; }
+.path { font-weight: 600; }
+.path .sep { color: var(--muted); font-weight: 400; padding-inline: 4px; }
+
+.copy { display: flex; align-items: stretch; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--code); min-width: 0; }
+.copy code { flex: 1; min-width: 0; padding: 10px 12px; overflow-x: auto; white-space: nowrap; font-size: 14px; user-select: all; }
+.copy button { flex: none; border: 0; border-left: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 500 13px var(--font-body); padding: 0 14px; cursor: pointer; min-width: 84px; }
+.copy button.ok { color: var(--accent); }
+.label { font-size: 13px; color: var(--muted); margin-bottom: -6px; }
+
+.links { display: flex; flex-wrap: wrap; gap: 10px; }
+.done-toggle { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); cursor: pointer; justify-self: start; padding: 6px 10px 6px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); }
+.done-toggle input { width: 18px; height: 18px; accent-color: var(--accent); margin: 0; }
+.step.done .done-toggle { color: var(--accent); border-color: var(--accent); }
+
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.tab { border: 0; background: none; font: 500 14px var(--font-body); color: var(--muted); padding: 8px 12px; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap; }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.panel { display: grid; gap: 12px; padding-top: 4px; }
+
+.flow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; counter-reset: f; }
+.flow div { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px; font-size: 13px; line-height: 1.4; }
+.flow b { display: block; font: 700 12px var(--font-mono); color: var(--accent); margin-bottom: 4px; }
+
+.note { background: var(--warn-soft); color: var(--ink); border-radius: 10px; padding: 12px 14px; font-size: 14px; }
+.note b { color: var(--warn); }
+
+/* Secciones de cierre */
+.section { margin-top: 56px; display: grid; gap: 18px; }
+.section h2 { font-size: 1.6rem; }
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 6px; align-content: start; }
+.tile h3 { font-size: 1.05rem; }
+.tile p { color: var(--muted); font-size: 14px; }
+.when { font: 500 12px var(--font-mono); color: var(--accent); letter-spacing: 0.02em; }
+
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 10px 14px; border-top: 1px solid var(--line); vertical-align: top; }
+thead th { border-top: 0; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 500; background: var(--code); }
+.pill { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); white-space: nowrap; }
+.pill.soft { background: var(--code); color: var(--muted); }
+
+.faq { display: grid; gap: 10px; }
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 0 16px; }
+summary { cursor: pointer; padding: 14px 0; font-weight: 600; list-style-position: outside; }
+details > div { padding-bottom: 14px; color: var(--muted); font-size: 15px; display: grid; gap: 8px; }
+
+.asks { display: flex; flex-wrap: wrap; gap: 8px; }
+.ask { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 14px; }
+
+footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; display: flex; flex-wrap: wrap; gap: 8px 20px; justify-content: space-between; }
+
+@media (max-width: 960px) {
+  .hero { grid-template-columns: minmax(0, 1fr); padding-block: 36px 28px; gap: 28px; }
+  .body { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .rail { position: static; }
+  .rail ol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid3 { grid-template-columns: minmax(0, 1fr); }
+  .flow { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 480px) {
+  .step { padding: 18px; }
+  .step-head { grid-template-columns: auto minmax(0, 1fr); }
+  .time { grid-column: 2; padding-top: 0; }
+  .rail ol { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) { .bar i { transition: none; } html { scroll-behavior: auto; } }
+html { scroll-behavior: smooth; }
+</style>
+
+<div class="page">
+  <header class="hero">
+    <div>
+      <div class="eyebrow">
+        <span class="chip">Hecho para Colombia</span>
+        <span class="chip beta">Beta · versión 0.2.0</span>
+      </div>
+      <h1>Mis finanzas, <span>dentro de tu Claude</span></h1>
+      <p class="lead">Claude lee las alertas que tus bancos te mandan a Gmail, arma un Google Sheet con cada movimiento y te dice cuánto puedes gastar por día hasta el sueldo. No instalas nada en tu computador.</p>
+      <div class="needs">
+        <div><span class="tick" aria-hidden="true">✓</span><span><b>Claude Pro o Max.</b> Las tareas automáticas necesitan un plan pago.</span></div>
+        <div><span class="tick" aria-hidden="true">✓</span><span><b>Alertas de tus bancos en Gmail.</b> Cada compra y transferencia te llega al correo.</span></div>
+        <div><span class="tick" aria-hidden="true">✓</span><span><b>Unos 15 minutos.</b> 5 de instalación y 10 de configuración con Claude.</span></div>
+      </div>
+      <div class="cta">
+        <a class="btn primary" href="#paso-1">Empezar la instalación</a>
+        <a class="btn" href="https://github.com/javierherrera1996/mis-finanzas-personales-tracker" target="_blank" rel="noopener">Ver el código ↗</a>
+      </div>
+    </div>
+
+    <figure class="demo" aria-label="Ejemplo de cómo una alerta se vuelve una fila del Sheet">
+      <div class="demo-label">Ejemplo</div>
+      <div class="mail">
+        <div class="from">Alertas Bancolombia · 20 nov, 10:15 a. m.</div>
+        Compraste <b class="num">$45.900</b> en ÉXITO CALLE 80 con tu T.Deb *1234.
+      </div>
+      <div class="arrow">el motor lo clasifica</div>
+      <div class="sheet" role="table">
+        <div class="sheet-row" role="row"><span>Fecha</span><span>Categoría</span><span class="v">Valor</span></div>
+        <div class="sheet-row" role="row"><span class="num">20 nov</span><span>Mercado y tiendas</span><span class="v">−$45.900</span></div>
+        <div class="sheet-row" role="row"><span class="num">19 nov</span><span>Transporte</span><span class="v">−$18.400</span></div>
+        <div class="sheet-row" role="row"><span class="num">19 nov</span><span>Entre mis cuentas</span><span class="v">$0</span></div>
+      </div>
+      <div class="answer">Te quedan <b>$1.496.000</b> libres después de la tarjeta: <b>$187.000 por día</b> hasta el sueldo (27 nov, penúltimo día hábil).</div>
+    </figure>
+  </header>
+
+  <div class="body">
+    <aside class="rail" aria-label="Tu avance">
+      <div class="meter"><strong id="cuenta">0 de 6</strong> pasos listos</div>
+      <div class="bar" aria-hidden="true"><i id="barra"></i></div>
+      <ol id="indice">
+        <li data-paso="1"><a href="#paso-1"><span class="dot">1</span>Alertas al correo</a></li>
+        <li data-paso="2"><a href="#paso-2"><span class="dot">2</span>Conectores</a></li>
+        <li data-paso="3"><a href="#paso-3"><span class="dot">3</span>Ejecución de código</a></li>
+        <li data-paso="4"><a href="#paso-4"><span class="dot">4</span>Instalar el plugin</a></li>
+        <li data-paso="5"><a href="#paso-5"><span class="dot">5</span>Configurar con Claude</a></li>
+        <li data-paso="6"><a href="#paso-6"><span class="dot">6</span>Dejarlo automático</a></li>
+      </ol>
+    </aside>
+
+    <main class="steps">
+      <section class="step" id="paso-1" data-paso="1">
+        <div class="step-head">
+          <span class="step-n">1</span>
+          <h2>Que tus bancos te avisen al correo</h2>
+          <span class="time">2 min por banco</span>
+        </div>
+        <p>Todo sale de las alertas que te llegan a Gmail. En la app de cada banco busca <b>Notificaciones</b> o <b>Alertas</b> y elige que te avisen por correo de cada compra, retiro y transferencia, sin monto mínimo.</p>
+        <p class="muted">Usa el mismo Gmail que vas a conectar en el paso 2. Si ya te llegan, sigue de largo.</p>
+        <label class="done-toggle"><input type="checkbox" id="hecho-1" data-paso="1"> Ya me llegan</label>
+      </section>
+
+      <section class="step" id="paso-2" data-paso="2">
+        <div class="step-head">
+          <span class="step-n">2</span>
+          <h2>Conecta Gmail y Google Drive</h2>
+          <span class="time">1 min</span>
+        </div>
+        <p class="path">Personalizar<span class="sep">→</span>Conectores<span class="sep">→</span>+</p>
+        <ul>
+          <li><b>Gmail</b>: para leer las alertas.</li>
+          <li><b>Google Drive</b>, y <b>Google Sheets</b> si te aparece aparte: para crear y actualizar tu Sheet "Mis finanzas".</li>
+          <li><b>Google Calendar</b> (opcional): para recordarte cada pago 3 días y 1 día antes.</li>
+        </ul>
+        <p class="muted">Entra con la cuenta de Google donde te llegan las alertas.</p>
+        <div class="links"><a class="btn" href="https://claude.ai/customize/connectors" target="_blank" rel="noopener">Abrir Conectores en Claude ↗</a></div>
+        <label class="done-toggle"><input type="checkbox" id="hecho-2" data-paso="2"> Ya los conecté</label>
+      </section>
+
+      <section class="step" id="paso-3" data-paso="3">
+        <div class="step-head">
+          <span class="step-n">3</span>
+          <h2>Activa la ejecución de código</h2>
+          <span class="time">30 s</span>
+        </div>
+        <p class="path">Configuración<span class="sep">→</span>Capacidades<span class="sep">→</span>Ejecución de código y creación de archivos</p>
+        <p>El plugin trae un motor que clasifica tus movimientos y hace las cuentas. Claude lo corre por dentro: nunca vas a ver código.</p>
+        <div class="links"><a class="btn" href="https://claude.ai/settings" target="_blank" rel="noopener">Abrir Configuración ↗</a></div>
+        <label class="done-toggle"><input type="checkbox" id="hecho-3" data-paso="3"> Ya está activa</label>
+      </section>
+
+      <section class="step" id="paso-4" data-paso="4">
+        <div class="step-head">
+          <span class="step-n">4</span>
+          <h2>Instala el plugin Mis finanzas</h2>
+          <span class="time">1 min</span>
+        </div>
+        <div class="tabs" role="tablist" aria-label="Dónde usas Claude">
+          <button class="tab" role="tab" id="tab-web" aria-controls="panel-web" aria-selected="true">Claude web y app</button>
+          <button class="tab" role="tab" id="tab-code" aria-controls="panel-code" aria-selected="false" tabindex="-1">Claude Code</button>
+          <button class="tab" role="tab" id="tab-zip" aria-controls="panel-zip" aria-selected="false" tabindex="-1">Subir el .zip</button>
+        </div>
+
+        <div class="panel" role="tabpanel" id="panel-web" aria-labelledby="tab-web">
+          <p class="path">Personalizar<span class="sep">→</span>Plugins<span class="sep">→</span>Agregar<span class="sep">→</span>Agregar marketplace</p>
+          <p>Pega esto y luego instala <b>Mis finanzas</b> de la lista:</p>
+          <div class="copy"><code id="c-market">javierherrera1996/mis-finanzas-personales-tracker</code><button type="button" data-copy="c-market">Copiar</button></div>
+          <div class="links"><a class="btn" href="https://claude.ai/customize/plugins" target="_blank" rel="noopener">Abrir Plugins en Claude ↗</a></div>
+          <p class="muted">Funciona igual en claude.ai y en la app de escritorio.</p>
+        </div>
+
+        <div class="panel" role="tabpanel" id="panel-code" aria-labelledby="tab-code" hidden>
+          <p>En una sesión de Claude Code, una línea a la vez:</p>
+          <div class="copy"><code id="c-cc1">/plugin marketplace add javierherrera1996/mis-finanzas-personales-tracker</code><button type="button" data-copy="c-cc1">Copiar</button></div>
+          <div class="copy"><code id="c-cc2">/plugin install mis-finanzas@mis-finanzas</code><button type="button" data-copy="c-cc2">Copiar</button></div>
+          <p class="muted">Claude Code necesita los conectores de Gmail y Drive de tu cuenta de claude.ai, o servidores MCP equivalentes.</p>
+        </div>
+
+        <div class="panel" role="tabpanel" id="panel-zip" aria-labelledby="tab-zip" hidden>
+          <p>Si tu cuenta no te deja agregar un marketplace:</p>
+          <ol>
+            <li>Descarga <b>mis-finanzas-plugin.zip</b> de la última versión en GitHub.</li>
+            <li>En Claude: <span class="path">Personalizar<span class="sep">→</span>Plugins<span class="sep">→</span>Agregar<span class="sep">→</span>Subir plugin</span>, y elige el .zip.</li>
+          </ol>
+          <div class="links"><a class="btn" href="https://github.com/javierherrera1996/mis-finanzas-personales-tracker/releases/latest" target="_blank" rel="noopener">Descargar de GitHub ↗</a></div>
+          <p class="muted">Así no se actualiza solo: cuando salga una versión nueva, vuelve a subirlo.</p>
+        </div>
+        <label class="done-toggle"><input type="checkbox" id="hecho-4" data-paso="4"> Ya lo instalé</label>
+      </section>
+
+      <section class="step" id="paso-5" data-paso="5">
+        <div class="step-head">
+          <span class="step-n">5</span>
+          <h2>Configúralo con Claude</h2>
+          <span class="time">10 min</span>
+        </div>
+        <p>Abre un chat nuevo y escribe:</p>
+        <div class="copy"><code id="c-start">/mis-finanzas:empezar</code><button type="button" data-copy="c-start">Copiar</button></div>
+        <p class="muted">También sirve escribir "configura mis finanzas". Para probarlo como alguien nuevo: <code>/mis-finanzas:empezar prueba</code>.</p>
+        <div class="flow">
+          <div><b>1</b>Tocas 4 opciones: bancos, deudas, qué quieres lograr e historial.</div>
+          <div><b>2</b>Lee 2 meses de alertas, semana por semana, y te muestra el avance.</div>
+          <div><b>3</b>Te enseña lo que vio: gasto por categoría, suscripciones, sueldo.</div>
+          <div><b>4</b>Confirmas con toques y le das los saldos de hoy.</div>
+          <div><b>5</b>Crea tu Sheet y te dice cuánto puedes gastar por día.</div>
+        </div>
+        <label class="done-toggle"><input type="checkbox" id="hecho-5" data-paso="5"> Ya tengo mi Sheet</label>
+      </section>
+
+      <section class="step" id="paso-6" data-paso="6">
+        <div class="step-head">
+          <span class="step-n">6</span>
+          <h2>Déjalo automático</h2>
+          <span class="time">2 min</span>
+        </div>
+        <p class="path">Programadas, en la barra lateral<span class="sep">→</span>Nueva tarea</p>
+        <p class="label">Todos los días, 7:00 a. m.</p>
+        <div class="copy"><code id="c-diaria">Actualiza mis finanzas</code><button type="button" data-copy="c-diaria">Copiar</button></div>
+        <p class="label">Los lunes, 7:30 a. m.</p>
+        <div class="copy"><code id="c-lunes">Mándame el informe semanal de mis finanzas</code><button type="button" data-copy="c-lunes">Copiar</button></div>
+        <p class="muted">Corren en la nube aunque tengas el computador apagado. Claude también te ofrece crearlas al final del paso 5.</p>
+        <label class="done-toggle"><input type="checkbox" id="hecho-6" data-paso="6"> Ya quedaron programadas</label>
+      </section>
+    </main>
+  </div>
+
+  <section class="section" aria-labelledby="t-solo">
+    <h2 id="t-solo">Lo que hace solo</h2>
+    <div class="grid3">
+      <div class="tile"><span class="when">Cada mañana</span><h3>Cuánto puedes gastar</h3><p>Trae las alertas nuevas, actualiza el Sheet y recalcula lo libre por día hasta el sueldo, descontando lo que falta pagar.</p></div>
+      <div class="tile"><span class="when">Cada lunes</span><h3>Tu informe semanal</h3><p>Llega a tu correo: cuánto gastaste, en qué, lo que vence en las próximas dos semanas y las preguntas que tiene para ti.</p></div>
+      <div class="tile"><span class="when">El día 1</span><h3>El cierre del mes</h3><p>Cómo te fue, qué suscripción cambió de precio y si alguna deuda se puede pagar con una tasa más baja.</p></div>
+    </div>
+    <p class="muted" style="color:var(--muted)">Después pregúntale lo que quieras:</p>
+    <div class="asks">
+      <span class="ask">¿Cuánto puedo gastar?</span>
+      <span class="ask">¿En qué se me fue la plata?</span>
+      <span class="ask">¿Qué suscripciones tengo?</span>
+      <span class="ask">¿A cuál deuda abono?</span>
+      <span class="ask">¿Me conviene comprar cartera?</span>
+      <span class="ask">Eso de $450.000 fue el arriendo</span>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="t-bancos">
+    <h2 id="t-bancos">Bancos</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Banco o billetera</th><th>Cómo lo lee</th><th>Qué tener en cuenta</th></tr></thead>
+        <tbody>
+          <tr><td>Bancolombia</td><td><span class="pill">Lector propio</span></td><td>Activa las notificaciones por correo en la app.</td></tr>
+          <tr><td>Davivienda</td><td><span class="pill">Lector propio</span></td><td>Las alertas llegan en conversaciones largas; el plugin las abre completas.</td></tr>
+          <tr><td>Nu, Nequi, Daviplata, Lulo, RappiPay y otros</td><td><span class="pill soft">Los lee Claude</span></td><td>La tarjeta Nu no avisa cada compra: esas las ve con el extracto o cuando se las cuentas.</td></tr>
+          <tr><td>Créditos, ICETEX, CDT e inversiones</td><td><span class="pill soft">Se los cuentas</span></td><td>Te pide saldo, tasa y cuota una vez; las cuotas las reconoce solo en tus cuentas.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="t-datos">
+    <h2 id="t-datos">Tus datos</h2>
+    <div class="grid3">
+      <div class="tile"><h3>Qué lee</h3><p>Solo los correos de alertas de tus bancos en tu Gmail. No entra a la app del banco ni te pide claves.</p></div>
+      <div class="tile"><h3>Dónde queda</h3><p>En un Sheet "Mis finanzas" en tu Google Drive. El plugin no manda tus datos a ningún servidor propio.</p></div>
+      <div class="tile"><h3>Qué no es</h3><p>No es asesoría financiera ni de inversión: hace cuentas con tus datos y compara información pública, como las tasas de la Superfinanciera.</p></div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="t-faq">
+    <h2 id="t-faq">Si algo falla</h2>
+    <div class="faq">
+      <details>
+        <summary>No me aparece "Agregar marketplace"</summary>
+        <div><p>Usa la pestaña "Subir el .zip" del paso 4. Si tu cuenta es de una empresa, puede que el administrador tenga apagados los plugins: ahí toca usar una cuenta personal.</p></div>
+      </details>
+      <details>
+        <summary>Claude dice que no encontró alertas</summary>
+        <div><p>Revisa que conectaste el mismo Gmail donde te llegan. Busca en Gmail el nombre de tu banco: si no hay correos de movimientos, activa las alertas (paso 1) y vuelve en un par de días.</p></div>
+      </details>
+      <details>
+        <summary>Leyó menos movimientos de los que tengo</summary>
+        <div><p>Dile "leíste pocas, vuelve a buscar la semana del 3 al 9". Siempre te muestra cuántas alertas leyó por banco y por semana, para que lo compares.</p></div>
+      </details>
+      <details>
+        <summary>No puede escribir en mi Sheet</summary>
+        <div><p>Conecta Google Sheets en Personalizar → Conectores, además de Drive. Sin eso puede leer, pero no actualizar las celdas.</p></div>
+      </details>
+      <details>
+        <summary>La tarea programada no corrió</summary>
+        <div><p>Revisa en Programadas que esté activa y que los conectores sigan conectados. Si un día falla, la siguiente corrida trae lo pendiente.</p></div>
+      </details>
+      <details>
+        <summary>Clasificó mal un movimiento</summary>
+        <div><p>Díselo en el chat: "eso fue el mercado". Lo corrige y crea una regla para la próxima vez. También puedes escribir en la columna "Categoría manual" del Sheet.</p></div>
+      </details>
+      <details>
+        <summary>Quiero desinstalarlo</summary>
+        <div><p>Personalizar → Plugins → Mis finanzas → Quitar. Borra las tareas en Programadas. Tu Sheet queda en tu Drive hasta que lo borres.</p></div>
+      </details>
+    </div>
+  </section>
+
+  <footer>
+    <span>Mis finanzas 0.2.0 · beta</span>
+    <span><a href="https://github.com/javierherrera1996/mis-finanzas-personales-tracker" target="_blank" rel="noopener">Código en GitHub</a> · <a href="https://github.com/javierherrera1996/mis-finanzas-personales-tracker/issues" target="_blank" rel="noopener">Reportar un problema</a></span>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var CLAVE = "mis-finanzas-guia-pasos";
+  var hechos = {};
+  try { hechos = JSON.parse(localStorage.getItem(CLAVE) || "{}") || {}; } catch (e) { hechos = {}; }
+
+  function guardar() { try { localStorage.setItem(CLAVE, JSON.stringify(hechos)); } catch (e) {} }
+
+  function pintar() {
+    var n = 0;
+    for (var i = 1; i <= 6; i++) {
+      var ok = !!hechos[i];
+      if (ok) n++;
+      var paso = document.querySelector('.step[data-paso="' + i + '"]');
+      var item = document.querySelector('#indice li[data-paso="' + i + '"]');
+      var caja = document.getElementById("hecho-" + i);
+      if (paso) paso.classList.toggle("done", ok);
+      if (item) {
+        item.classList.toggle("done", ok);
+        item.querySelector(".dot").textContent = ok ? "✓" : String(i);
+      }
+      if (caja) caja.checked = ok;
+    }
+    document.getElementById("cuenta").textContent = n + " de 6";
+    document.getElementById("barra").style.width = (n / 6 * 100) + "%";
+  }
+
+  document.querySelectorAll('.done-toggle input').forEach(function (caja) {
+    caja.addEventListener("change", function () {
+      hechos[caja.dataset.paso] = caja.checked;
+      guardar();
+      pintar();
+    });
+  });
+
+  // Copiar
+  document.querySelectorAll("button[data-copy]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var el = document.getElementById(b.dataset.copy);
+      var texto = el.textContent;
+      function listo(msg) {
+        b.textContent = msg;
+        b.classList.add("ok");
+        setTimeout(function () { b.textContent = "Copiar"; b.classList.remove("ok"); }, 1800);
+      }
+      function seleccionar() {
+        var r = document.createRange();
+        r.selectNodeContents(el);
+        var s = window.getSelection();
+        s.removeAllRanges();
+        s.addRange(r);
+        listo("Seleccionado");
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(texto).then(function () { listo("Copiado"); }, seleccionar);
+      } else {
+        seleccionar();
+      }
+    });
+  });
+
+  // Pestañas del paso 4
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+  function elegir(t) {
+    tabs.forEach(function (x) {
+      var on = x === t;
+      x.setAttribute("aria-selected", on ? "true" : "false");
+      x.tabIndex = on ? 0 : -1;
+      document.getElementById(x.getAttribute("aria-controls")).hidden = !on;
+    });
+  }
+  tabs.forEach(function (t, i) {
+    t.addEventListener("click", function () { elegir(t); });
+    t.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+        var j = (i + (e.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+        tabs[j].focus();
+        elegir(tabs[j]);
+      }
+    });
+  });
+
+  pintar();
+})();
+</script>
