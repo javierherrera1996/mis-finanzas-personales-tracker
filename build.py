@@ -43,7 +43,7 @@ REGLAS = [tuple(r) for r in C.get("reglas_personales", [])] + [
     (r"^LIBRANZA NOMINA", "Ingreso", "Salario", "Libranza descontada de nómina (estimado)"),
     (r"^CUOTA LIBRANZA NOMINA", "Deuda", "Créditos de consumo / libranza", "Libranza descontada de nómina"),
     (r"Rendimientos|Abono X Gravamen", "Ingreso", "Rendimientos", ""),
-    (r"Devolucion|Reversion|Reversada|Recibiras", "Ingreso", "Devoluciones", ""),
+    (r"Devolucion|Reversion|Reversada|Recibiras|Anulaci[oó]n", "Ingreso", "Devoluciones", ""),   # "Anulacion GOOGLE *ONE" (24-nov-2026)
     # --- gastos ---
     (r"ENEL|CODENSA|VANTI|GAS NATURAL|ACUEDUCTO", "Gasto", "Vivienda", "Servicios públicos"),
     (r"COMUNICACION CELULAR|COMCEL|CLARO|MOVISTAR|TIGO", "Gasto", "Vivienda", "Celular / internet"),

@@ -89,7 +89,7 @@ def generar(compromisos, tarjetas=(), suscripciones=(), proximo_sueldo=None, hoy
                 f"No veo el pago de {nom} de {per}" if viejo else f"{nom} de {per} sin pagar",
                 f"Vencía el {_d(c['vence'])} ({c.get('dias_atraso')} días)."
                 + (f" Lo normal es ≈ {_f(c['monto_esperado'])}." if c.get("monto_esperado") else ""),
-                (c.get("como") or "Págalo") + ". Si ya lo pagaste por otro lado o este mes no va, márcalo en Tu marca o díselo a Claude.")
+                "Págalo" + (f" ({c['como']})" if c.get("como") else "") + ". Si ya lo pagaste por otro lado o este mes no va, márcalo en Tu marca o díselo a Claude.")
         elif est == "vence_pronto":
             add(f"compromiso:{c['id']}:vence", "naranja", "compromisos", f"{nom}: vence el {_d(c['vence'])}",
                 f"≈ {_f(c['monto_esperado'])}." if c.get("monto_esperado") else "", c.get("como") or "")
@@ -102,6 +102,10 @@ def generar(compromisos, tarjetas=(), suscripciones=(), proximo_sueldo=None, hoy
             add(f"compromiso:{c['id']}:probable:{ev.get('id')}", "amarillo", "compromisos",
                 f"¿Los {_f(ev['valor'])} del {_d(ev['fecha'])} fueron {nom}?", c.get("deduccion", ""),
                 "Si no fue eso, díselo a Claude y lo corrijo; si sí, no tienes que hacer nada.")
+        elif est == "sin_confirmar" and not c.get("automatico"):
+            add(f"compromiso:{c['id']}:sin_confirmar", "amarillo", "compromisos", f"¿Ya pagaste {nom} de {per}?",
+                c.get("nota") or "No lo veo en tus alertas.",
+                "Márcalo en Tu marca (o en el tablero), o dile a Claude cómo lo pagas para reconocerlo solo la próxima vez.")
         elif est == "no_ha_llegado":
             add(f"compromiso:{c['id']}:no_llego", "naranja", "compromisos", f"No ha llegado: {nom}",
                 f"Lo esperaba el {_d(c['vence'])}" + (f" (≈ {_f(c['monto_esperado'])})." if c.get("monto_esperado") else "."),
@@ -151,6 +155,7 @@ def ingresos_recientes(movs, hoy=None, dias=5):
     desde = (hoy - datetime.timedelta(days=dias)).isoformat()
     return sorted((m for m in movs if m["Valor"] >= 1000 and desde <= m["Fecha"] <= hoy.isoformat()
                    and not str(m.get("Fuente", "")).startswith("Descuento de nómina")
+                   and " TC " not in f" {_cuenta(m.get('Fuente'))} "   # en una tarjeta de crédito no "llega" plata: es una anulación que baja la deuda
                    and ((m.get("Tipo") == "Ingreso" and m.get("Categoría") not in NO_AVISAR_INGRESO) or m.get("Tipo") == "Gasto")),
                   key=lambda m: m["Fecha"])
 

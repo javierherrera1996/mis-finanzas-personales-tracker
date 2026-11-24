@@ -93,6 +93,11 @@ class Revisar(unittest.TestCase):
         visto = {"cuenta": "Bancolombia Ahorros *4455", "valor": 1500000, "fecha": D(3)}
         self.assertFalse(avisos.revisar([], [mov(1500000, 1, cat="Vivienda", tipo="Gasto")], self.memoria(ingresos=[visto]), HOY)["enviar"])
 
+    def test_en_la_tarjeta_no_llega_plata(self):
+        """Una anulación en la tarjeta de crédito ("Anulacion GOOGLE *ONE", $4.747) baja la deuda: no es plata que llegó."""
+        r = avisos.revisar([], [mov(4747, 1, fuente="Davivienda TC *3822 (alerta)")], self.memoria(), HOY)
+        self.assertFalse(r["enviar"])
+
     def test_memoria_al_enviar(self):
         r = avisos.revisar([self.rojo, self.amarillo], [], self.memoria(), HOY)
         filas = r["memoria_si_envias"]

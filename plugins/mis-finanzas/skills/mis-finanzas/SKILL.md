@@ -96,7 +96,7 @@ Nada más por ahora: tasas, saldos de créditos, cédula y techo de gasto se pre
 
 Si `resumen.aproximado` es true, di la cifra con "≈" y por qué en una línea ("≈ $X por día: no sumé tu Nequi y lo de la tarjeta lo estimé con tus compras"). Al final cambia en Perfil "Configuración" a "lista (AAAA-MM-DD)".
 
-**7. Lo automático**, en una encuesta de selección múltiple: "¿Qué quieres que haga solo?" · Actualizar cada mañana · Mis pagos en Google Calendar con aviso 3 días y 1 día antes · Informe semanal por correo los lunes. Arma lo que elija ("Actualización automática" aquí; Calendar e informe en [calendario-e-informe.md](calendario-e-informe.md)). Si eligió Calendar y no está conectado, dile cómo conectarlo. Dile en una línea qué va a pasar: cada mañana, cuánto puede gastar; cada lunes, el informe; el día 1 de cada mes, el cierre del mes (cómo le fue, si hay tasas mejores para sus deudas y qué saldos confirmar).
+**7. Lo automático**, en una encuesta de selección múltiple: "¿Qué quieres que haga solo?" · Actualizar cada mañana · Mis pagos en Google Calendar con aviso 3 días y 1 día antes · Informe semanal por correo los lunes · Un tablero para verlo desde el celular ("Tu tablero", abajo). Arma lo que elija ("Actualización automática" aquí; Calendar e informe en [calendario-e-informe.md](calendario-e-informe.md)). Si eligió Calendar y no está conectado, dile cómo conectarlo. Dile en una línea qué va a pasar: cada mañana, cuánto puede gastar; cada lunes, el informe; el día 1 de cada mes, el cierre del mes (cómo le fue, si hay tasas mejores para sus deudas y qué saldos confirmar).
 
 **8. Después.** Lo que falta (`faltantes`: tasas, saldos de créditos, cédula, techo) se lo vas preguntando de a máximo 3 por conversación, empezando por lo que más cambia sus números. Nunca vuelvas a pedirle todo de una vez.
 
@@ -104,7 +104,7 @@ Si `resumen.aproximado` es true, di la cifra con "≈" y por qué en una línea 
 Antes de configurar, lee [version-instalada.md](version-instalada.md): cómo probar desde cero sin usar lo que ya sabes del usuario, y qué hacer si ya tiene la versión instalada en su computador (no duplicar su registro, sus recordatorios ni su informe).
 
 ## Actualizar ("actualiza mis finanzas")
-1. **Lee el Sheet**: Cuentas, Créditos, Fijos, Reglas, las columnas ID y Tu marca de Compromisos, toda la pestaña Avisos, los ID de Notas, la columna ID de Correos, las filas de Correos de los últimos 3 días y las filas de Movimientos desde la fecha de saldo más antigua o desde el 1.° del mes anterior (la que sea primero). En la corrida del informe semanal, Movimientos de los últimos 4 meses: así el motor ve los cobros que se repiten.
+1. **Lee el Sheet**: Perfil, Cuentas, Créditos, Fijos, Reglas, las columnas ID y Tu marca de Compromisos, toda la pestaña Avisos, los ID de Notas, la columna ID de Correos, las filas de Correos de los últimos 3 días y las filas de Movimientos desde la fecha de saldo más antigua o desde el 1.° del mes anterior (la que sea primero). En la corrida del informe semanal, Movimientos de los últimos 4 meses: así el motor ve los cobros que se repiten.
 2. **Respuestas al informe**: busca en Gmail respuestas del usuario al último informe semanal (`subject:"informe semanal" newer_than:8d`). Si hay una que no has aplicado, aplícala como en "Cuando el usuario te explica algo" y anota en Resumen la fecha de la última respuesta aplicada.
 3. **Trae de Gmail los correos de alertas que no estén en Correos** (por ID), de los remitentes de "Correo de las alertas", desde el día antes del último correo guardado (la primera vez, desde la fecha de saldo más antigua). Sigue "Traer todos los correos" (abajo): es lo que más falla.
 4. **Arma `entrada.json`** con código:
@@ -124,6 +124,7 @@ Antes de configurar, lee [version-instalada.md](version-instalada.md): cómo pro
     "notas_ids": [columna ID de Notas],
     "marcas_compromisos": {"ID de Compromisos": {"estado": "pagado" | "saltado", "nota": "…"}},   ← filas con algo en Tu marca
     "avisos_memoria": [filas de Avisos: {"tipo", "id", "primera", "ultima", "veces", "titulo", "cuenta", "valor", "fecha"}],
+    "sheet_url": "enlace del Sheet (el tablero lo muestra)",
     "objetivo": "saber" | "gastar_menos" | "deudas" | "ahorrar",   ← de Perfil
     "ofertas": [{"credito", "entidad", "tasa_ea", "costos", "condiciones", "fuente", "fecha"}],   ← solo al buscar mejores tasas
     "tasa_usura": 28.59,
@@ -144,6 +145,7 @@ Antes de configurar, lee [version-instalada.md](version-instalada.md): cómo pro
    - Notas: agrega los `descubrimientos` con `nuevo: true` (fecha de hoy, texto, De dónde: motor, Estado: "por confirmar" si trae pregunta o "anotado" si no, y su ID).
 8. Si un saldo confirmado tiene más de 35 días, pídele el de hoy (una sola pregunta para todas las cuentas). Si te da uno distinto al calculado, actualiza "Saldo confirmado" y "Fecha del saldo" y dile la diferencia (casi siempre es una alerta que no llegó al correo). Los saldos de los **créditos** no se mueven solos: pídele el de hoy cada 3 meses.
 9. Si cambiaron Fijos, Créditos, tarjetas o el sueldo, vuelve a sincronizar Calendar.
+9a. **Tablero** (si Perfil tiene "Tablero"): sigue "Tu tablero → En cada actualización".
 9b. **Avisos** (el asesor escribe solo cuando hay algo nuevo o urgente). El motor ya decidió en `avisos`; no lo recalcules:
    - `enviar` true: manda por Gmail, al correo del propio usuario, `avisos.asunto` con `avisos.html` (o `avisos.texto` si tu herramienta no manda HTML). **Solo si salió**, reescribe la pestaña Avisos con `avisos.memoria_si_envias`. Si no pudiste mandarlo, déjalo en borradores y no toques Avisos: la siguiente revisión lo intenta de nuevo.
    - `enviar` false con `memoria_si_no_envias` (la primera vez): escríbela en Avisos. Con `enviar` false y sin memoria nueva, no hagas nada (`motivo` dice por qué).
@@ -153,6 +155,21 @@ Antes de configurar, lee [version-instalada.md](version-instalada.md): cómo pro
 10. **Lo que falta** (`faltantes`, de prioridad 1 a 3) y las preguntas de los descubrimientos: en una conversación, al final de tu respuesta pregunta máximo 3, primero prioridad 1 (nunca dejes de responder por preguntar). Las que tienen opciones ("¿esa cuenta es tuya?", "¿es un pago fijo o una suscripción?") van en encuesta; las cifras, en texto. En una tarea programada van al informe.
 
 **Si corres desde una tarea programada (nadie te está leyendo):** no hagas preguntas. Los movimientos dudosos quedan con su nota "❓" y se los preguntas la próxima vez que te hable (también salen en el informe).
+
+## Tu tablero
+Una página en su cuenta de Claude (un artifact) con lo de cada día: cuánto puede gastar, qué pagos piden atención (con botones "Ya lo pagué" y "No aplica este mes"), en qué se va la plata, tarjetas, deudas, suscripciones y los movimientos de los últimos 60 días. Lee sus datos de su propio almacén, sin servidores de nadie.
+
+**Crearlo** (paso 7, `/mis-finanzas:tablero` o "crea mi tablero"):
+1. Lee el archivo `tablero.html` de esta skill y publícalo tal cual como una página nueva en su cuenta, con el título "Mis finanzas" y la capacidad de base de datos (`capabilities: {"db": {}}`). No le cambies el código: la página no trae datos de nadie.
+2. Escribe el enlace en Perfil ("Tablero" = enlace) y corre "Actualizar" para llenarlo.
+3. Dile en una línea: "Ábrelo desde el celular en la app de Claude; **no lo compartas con enlace público**: si lo haces, la actualización automática no puede escribir en él."
+4. Si tus herramientas no pueden publicar una página con base de datos, dile en una línea que su Claude todavía no lo permite, sin inventar alternativas: el Sheet y los correos le dan lo mismo.
+
+**En cada actualización** (paso 9a de "Actualizar"):
+- **Antes de correr el motor**, lee la colección `marcas` del almacén del tablero. Cada documento es `{id, nombre, estado, fecha}`, donde estado es pagado, recibido o saltado. Súmalos a `marcas_compromisos` como `{id: {"estado": estado, "nota": "marcado en el tablero el <fecha>"}}`.
+- **Después**, escribe en "Tu marca" de Compromisos el estado de esas filas por ID y borra esos documentos de `marcas`: desde ahí manda el Sheet.
+- Reemplaza en la colección `tablero` los documentos `resumen`, `compromisos` y `movimientos` con lo que trae `tablero` (si tu herramienta pide la versión de un documento antes de reemplazarlo, léela primero). No los recalcules ni les cambies cifras.
+- Si escribir en el almacén falla con un error de acceso o público, dile al usuario que quite el enlace público del tablero; el resto de la actualización sigue igual.
 
 ## Reclasificar todo
 Cuando cambie una Regla o una cuenta, cuando subas una versión nueva de esta skill, una vez al mes (el día 1) o cuando el usuario lo pida:
@@ -239,4 +256,4 @@ Si hay `cuentas_sin_saldo`, dile que esas no están sumadas y pídele el saldo. 
 - Las tasas que encuentres en internet son las publicadas, no una oferta en firme.
 
 ---
-Versión 0.4.0 · 24-nov-2026
+Versión 0.5.0 · 24-nov-2026

@@ -32,6 +32,11 @@ def _f(v):
     return "$" + f"{round(v):,}".replace(",", ".")
 
 
+def _dia(iso):
+    d = datetime.date.fromisoformat(str(iso)[:10])
+    return f"{d.day}-{['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'][d.month - 1]}"
+
+
 def _mes_sig(y, m):
     return (y + 1, 1) if m == 12 else (y, m + 1)
 
@@ -64,6 +69,7 @@ def _prueba(it):
         return "lo que debías + compras − pagos que vi"
     if it["tipo"] == "suscripcion": return "cobro en la tarjeta o cuenta" if it.get("evidencia") else "aún no aparece el cobro"
     if it["estado"] == "automatico": return "descuento de nómina (no se ve; se asume)"
+    if it["estado"] == "sin_confirmar": return "no lo veo en tus alertas (confírmalo)"
     if it.get("evidencia"): return "movimiento del banco" + (" (monto bajo lo esperado)" if it["estado"] == "parcial" else "")
     return "no aparece ningún pago"
 
@@ -141,7 +147,7 @@ def lista(movs, pagos, tarjetas=(), suscripciones=(), marcas=None, hoy=None, has
                                 "descripcion": str(mv.get("Descripción", ""))[:80]} for mv in hits]
             if probable:
                 est = "recibido_probable" if entra else "pagado_probable"
-                it["deduccion"] = (f"No veo a quién fue, pero el {probable['Fecha']} {'entraron' if entra else 'salieron'} "
+                it["deduccion"] = (f"No veo a quién fue, pero el {_dia(probable['Fecha'])} {'entraron' if entra else 'salieron'} "
                                    f"{_f(abs(probable['Valor']))}, casi igual a lo esperado ({_f(esperado)}). Lo doy por "
                                    f"{'recibido' if entra else 'pagado'} hasta que digas lo contrario.")
             elif pagado and (not esperado or pagado >= 0.85 * esperado):
@@ -152,6 +158,12 @@ def lista(movs, pagos, tarjetas=(), suscripciones=(), marcas=None, hoy=None, has
                 est = "por_recibir" if entra else ("vence_pronto" if (f0 - hoy).days <= 3 else "pendiente")
             elif p.get("automatico"):
                 est = "automatico" if not p.get("buscar") else ("sin_confirmar" if (hoy - f0).days > 3 else "por_confirmar")
+            elif not p.get("buscar") or (not cand and (yy, mm) < (y, m)):
+                # No se puede saber: no dice cómo aparece en el banco, o es de un mes anterior y nunca se ha visto un pago
+                # de esto (lo acaba de registrar, o lo paga por un camino sin alertas). Se pregunta; no se alarma.
+                est = "sin_confirmar"
+                it["nota"] = ("No sé cómo aparece este pago en tus alertas: dime cómo lo pagas." if not p.get("buscar")
+                              else "No veo ningún pago de esto en tus alertas: ¿lo pagas por otro lado?")
             elif entra:
                 est = "no_ha_llegado" if (hoy - f0).days >= 2 else "por_recibir"
             else:

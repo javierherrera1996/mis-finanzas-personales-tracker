@@ -333,10 +333,14 @@ class MotorSkill(unittest.TestCase):
                     "texto": f"Bancolombia: {texto}. ¿Dudas? llamanos"}
         cs = [alerta(1, d_arr, f"Pagaste $1.800.000,00 a INMOBILIARIA EJEMPLO por PSE desde tu cuenta *4455 el {d_arr:%d/%m/%Y} a las 10:00"),
               alerta(2, d_ing, f"Transferiste $672.000,00 desde tu cuenta *4455 a la cuenta *55501234567 el {d_ing:%d/%m/%Y} a las 09:00"),
-              alerta(3, d_tc, f"Compraste $95.000,00 en RESTAURANTE EJEMPLO con tu T.Cred *8899, el {d_tc:%d/%m/%Y} a las 21:00")]
+              alerta(3, d_tc, f"Compraste $95.000,00 en RESTAURANTE EJEMPLO con tu T.Cred *8899, el {d_tc:%d/%m/%Y} a las 21:00"),
+              # el gimnasio ya se había pagado antes: así el de este periodo, sin pago, es atrasado (y no "sin confirmar")
+              alerta(4, d_gym - datetime.timedelta(days=31), f"Pagaste $150.000,00 a GYM EJEMPLO por PSE desde tu cuenta *4455 el "
+                     f"{d_gym - datetime.timedelta(days=31):%d/%m/%Y} a las 10:00")]
         fijos = [{"nombre": "Arriendo", "dia": d_arr.day, "monto": 1800000, "tipo": "pago", "buscar": "INMOBILIARIA EJEMPLO"},
                  {"nombre": "Clases de inglés", "dia": d_ing.day, "monto": 672000, "tipo": "pago", "buscar": "EMETHOD"},
-                 {"nombre": "Gimnasio", "dia": d_gym.day, "monto": 150000, "tipo": "pago", "buscar": "GYM EJEMPLO"}]
+                 {"nombre": "Gimnasio", "dia": d_gym.day, "monto": 150000, "tipo": "pago", "buscar": "GYM EJEMPLO"},
+                 {"nombre": "Administración", "dia": d_arr.day, "monto": 380000, "tipo": "pago", "buscar": ""}]
         cfg = copy.deepcopy(CONFIG)
         next(c for c in cfg["cuentas"] if c["tipo"] == "tarjeta_credito").update(dia_pago=(hoy + datetime.timedelta(days=12)).day)
         s = self.correr({"config": cfg, "correos": cs, "fijos": fijos})
@@ -349,6 +353,10 @@ class MotorSkill(unittest.TestCase):
         gym = por[("Gimnasio", d_gym.isoformat())]
         self.assertEqual((gym["estado"], gym["grupo"], gym["dias_atraso"], gym["falta"]), ("atrasado", "atencion", 2, 150000))
         self.assertIn("Gimnasio", s["compromisos_resumen"]["atrasados"])
+        # sin saber cómo aparece en el banco no se puede afirmar que está atrasado: se pregunta
+        adm = por[("Administración", d_arr.isoformat())]
+        self.assertEqual((adm["estado"], adm["grupo"], adm["prueba"]), ("sin_confirmar", "atencion", "no lo veo en tus alertas (confírmalo)"))
+        self.assertTrue(any(a["titulo"].startswith("¿Ya pagaste Administración") and a["severidad"] == "amarillo" for a in s["avisos"]["alertas"]))
         tc = next(c for c in s["compromisos"] if c["tipo"] == "tarjeta")
         self.assertTrue(tc["prueba"].startswith("estimado"))
         self.assertEqual(tc["falta"], 95000)
@@ -364,6 +372,21 @@ class MotorSkill(unittest.TestCase):
         s3 = self.correr({"config": cfg, "correos": cs, "fijos": fijos, "avisos_memoria": av["memoria_si_no_envias"]})
         self.assertFalse(s3["avisos"]["enviar"])
         self.assertEqual(s3["avisos"]["motivo"], "nada nuevo ni urgente")
+
+    def test_datos_del_tablero(self):
+        """El tablero (artifact del usuario) recibe tres documentos que caben en el almacén (256 KiB cada uno), con claves
+        de documento válidas para las marcas y sin cifras inventadas."""
+        import re as _re
+        s = self.correr({"config": copy.deepcopy(CONFIG), "correos": correos(), "sheet_url": "https://docs.google.com/spreadsheets/d/x"})
+        t = s["tablero"]
+        self.assertEqual(set(t), {"resumen", "compromisos", "movimientos"})
+        for parte, doc in t.items():
+            self.assertLess(len(json.dumps(doc, ensure_ascii=False).encode()), 200 * 1024, parte)
+        self.assertEqual(t["resumen"]["kpis"]["por_dia"], s["resumen"]["por_dia"])
+        self.assertEqual(t["resumen"]["sheet_url"], "https://docs.google.com/spreadsheets/d/x")
+        for c in t["compromisos"]["items"]:
+            self.assertRegex(c["clave"], r"^[A-Za-z0-9_.~:@+-]+$")
+        self.assertEqual(t["movimientos"]["columnas"][:2], ["fecha", "valor"])
 
     def test_suscripciones_claras(self):
         def alerta(i, fecha, comercio, valor):
