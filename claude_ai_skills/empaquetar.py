@@ -30,6 +30,7 @@ def armar_plugin(destino, nombre="mis-finanzas-plugin"):
     os.makedirs(os.path.join(d, "skills"))
     armar(os.path.join(d, "skills"))
     shutil.copytree(os.path.join(AQUI, "plugin"), d, dirs_exist_ok=True)
+    shutil.copy(os.path.join(RAIZ, "LICENSE"), d)   # MIT: viaja con el plugin (marketplace y .zip)
     return d
 
 

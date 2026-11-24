@@ -318,3 +318,7 @@ Más detalle técnico en [docs/como-funciona.md](docs/como-funciona.md).
 <div align="center">
 <sub>Hecho con 🤖 Claude Code · Mejoras: <code>git pull</code> (tus datos no se tocan)</sub>
 </div>
+
+## Licencia
+
+[MIT](LICENSE): úsalo, cámbialo y compártelo libremente, manteniendo el aviso de copyright.

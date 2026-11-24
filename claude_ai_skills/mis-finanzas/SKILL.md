@@ -218,4 +218,4 @@ Si hay `cuentas_sin_saldo`, dile que esas no están sumadas y pídele el saldo.
 - Las tasas que encuentres en internet son las publicadas, no una oferta en firme.
 
 ---
-Versión 0.2.0 · 24-nov-2026
+Versión 0.2.1 · 24-nov-2026
