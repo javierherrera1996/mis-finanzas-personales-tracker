@@ -356,6 +356,14 @@ class MotorSkill(unittest.TestCase):
         s2 = self.correr({"config": cfg, "correos": cs, "fijos": fijos, "marcas_compromisos": {gym["id"]: {"estado": "pagado", "nota": "en efectivo"}}})
         g2 = next(c for c in s2["compromisos"] if c["id"] == gym["id"])
         self.assertEqual((g2["estado"], g2["prueba"], g2["falta"], g2["nota"]), ("pagado", "lo marcaste tú", 0, "en efectivo"))
+        # avisos: la primera revisión no manda nada (lo acaba de ver) y deja la memoria para la pestaña Avisos
+        av = s["avisos"]
+        self.assertFalse(av["enviar"])
+        self.assertTrue(any(x.get("id", "").startswith(f"compromiso:{gym['id']}") for x in av["memoria_si_no_envias"]))
+        self.assertTrue(any(a["titulo"].startswith("Gimnasio") and a["severidad"] == "rojo" for a in av["alertas"]))
+        s3 = self.correr({"config": cfg, "correos": cs, "fijos": fijos, "avisos_memoria": av["memoria_si_no_envias"]})
+        self.assertFalse(s3["avisos"]["enviar"])
+        self.assertEqual(s3["avisos"]["motivo"], "nada nuevo ni urgente")
 
     def test_suscripciones_claras(self):
         def alerta(i, fecha, comercio, valor):

@@ -13,7 +13,7 @@ El motor devuelve `calendario`: un evento mensual por pago fijo, cuota de crédi
 ## Informe semanal
 Si lo quiere, una tarea programada **los lunes a las 7:30 a. m.** con el texto "Mándame el informe semanal de mis finanzas". Cuando corra:
 1. Haz "Actualizar" completo (sin preguntas).
-2. Manda por Gmail, al correo del propio usuario, `informe.asunto` y `informe.texto` **tal cual los arma el motor** (no recalcules ni cambies cifras), con el enlace del Sheet al final.
+2. Manda por Gmail, al correo del propio usuario, `informe.asunto` y `informe.texto` **tal cual los arma el motor** (no recalcules ni cambies cifras), con el enlace del Sheet al final. Si `avisos.enviar` es true, pon `avisos.html` (o `avisos.texto`) arriba del informe en ese mismo correo y luego escribe `avisos.memoria_si_envias` en la pestaña Avisos: no mandes dos correos.
 3. Si el conector no deja enviar sin que el usuario confirme, déjalo como borrador y anota en Resumen "📩 Informe del lunes listo en borradores".
 
 El informe trae lo mismo que el de la versión instalada: cuánto puede gastar por día, qué tiene que pagar antes del sueldo, el gasto de la semana y desde el último sueldo, los próximos pagos, las deudas de mayor a menor tasa con dónde abonar y los movimientos "¿qué fue esto?". Además, lo que descubriste esa semana y lo que te falta saber. Si el usuario responde el correo, sus respuestas se aplican en la siguiente actualización (paso 2).

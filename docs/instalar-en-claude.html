@@ -180,7 +180,7 @@ html { scroll-behavior: smooth; }
     <div>
       <div class="eyebrow">
         <span class="chip">Hecho para Colombia</span>
-        <span class="chip beta">Beta · versión 0.3.0</span>
+        <span class="chip beta">Beta · versión 0.4.0</span>
       </div>
       <h1>Mis finanzas, <span>dentro de tu Claude</span></h1>
       <p class="lead">Claude lee las alertas que tus bancos te mandan a Gmail, arma un Google Sheet con cada movimiento y te dice cuánto puedes gastar por día hasta el sueldo. No instalas nada en tu computador.</p>
@@ -345,7 +345,7 @@ html { scroll-behavior: smooth; }
   <section class="section" aria-labelledby="t-solo">
     <h2 id="t-solo">Lo que hace solo</h2>
     <div class="grid3">
-      <div class="tile"><span class="when">Cada mañana</span><h3>Qué pagaste y qué falta</h3><p>Trae las alertas nuevas y revisa cada pago del mes: pagado, atrasado o por vencer, y cómo lo sabe. Con eso recalcula cuánto puedes gastar por día hasta el sueldo.</p></div>
+      <div class="tile"><span class="when">Cada mañana</span><h3>Qué pagaste y qué falta</h3><p>Trae las alertas nuevas y revisa cada pago del mes: pagado, atrasado o por vencer, y cómo lo sabe. Con eso recalcula cuánto puedes gastar por día hasta el sueldo, y si algo está atrasado, vence pronto o te llegó plata, te escribe un correo corto.</p></div>
       <div class="tile"><span class="when">Cada lunes</span><h3>Tu informe semanal</h3><p>Llega a tu correo: cuánto gastaste, en qué, lo que vence en las próximas dos semanas y las preguntas que tiene para ti.</p></div>
       <div class="tile"><span class="when">El día 1</span><h3>El cierre del mes</h3><p>Cómo te fue, qué suscripción cambió de precio y si alguna deuda se puede pagar con una tasa más baja.</p></div>
     </div>
@@ -408,6 +408,10 @@ html { scroll-behavior: smooth; }
         <div><p>Revisa en Programadas que esté activa y que los conectores sigan conectados. Si un día falla, la siguiente corrida trae lo pendiente.</p></div>
       </details>
       <details>
+        <summary>Me llegan muchos correos</summary>
+        <div><p>Máximo 2 al día. Lo urgente se repite cada 2 o 3 días hasta que se resuelva; lo demás, una sola vez. Si ya lo resolviste por otro lado, márcalo en la columna "Tu marca" de Compromisos o díselo a Claude y no te lo vuelve a recordar.</p></div>
+      </details>
+      <details>
         <summary>Clasificó mal un movimiento</summary>
         <div><p>Díselo en el chat: "eso fue el mercado". Lo corrige y crea una regla para la próxima vez. También puedes escribir en la columna "Categoría manual" del Sheet.</p></div>
       </details>
@@ -419,7 +423,7 @@ html { scroll-behavior: smooth; }
   </section>
 
   <footer>
-    <span>Mis finanzas 0.3.0 · beta · licencia MIT</span>
+    <span>Mis finanzas 0.4.0 · beta · licencia MIT</span>
     <span><a href="https://github.com/javierherrera1996/mis-finanzas-personales-tracker" target="_blank" rel="noopener">Código en GitHub</a> · <a href="https://github.com/javierherrera1996/mis-finanzas-personales-tracker/issues" target="_blank" rel="noopener">Reportar un problema</a></span>
   </footer>
 </div>

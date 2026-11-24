@@ -41,6 +41,7 @@ Cuatro grupos, en este orden de pestañas (lo que más mira va primero):
 | | **Fijos** | Solo pagos y cobros del mes: Nombre · Día · Monto · Tipo (pago o cobro) · Cómo aparece en el banco. El sueldo, lo apartado y el techo van en Perfil, no aquí | Igual |
 | | **Reglas** | Si aparece · Tipo · Categoría · Subcategoría | Igual |
 | | **Notas** | Fecha · Qué descubrí · De dónde (correo, conversación, motor) · Estado (por confirmar, confirmado, descartado) · ID | Tú y el usuario |
+| Memoria del asesor | **Avisos** (la última) | Tipo (inicio · alerta · ingreso · correo) · ID · Primera · Última · Veces · Título · Cuenta · Valor · Fecha | Solo tú, con lo que devuelve el motor; nadie la edita a mano |
 
 - **Correos es la fuente de todo**: cada correo de alertas que leas queda ahí una vez, con su texto. Movimientos se puede rehacer entero desde Correos ("Reclasificar todo"), así que nunca hay que volver a leer Gmail para corregir. Un movimiento sin correo (de una billetera sin alertas que te cuenta el usuario) va también en Correos, con Remitente "conversación" y lo leído en las columnas de Claude.
 - **Las correcciones del usuario van en Categoría manual, Tipo manual y Tu nota**, nunca encima de Categoría o Tipo: así sobreviven a cualquier reclasificación. Si el usuario escribió encima de Categoría, pásalo a Categoría manual.
@@ -90,7 +91,7 @@ Si no elige nada en la segunda, es que no tiene. El objetivo va a `"objetivo"` e
 
 Nada más por ahora: tasas, saldos de créditos, cédula y techo de gasto se preguntan después (paso 8).
 
-**6. Llena el Sheet y cierra.** Llena las pestañas que creaste en el paso 0b (Compromisos primero) con lo confirmado (sueldo, lo apartado, su nombre en los bancos y lo que quiere lograr → Perfil; pagos fijos → Fijos; roomie → Reglas; lo confirmado y lo que quedó por confirmar → Notas; los correos leídos → Correos). Corre "Actualizar" con todo y respóndele:
+**6. Llena el Sheet y cierra.** Llena las pestañas que creaste en el paso 0b (Compromisos primero y, en Avisos, `avisos.memoria_si_no_envias`: así el primer correo solo trae lo nuevo) con lo confirmado (sueldo, lo apartado, su nombre en los bancos y lo que quiere lograr → Perfil; pagos fijos → Fijos; roomie → Reglas; lo confirmado y lo que quedó por confirmar → Notas; los correos leídos → Correos). Corre "Actualizar" con todo y respóndele:
 > Puedes gastar **$X por día** hasta el [sueldo]. [La primera de `acciones`.] Aquí está tu Sheet: [enlace].
 
 Si `resumen.aproximado` es true, di la cifra con "≈" y por qué en una línea ("≈ $X por día: no sumé tu Nequi y lo de la tarjeta lo estimé con tus compras"). Al final cambia en Perfil "Configuración" a "lista (AAAA-MM-DD)".
@@ -103,7 +104,7 @@ Si `resumen.aproximado` es true, di la cifra con "≈" y por qué en una línea 
 Antes de configurar, lee [version-instalada.md](version-instalada.md): cómo probar desde cero sin usar lo que ya sabes del usuario, y qué hacer si ya tiene la versión instalada en su computador (no duplicar su registro, sus recordatorios ni su informe).
 
 ## Actualizar ("actualiza mis finanzas")
-1. **Lee el Sheet**: Cuentas, Créditos, Fijos, Reglas, las columnas ID y Tu marca de Compromisos, los ID de Notas, la columna ID de Correos, las filas de Correos de los últimos 3 días y las filas de Movimientos desde la fecha de saldo más antigua o desde el 1.° del mes anterior (la que sea primero). En la corrida del informe semanal, Movimientos de los últimos 4 meses: así el motor ve los cobros que se repiten.
+1. **Lee el Sheet**: Cuentas, Créditos, Fijos, Reglas, las columnas ID y Tu marca de Compromisos, toda la pestaña Avisos, los ID de Notas, la columna ID de Correos, las filas de Correos de los últimos 3 días y las filas de Movimientos desde la fecha de saldo más antigua o desde el 1.° del mes anterior (la que sea primero). En la corrida del informe semanal, Movimientos de los últimos 4 meses: así el motor ve los cobros que se repiten.
 2. **Respuestas al informe**: busca en Gmail respuestas del usuario al último informe semanal (`subject:"informe semanal" newer_than:8d`). Si hay una que no has aplicado, aplícala como en "Cuando el usuario te explica algo" y anota en Resumen la fecha de la última respuesta aplicada.
 3. **Trae de Gmail los correos de alertas que no estén en Correos** (por ID), de los remitentes de "Correo de las alertas", desde el día antes del último correo guardado (la primera vez, desde la fecha de saldo más antigua). Sigue "Traer todos los correos" (abajo): es lo que más falla.
 4. **Arma `entrada.json`** con código:
@@ -122,6 +123,7 @@ Antes de configurar, lee [version-instalada.md](version-instalada.md): cómo pro
     "movimientos_previos": [filas de Movimientos con todas sus columnas],
     "notas_ids": [columna ID de Notas],
     "marcas_compromisos": {"ID de Compromisos": {"estado": "pagado" | "saltado", "nota": "…"}},   ← filas con algo en Tu marca
+    "avisos_memoria": [filas de Avisos: {"tipo", "id", "primera", "ultima", "veces", "titulo", "cuenta", "valor", "fecha"}],
     "objetivo": "saber" | "gastar_menos" | "deudas" | "ahorrar",   ← de Perfil
     "ofertas": [{"credito", "entidad", "tasa_ea", "costos", "condiciones", "fuente", "fecha"}],   ← solo al buscar mejores tasas
     "tasa_usura": 28.59,
@@ -142,6 +144,12 @@ Antes de configurar, lee [version-instalada.md](version-instalada.md): cómo pro
    - Notas: agrega los `descubrimientos` con `nuevo: true` (fecha de hoy, texto, De dónde: motor, Estado: "por confirmar" si trae pregunta o "anotado" si no, y su ID).
 8. Si un saldo confirmado tiene más de 35 días, pídele el de hoy (una sola pregunta para todas las cuentas). Si te da uno distinto al calculado, actualiza "Saldo confirmado" y "Fecha del saldo" y dile la diferencia (casi siempre es una alerta que no llegó al correo). Los saldos de los **créditos** no se mueven solos: pídele el de hoy cada 3 meses.
 9. Si cambiaron Fijos, Créditos, tarjetas o el sueldo, vuelve a sincronizar Calendar.
+9b. **Avisos** (el asesor escribe solo cuando hay algo nuevo o urgente). El motor ya decidió en `avisos`; no lo recalcules:
+   - `enviar` true: manda por Gmail, al correo del propio usuario, `avisos.asunto` con `avisos.html` (o `avisos.texto` si tu herramienta no manda HTML). **Solo si salió**, reescribe la pestaña Avisos con `avisos.memoria_si_envias`. Si no pudiste mandarlo, déjalo en borradores y no toques Avisos: la siguiente revisión lo intenta de nuevo.
+   - `enviar` false con `memoria_si_no_envias` (la primera vez): escríbela en Avisos. Con `enviar` false y sin memoria nueva, no hagas nada (`motivo` dice por qué).
+   - En una conversación (alguien te está leyendo) no mandes el correo: lo rojo y lo naranja de `avisos.alertas` díselo al final de tu respuesta, en una o dos líneas.
+   - En la corrida del informe del lunes no mandes un correo aparte: pon `avisos.html` arriba del informe y escribe `memoria_si_envias` (cuenta como el correo del día).
+   - El ritmo lo pone el motor: rojo cada 2 días hasta que se resuelva, naranja cada 3, amarillo una vez, máximo 2 correos al día y la plata que llega se avisa una sola vez.
 10. **Lo que falta** (`faltantes`, de prioridad 1 a 3) y las preguntas de los descubrimientos: en una conversación, al final de tu respuesta pregunta máximo 3, primero prioridad 1 (nunca dejes de responder por preguntar). Las que tienen opciones ("¿esa cuenta es tuya?", "¿es un pago fijo o una suscripción?") van en encuesta; las cifras, en texto. En una tarea programada van al informe.
 
 **Si corres desde una tarea programada (nadie te está leyendo):** no hagas preguntas. Los movimientos dudosos quedan con su nota "❓" y se los preguntas la próxima vez que te hable (también salen en el informe).
@@ -183,7 +191,8 @@ La pestaña Suscripciones sale de `analisis.suscripciones` y `analisis.suscripci
 Para crear los eventos de Google Calendar (`calendario`) y mandar el informe del lunes (`informe`), sigue [calendario-e-informe.md](calendario-e-informe.md).
 
 ## Actualización automática
-- **Diaria, 7:00 a. m.**: "Actualiza mis finanzas".
+- **Diaria, 7:00 a. m.**: "Actualiza mis finanzas". Además de actualizar, manda el correo de avisos si hay algo nuevo o urgente.
+- **Opcional, 1:00 p. m.**: el mismo texto, para enterarse el mismo día de lo que pase en la mañana (el motor no deja pasar de 2 correos al día).
 - **Lunes, 7:30 a. m.** (si quiere el informe): "Mándame el informe semanal de mis finanzas".
 
 **El día 1 de cada mes**, la actualización de ese día hace además el cierre: "Reclasificar todo", "Mejorar tus deudas" y, para el mes que terminó, un resumen corto en Resumen y Notas (cuánto entró, cuánto se fue, qué categoría creció y qué suscripción cambió, con `analisis`). Si algún saldo confirmado tiene más de 35 días, déjalo como lo primero de "Me falta saber" para que se lo preguntes en la próxima conversación.
@@ -230,4 +239,4 @@ Si hay `cuentas_sin_saldo`, dile que esas no están sumadas y pídele el saldo. 
 - Las tasas que encuentres en internet son las publicadas, no una oferta en firme.
 
 ---
-Versión 0.3.0 · 24-nov-2026
+Versión 0.4.0 · 24-nov-2026

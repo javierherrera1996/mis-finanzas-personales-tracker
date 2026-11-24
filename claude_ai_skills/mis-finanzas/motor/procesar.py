@@ -398,6 +398,11 @@ def main(entrada, salida):
     res["compromisos"] = compromisos.lista(todos, agente.pagos_config()["pagos"], tarjetas, res["analisis"].get("suscripciones") or [],
                                            e.get("marcas_compromisos") or {}, hoy)
     res["compromisos_resumen"] = compromisos.resumen(res["compromisos"], hoy)
+    # Avisos: alertas de hoy y si sale correo (la memoria vive en la pestaña Avisos: entra en avisos_memoria)
+    import avisos
+    alertas_hoy = avisos.generar(res["compromisos"], tarjetas, res["analisis"].get("suscripciones") or [], res["resumen"]["proximo_sueldo"], hoy)
+    res["avisos"] = avisos.revisar(alertas_hoy, todos, e.get("avisos_memoria") or [], hoy, res["compromisos_resumen"],
+                                   res["resumen"]["por_dia"], res["resumen"]["proximo_sueldo"])
     ya_notas = set(e.get("notas_ids") or [])
     res["descubrimientos"] = [dict(x, nuevo=x["id"] not in ya_notas)
                               for x in reportes.descubrimientos(todos, nuevos, cfg, res["productos_vistos"], res["analisis"], hoy)]
