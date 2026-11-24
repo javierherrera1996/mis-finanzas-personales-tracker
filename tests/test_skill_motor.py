@@ -321,6 +321,42 @@ class MotorSkill(unittest.TestCase):
         self.assertIn(tc["nombre"], s["resumen"]["tarjetas_estimadas"])
         self.assertTrue(any(f["id"].startswith("deuda:") and f["prioridad"] == 1 for f in s["faltantes"]))
 
+    def test_compromisos_del_mes(self):
+        """Cada pago del mes con su estado y cómo se sabe: pagado por el texto, pagado_probable por el monto (±2 %),
+        atrasado si no aparece, la tarjeta con lo que se debe, y la marca del usuario gana."""
+        import datetime
+        hoy = datetime.date.today()
+        d_arr, d_ing, d_gym, d_tc = (hoy - datetime.timedelta(days=n) for n in (6, 3, 2, 5))
+
+        def alerta(i, fecha, texto):
+            return {"id": f"c{i}", "fecha": fecha.isoformat() + "T10:00:00", "de": BANCOLOMBIA, "asunto": "Alertas y Notificaciones",
+                    "texto": f"Bancolombia: {texto}. ¿Dudas? llamanos"}
+        cs = [alerta(1, d_arr, f"Pagaste $1.800.000,00 a INMOBILIARIA EJEMPLO por PSE desde tu cuenta *4455 el {d_arr:%d/%m/%Y} a las 10:00"),
+              alerta(2, d_ing, f"Transferiste $672.000,00 desde tu cuenta *4455 a la cuenta *55501234567 el {d_ing:%d/%m/%Y} a las 09:00"),
+              alerta(3, d_tc, f"Compraste $95.000,00 en RESTAURANTE EJEMPLO con tu T.Cred *8899, el {d_tc:%d/%m/%Y} a las 21:00")]
+        fijos = [{"nombre": "Arriendo", "dia": d_arr.day, "monto": 1800000, "tipo": "pago", "buscar": "INMOBILIARIA EJEMPLO"},
+                 {"nombre": "Clases de inglés", "dia": d_ing.day, "monto": 672000, "tipo": "pago", "buscar": "EMETHOD"},
+                 {"nombre": "Gimnasio", "dia": d_gym.day, "monto": 150000, "tipo": "pago", "buscar": "GYM EJEMPLO"}]
+        cfg = copy.deepcopy(CONFIG)
+        next(c for c in cfg["cuentas"] if c["tipo"] == "tarjeta_credito").update(dia_pago=(hoy + datetime.timedelta(days=12)).day)
+        s = self.correr({"config": cfg, "correos": cs, "fijos": fijos})
+        por = {(c["nombre"], c["vence"]): c for c in s["compromisos"]}
+        arr = por[("Arriendo", d_arr.isoformat())]
+        self.assertEqual((arr["estado"], arr["prueba"]), ("pagado", "movimiento del banco"))
+        ing = por[("Clases de inglés", d_ing.isoformat())]
+        self.assertEqual(ing["estado"], "pagado_probable")
+        self.assertIn("casi igual", ing["deduccion"])
+        gym = por[("Gimnasio", d_gym.isoformat())]
+        self.assertEqual((gym["estado"], gym["grupo"], gym["dias_atraso"], gym["falta"]), ("atrasado", "atencion", 2, 150000))
+        self.assertIn("Gimnasio", s["compromisos_resumen"]["atrasados"])
+        tc = next(c for c in s["compromisos"] if c["tipo"] == "tarjeta")
+        self.assertTrue(tc["prueba"].startswith("estimado"))
+        self.assertEqual(tc["falta"], 95000)
+        # la marca del usuario gana y la prueba lo dice
+        s2 = self.correr({"config": cfg, "correos": cs, "fijos": fijos, "marcas_compromisos": {gym["id"]: {"estado": "pagado", "nota": "en efectivo"}}})
+        g2 = next(c for c in s2["compromisos"] if c["id"] == gym["id"])
+        self.assertEqual((g2["estado"], g2["prueba"], g2["falta"], g2["nota"]), ("pagado", "lo marcaste tú", 0, "en efectivo"))
+
     def test_suscripciones_claras(self):
         def alerta(i, fecha, comercio, valor):
             return {"id": f"s{i}", "fecha": fecha + "T12:00:00", "de": BANCOLOMBIA, "asunto": "Alertas y Notificaciones",

@@ -393,6 +393,11 @@ def main(entrada, salida):
     res["calendario"] = reportes.eventos_calendario(agente.pagos_config()["pagos"], [p for p in agente.PRODUCTOS if p["tipo"] == "tarjeta_credito"],
                                                     hoy, agente)
     res["analisis"] = reportes.analisis(todos, agente, hoy, {x["nombre"]: x["desde"] for x in e.get("suscripciones_canceladas") or []})
+    # Compromisos: cada pago y cobro del mes con su estado y cómo se sabe (pestaña Compromisos; "Tu marca" vuelve en marcas_compromisos)
+    import compromisos
+    res["compromisos"] = compromisos.lista(todos, agente.pagos_config()["pagos"], tarjetas, res["analisis"].get("suscripciones") or [],
+                                           e.get("marcas_compromisos") or {}, hoy)
+    res["compromisos_resumen"] = compromisos.resumen(res["compromisos"], hoy)
     ya_notas = set(e.get("notas_ids") or [])
     res["descubrimientos"] = [dict(x, nuevo=x["id"] not in ya_notas)
                               for x in reportes.descubrimientos(todos, nuevos, cfg, res["productos_vistos"], res["analisis"], hoy)]

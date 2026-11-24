@@ -8,7 +8,7 @@ AQUI = os.path.dirname(os.path.abspath(__file__))
 RAIZ = os.path.dirname(AQUI)
 SKILL = os.path.join(AQUI, "mis-finanzas")
 # solo Python estándar: nada de Google, PDFs ni red (el entorno de Claude no instala paquetes)
-MODULOS = ["agente", "build", "config", "cuentas", "deudas", "parse_creditos", "parse_davi", "parse_extractos", "parse_otros",
+MODULOS = ["agente", "build", "compromisos", "config", "cuentas", "deudas", "parse_creditos", "parse_davi", "parse_extractos", "parse_otros",
            "tarjetas", "transferencias"]
 
 

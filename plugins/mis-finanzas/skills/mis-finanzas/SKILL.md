@@ -29,7 +29,8 @@ Cuatro grupos, en este orden de pestañas (lo que más mira va primero):
 
 | Grupo | Pestaña | Columnas | ¿Quién la cambia? |
 |---|---|---|---|
-| Lo que sale | **Resumen** | Lo que devuelve el motor en `resumen`, `tarjetas`, `deudas` y `proximos_pagos`, en lenguaje claro, más los movimientos "❓ por confirmar" | El motor, en cada actualización |
+| Lo que sale | **Compromisos** (la primera) | `compromisos`, primero los del grupo atencion, luego por_hacer y al final listo: Qué · Tipo · Vence · Esperado · Pagado · Falta · Estado (⚠️ atrasado · 🔜 vence pronto · ½ parcial · ⏳ pendiente · ✅ pagado · 🤔 pagado probable · 🔁 se cobra solo · ❔ sin datos) · Cómo se sabe (`prueba`) · Evidencia · **Tu marca** (pagado · saltado · no aplica) · ID | El motor; "Tu marca" es del usuario |
+| | **Resumen** | Lo que devuelve el motor en `resumen`, `compromisos_resumen`, `tarjetas` y `deudas`, en lenguaje claro, más los movimientos "❓ por confirmar" | El motor, en cada actualización |
 | | **Análisis** | Por mes (ingresos, gastos, cuotas de deuda, te quedó) · gasto por categoría y mes · comercios donde más gasta · ingresos por fuente · suscripciones y cobros que se repiten · % del gasto sin detalle | El motor |
 | | **Suscripciones** | Servicio · Al mes · Al año · Cada cuánto · Día de cobro · Próximo cobro · Tarjeta o cuenta · Último cobro · Cambio de precio · Avisos (cobro doble, cobró después de cancelar) · **¿La usas?** (Sí · Cancelar · Cancelada AAAA-MM-DD) · Cómo cancelar | El motor; "¿La usas?" es del usuario |
 | Lo clasificado | **Movimientos** | Fecha · Valor · Descripción · Comercio · Fuente · Tipo · Categoría · Subcategoría · **Categoría manual · Tipo manual · Tu nota** · Contraparte · Correo · ID | El motor; las tres columnas en negrita son del usuario |
@@ -89,7 +90,7 @@ Si no elige nada en la segunda, es que no tiene. El objetivo va a `"objetivo"` e
 
 Nada más por ahora: tasas, saldos de créditos, cédula y techo de gasto se preguntan después (paso 8).
 
-**6. Llena el Sheet y cierra.** Llena las pestañas que creaste en el paso 0b con lo confirmado (sueldo, lo apartado, su nombre en los bancos y lo que quiere lograr → Perfil; pagos fijos → Fijos; roomie → Reglas; lo confirmado y lo que quedó por confirmar → Notas; los correos leídos → Correos). Corre "Actualizar" con todo y respóndele:
+**6. Llena el Sheet y cierra.** Llena las pestañas que creaste en el paso 0b (Compromisos primero) con lo confirmado (sueldo, lo apartado, su nombre en los bancos y lo que quiere lograr → Perfil; pagos fijos → Fijos; roomie → Reglas; lo confirmado y lo que quedó por confirmar → Notas; los correos leídos → Correos). Corre "Actualizar" con todo y respóndele:
 > Puedes gastar **$X por día** hasta el [sueldo]. [La primera de `acciones`.] Aquí está tu Sheet: [enlace].
 
 Si `resumen.aproximado` es true, di la cifra con "≈" y por qué en una línea ("≈ $X por día: no sumé tu Nequi y lo de la tarjeta lo estimé con tus compras"). Al final cambia en Perfil "Configuración" a "lista (AAAA-MM-DD)".
@@ -102,7 +103,7 @@ Si `resumen.aproximado` es true, di la cifra con "≈" y por qué en una línea 
 Antes de configurar, lee [version-instalada.md](version-instalada.md): cómo probar desde cero sin usar lo que ya sabes del usuario, y qué hacer si ya tiene la versión instalada en su computador (no duplicar su registro, sus recordatorios ni su informe).
 
 ## Actualizar ("actualiza mis finanzas")
-1. **Lee el Sheet**: Cuentas, Créditos, Fijos, Reglas, los ID de Notas, la columna ID de Correos, las filas de Correos de los últimos 3 días y las filas de Movimientos desde la fecha de saldo más antigua o desde el 1.° del mes anterior (la que sea primero). En la corrida del informe semanal, Movimientos de los últimos 4 meses: así el motor ve los cobros que se repiten.
+1. **Lee el Sheet**: Cuentas, Créditos, Fijos, Reglas, las columnas ID y Tu marca de Compromisos, los ID de Notas, la columna ID de Correos, las filas de Correos de los últimos 3 días y las filas de Movimientos desde la fecha de saldo más antigua o desde el 1.° del mes anterior (la que sea primero). En la corrida del informe semanal, Movimientos de los últimos 4 meses: así el motor ve los cobros que se repiten.
 2. **Respuestas al informe**: busca en Gmail respuestas del usuario al último informe semanal (`subject:"informe semanal" newer_than:8d`). Si hay una que no has aplicado, aplícala como en "Cuando el usuario te explica algo" y anota en Resumen la fecha de la última respuesta aplicada.
 3. **Trae de Gmail los correos de alertas que no estén en Correos** (por ID), de los remitentes de "Correo de las alertas", desde el día antes del último correo guardado (la primera vez, desde la fecha de saldo más antigua). Sigue "Traer todos los correos" (abajo): es lo que más falla.
 4. **Arma `entrada.json`** con código:
@@ -120,6 +121,7 @@ Antes de configurar, lee [version-instalada.md](version-instalada.md): cómo pro
                 {"id", "fecha", "de", "asunto", "texto", "estado", "extraido": {"fecha", "valor", "descripcion", "institucion", "producto"} si lo leyó Claude}],
     "movimientos_previos": [filas de Movimientos con todas sus columnas],
     "notas_ids": [columna ID de Notas],
+    "marcas_compromisos": {"ID de Compromisos": {"estado": "pagado" | "saltado", "nota": "…"}},   ← filas con algo en Tu marca
     "objetivo": "saber" | "gastar_menos" | "deudas" | "ahorrar",   ← de Perfil
     "ofertas": [{"credito", "entidad", "tasa_ea", "costos", "condiciones", "fuente", "fecha"}],   ← solo al buscar mejores tasas
     "tasa_usura": 28.59,
@@ -133,7 +135,8 @@ Antes de configurar, lee [version-instalada.md](version-instalada.md): cómo pro
    - **Correos**: agrega las filas de `correos_registro` que no estaban (con lo que leíste en las columnas de Claude) y actualiza Estado y Movimientos de las que ya estaban.
    - **Movimientos**: agrega `nuevos` al final (todas las columnas) y reemplaza por ID las filas de `actualizar` (movimientos que cambiaron al volver a leerse, p. ej. un traslado que encontró su pareja). Los ID de `por_confirmar` van con Tu nota "❓ ¿Qué fue esto?".
    - `cuentas[].saldo` en "Saldo hoy" y `tarjetas[].deuda` en la fila de cada tarjeta. **No cambies "Saldo confirmado"**: ese solo lo cambia el usuario.
-   - Resumen con `resumen`, `tarjetas`, `deudas` y `proximos_pagos`.
+   - **Compromisos**: reescríbela completa con `compromisos` (atencion, por_hacer, listo), conservando por ID lo que el usuario puso en Tu marca.
+   - Resumen con `resumen`, `compromisos_resumen`, `tarjetas` y `deudas`.
    - Suscripciones con `analisis.suscripciones`, conservando por nombre lo que el usuario puso en "¿La usas?" y "Cómo cancelar".
    - Análisis con `analisis`: actualiza los meses que vienen ahí y deja los anteriores como están (así se arma la historia).
    - Notas: agrega los `descubrimientos` con `nuevo: true` (fecha de hoy, texto, De dónde: motor, Estado: "por confirmar" si trae pregunta o "anotado" si no, y su ID).
@@ -217,7 +220,7 @@ Si hay `cuentas_sin_saldo`, dile que esas no están sumadas y pídele el saldo. 
 
 **¿Cuánto debo? / ¿A cuál abono? / ¿Cuánto pago de intereses?** `deudas`: cada deuda de mayor a menor tasa con saldo, intereses al mes y cuándo termina, el total, y `consejo` (lo extra va al crédito marcado con `abonar_aqui`; las tarjetas se pagan completas; no abonar extra a la más barata).
 
-**¿Qué me toca pagar?** `proximos_pagos` (✅ pagado, ⏳ pendiente, 🔁 sale solo) y `falta_pagar_antes_del_sueldo`.
+**¿Qué me toca pagar? / ¿Ya pagué X?** `compromisos`: primero lo que pide atención (atrasado, vence pronto, parcial, sin datos), después lo pendiente, cada uno con cuánto falta y cómo lo sabes (`prueba`). Cierra con `compromisos_resumen.falta_pagar_este_mes`. Los `pagado_probable` pregúntalos en una encuesta ("El 21-nov salieron $672.000 sin nombre: ¿fue el inglés?" Sí · No): si dice que sí, ponle Categoría manual a ese movimiento y una Regla con su descripción; si dice que no, márcalo en Tu marca como pendiente. Un atrasado no se borra hasta que aparezca el pago o lo marque.
 
 ## Límites (dilos si preguntan o si afectan la respuesta)
 - Todavía no lee los extractos en PDF (suelen venir con clave). Los saldos de cuentas, tarjetas y créditos salen de lo que el usuario confirma más las alertas.
@@ -227,4 +230,4 @@ Si hay `cuentas_sin_saldo`, dile que esas no están sumadas y pídele el saldo. 
 - Las tasas que encuentres en internet son las publicadas, no una oferta en firme.
 
 ---
-Versión 0.2.2 · 24-nov-2026
+Versión 0.3.0 · 24-nov-2026
