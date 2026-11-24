@@ -305,6 +305,22 @@ class MotorSkill(unittest.TestCase):
         self.assertTrue(any(x["titulo"].startswith("✂️ Corte") for x in s["calendario"]))
         self.assertIn("PARA MEJORAR TUS DEUDAS", s["informe"]["texto"])
 
+    def test_no_se_cuanto_debo_en_la_tarjeta(self):
+        """Paso 5 de la configuración: "no sé" vale. Lo que debe en la tarjeta se estima con las compras que avisó y la
+        cifra por día queda marcada como aproximada; lo que falta se pide después."""
+        import datetime
+        hace = datetime.date.today() - datetime.timedelta(days=10)
+        texto = f"Compraste $120.000,00 en RESTAURANTE EJEMPLO con tu T.Cred *8899, el {hace:%d/%m/%Y} a las 21:00"
+        cs = [{"id": "tc1", "fecha": hace.isoformat() + "T21:00:00", "de": BANCOLOMBIA, "asunto": "Alertas y Notificaciones",
+               "texto": f"Bancolombia: {texto}. ¿Dudas? llamanos"}]
+        s = self.correr({"config": copy.deepcopy(CONFIG), "correos": cs})
+        tc = next(t for t in s["tarjetas"] if "8899" in t["nombre"])
+        self.assertTrue(tc["estimada"])
+        self.assertEqual(tc["deuda"], 120000)
+        self.assertTrue(s["resumen"]["aproximado"])
+        self.assertIn(tc["nombre"], s["resumen"]["tarjetas_estimadas"])
+        self.assertTrue(any(f["id"].startswith("deuda:") and f["prioridad"] == 1 for f in s["faltantes"]))
+
     def test_suscripciones_claras(self):
         def alerta(i, fecha, comercio, valor):
             return {"id": f"s{i}", "fecha": fecha + "T12:00:00", "de": BANCOLOMBIA, "asunto": "Alertas y Notificaciones",

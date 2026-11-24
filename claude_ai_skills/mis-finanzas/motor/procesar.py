@@ -312,6 +312,22 @@ def main(entrada, salida):
             compras = sum(r["Valor"] for r in post if cu.de_fuente(r["Fuente"], agente.PRODUCTOS) is p)
             pagos = sum(r["Valor"] for r in post if r.get("Contraparte") == p["id"])
             t.update(deuda=round(s["valor"] - compras + pagos), desde=s["fecha"])
+        else:
+            # No sabe cuánto debe ("no sé" en la configuración): estimado con las compras que avisó la tarjeta en el
+            # ciclo que ya cortó (lo que se paga en el próximo vencimiento) o, sin día de corte, en los últimos 30 días.
+            ini, fin = (hoy - datetime.timedelta(days=30)).isoformat(), hoy.isoformat()
+            if isinstance(p.get("dia_corte"), int):
+                dc = min(p["dia_corte"], 28)
+                ult = datetime.date(hoy.year, hoy.month, dc)
+                if ult >= hoy:
+                    ult = datetime.date(hoy.year - (hoy.month == 1), (hoy.month - 2) % 12 + 1, dc)
+                ant = datetime.date(ult.year - (ult.month == 1), (ult.month - 2) % 12 + 1, dc)
+                ini, fin = ant.isoformat(), ult.isoformat()
+            compras = -sum(r["Valor"] for r in todos if ini < r["Fecha"] <= fin and r["Valor"] < 0
+                           and cu.de_fuente(r["Fuente"], agente.PRODUCTOS) is p)
+            if compras > 0:
+                t.update(deuda=round(compras), estimada=True, estimada_con=f"compras que avisó la tarjeta del {ini} al {fin}")
+        if t["deuda"] is not None:
             if t["deuda"] > 0 and isinstance(p.get("dia_pago"), int):
                 d = p["dia_pago"]
                 vence = datetime.date(hoy.year, hoy.month, min(d, 28))
@@ -320,7 +336,8 @@ def main(entrada, salida):
                 t["vence"] = vence.isoformat()
                 if vence < pp:
                     por_pagar_tc += t["deuda"]
-                    est["por_pagar_antes_del_sueldo"].append({"nombre": p["nombre"], "fecha": vence, "monto": t["deuda"]})
+                    est["por_pagar_antes_del_sueldo"].append({"nombre": p["nombre"] + (" (estimado)" if t.get("estimada") else ""),
+                                                              "fecha": vence, "monto": t["deuda"]})
         if isinstance(p.get("dia_corte"), int):   # lo que se compre después del corte se paga en el extracto siguiente
             dc = p["dia_corte"]
             corte = datetime.date(hoy.year, hoy.month, min(dc, 28))
@@ -351,6 +368,10 @@ def main(entrada, salida):
             "hoy": hoy.isoformat(), "alertas_hasta": max([r["Fecha"] for r in todos] or [""]),
             "plata_en_cuentas": round(c["total"]), "apartado": round(c.get("reservado_inversion", 0)), "disponible": round(c["disponible"]),
             "inversiones": round(c["inversiones"]), "cuentas_sin_saldo": c["sin_saldo"],
+            # la cifra por día es aproximada si faltan saldos o la deuda de una tarjeta salió de las alertas: dilo
+            "aproximado": bool(c["sin_saldo"] or [t for t in tarjetas if t.get("estimada") or t["deuda"] is None]),
+            "tarjetas_estimadas": [t["nombre"] for t in tarjetas if t.get("estimada")],
+            "tarjetas_sin_deuda": [t["nombre"] for t in tarjetas if t["deuda"] is None],
             "proximo_sueldo": est["proximo_pago"].isoformat(), "dias_al_sueldo": est["dias_al_pago"],
             "falta_pagar_antes_del_sueldo": [{"nombre": p["nombre"], "fecha": p["fecha"].isoformat(), "monto": round(p["monto"])}
                                               for p in est["por_pagar_antes_del_sueldo"]],

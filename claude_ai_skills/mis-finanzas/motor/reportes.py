@@ -487,7 +487,8 @@ def faltantes(filas, tarjetas, creditos, cfg, hoy):
         elif dias(x["desde"]) > 35:
             add("saldo:" + slug(x["nombre"]), f"El saldo de hoy de {x['nombre']} (el último que me diste es del {d(x['desde'])})", 2)
     for t in tarjetas:
-        if t["deuda"] is None: add("deuda:" + slug(t["nombre"]), f"Cuánto debes hoy en {t['nombre']}", 1)
+        if t["deuda"] is None or t.get("estimada"):
+            add("deuda:" + slug(t["nombre"]), f"Cuánto debes hoy en {t['nombre']}" + (" (lo estoy estimando con las compras que vi)" if t.get("estimada") else ""), 1)
         if not t.get("dia_pago"): add("dia:" + slug(t["nombre"]), f"El día límite de pago de {t['nombre']}", 1)
         if not t.get("tasa_ea"): add("tasa:" + slug(t["nombre"]), f"La tasa E.A. de {t['nombre']} (estoy suponiendo 28,5%)", 3)
     for c in creditos:

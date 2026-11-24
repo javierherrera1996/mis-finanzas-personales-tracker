@@ -180,7 +180,7 @@ html { scroll-behavior: smooth; }
     <div>
       <div class="eyebrow">
         <span class="chip">Hecho para Colombia</span>
-        <span class="chip beta">Beta · versión 0.2.1</span>
+        <span class="chip beta">Beta · versión 0.2.2</span>
       </div>
       <h1>Mis finanzas, <span>dentro de tu Claude</span></h1>
       <p class="lead">Claude lee las alertas que tus bancos te mandan a Gmail, arma un Google Sheet con cada movimiento y te dice cuánto puedes gastar por día hasta el sueldo. No instalas nada en tu computador.</p>
@@ -319,7 +319,7 @@ html { scroll-behavior: smooth; }
           <div><b>1</b>Tocas 4 opciones: bancos, deudas, qué quieres lograr e historial.</div>
           <div><b>2</b>Lee 2 meses de alertas, semana por semana, y te muestra el avance.</div>
           <div><b>3</b>Te enseña lo que vio: gasto por categoría, suscripciones, sueldo.</div>
-          <div><b>4</b>Confirmas con toques y le das los saldos de hoy.</div>
+          <div><b>4</b>Confirmas con toques y le das los saldos de hoy. Si no los sabes, escribe «no sé».</div>
           <div><b>5</b>Crea tu Sheet y te dice cuánto puedes gastar por día.</div>
         </div>
         <label class="done-toggle"><input type="checkbox" id="hecho-5" data-paso="5"> Ya tengo mi Sheet</label>
@@ -401,7 +401,7 @@ html { scroll-behavior: smooth; }
       </details>
       <details>
         <summary>No puede escribir en mi Sheet</summary>
-        <div><p>Conecta Google Sheets en Personalizar → Conectores, además de Drive. Sin eso puede leer, pero no actualizar las celdas.</p></div>
+        <div><p>Conecta Google Sheets en Personalizar → Conectores, además de Drive. Claude lo comprueba antes de leer tu correo: si no puede escribir, te avisa en el primer minuto.</p></div>
       </details>
       <details>
         <summary>La tarea programada no corrió</summary>
@@ -419,7 +419,7 @@ html { scroll-behavior: smooth; }
   </section>
 
   <footer>
-    <span>Mis finanzas 0.2.1 · beta · licencia MIT</span>
+    <span>Mis finanzas 0.2.2 · beta · licencia MIT</span>
     <span><a href="https://github.com/javierherrera1996/mis-finanzas-personales-tracker" target="_blank" rel="noopener">Código en GitHub</a> · <a href="https://github.com/javierherrera1996/mis-finanzas-personales-tracker/issues" target="_blank" rel="noopener">Reportar un problema</a></span>
   </footer>
 </div>

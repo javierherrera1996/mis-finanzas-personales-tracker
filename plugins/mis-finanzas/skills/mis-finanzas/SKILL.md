@@ -47,11 +47,13 @@ Cuatro grupos, en este orden de pestañas (lo que más mira va primero):
 - Tipo es uno de: Gasto, Ingreso, Interno (entre sus cuentas), Deuda (cuotas), Financiamiento (desembolsos).
 
 ## Empezar (primer uso)
-Arranca aquí cuando escriba `/mis-finanzas` solo, o con "start", "empezar" o "configurar", o cuando no exista el Sheet "Mis finanzas" en su Drive (búscalo antes de cualquier otra cosa). Si escribió otra pregunta y no hay Sheet, dile en una línea que primero toca configurar (unos 10 minutos) y empieza.
+Arranca aquí cuando escriba `/mis-finanzas` solo, o con "start", "empezar" o "configurar", o cuando no exista el Sheet "Mis finanzas" en su Drive (búscalo antes de cualquier otra cosa). Si existe pero en Perfil dice "Configuración: en curso", la configuración se cortó: retómala donde iba (lo que ya está en Correos no se vuelve a leer: sigue desde la fecha del último correo guardado) y no le repitas las preguntas que ya contestó. Si escribió otra pregunta y no hay Sheet, dile en una línea que primero toca configurar (unos 10 minutos) y empieza.
 
 **La idea: primero mostrarle algo útil, después confirmar con toques y al final pedir lo mínimo de cifras.** Nada de paredes de preguntas antes de que vea valor.
 
 **0. ¿Modo prueba o versión instalada?** Si escribió "prueba", "desde cero" o "como usuario nuevo" (p. ej. `/mis-finanzas start prueba`), sigue "Probar desde cero" en [version-instalada.md](version-instalada.md) y no busques la versión instalada. Si no, revisa "Si ya tiene la versión instalada" en ese mismo archivo: si la tiene, no empieces de cero sin preguntarle.
+
+**0b. Antes de leer Gmail, comprueba que puedes escribir su Sheet.** Crea ya el Sheet "Mis finanzas" con todas las pestañas de la tabla de arriba (solo encabezados), escribe en Perfil "Configuración" = "en curso (AAAA-MM-DD)" y léelo de vuelta. Si no pudiste crear el archivo o escribir esa celda (por ejemplo, tus herramientas de Google solo buscan o leen archivos), para aquí y díselo en dos líneas: que conecte **Google Sheets** en Personalizar → Conectores (claude.ai/customize/connectors) y vuelva a escribir `/mis-finanzas:empezar`. Nunca leas el historial sin poder guardarlo: son minutos de trabajo que se perderían.
 
 **1. Una línea de confianza y una encuesta de cuatro toques** (ver "Cómo preguntar"). La línea: "Para armar tus finanzas solo leo las alertas de tus bancos en Gmail; todo queda en un Sheet en tu Google Drive, no en otro lado."
 
@@ -64,7 +66,7 @@ Arranca aquí cuando escriba `/mis-finanzas` solo, o con "start", "empezar" o "c
 
 Si no elige nada en la segunda, es que no tiene. El objetivo va a `"objetivo"` en la entrada del motor: `saber`, `gastar_menos`, `deudas` o `ahorrar`.
 
-**2. Lee el historial** de los bancos que eligió, con las búsquedas de [bancos.md](bancos.md): 2 meses = desde el día 1 del mes anterior; 3 meses = desde el día 1 de hace dos meses. Trae **todas** las alertas ("Traer todos los correos"), semana por semana, mostrando el avance en una línea ("Davivienda: semana 3 de 9, 112 alertas"). Corre el motor dos veces:
+**2. Lee el historial** de los bancos que eligió, con las búsquedas de [bancos.md](bancos.md): 2 meses = desde el día 1 del mes anterior; 3 meses = desde el día 1 de hace dos meses. Trae **todas** las alertas ("Traer todos los correos"), semana por semana, mostrando el avance en una línea ("Davivienda: semana 3 de 9, 112 alertas"). **Al terminar cada semana, agrega esos correos a la pestaña Correos**: si la conversación se corta, la próxima vez se retoma desde ahí. Corre el motor dos veces:
 - sin cuentas (`"config": {"sueldo": {}}`): `productos_vistos` dice qué cuentas y tarjetas aparecen;
 - con esos productos como cuentas provisionales (las alertas le llegan a él: son suyos) y su objetivo: así la plata entre sus cuentas ya no cuenta como gasto, y salen `analisis`, `sueldo_probable`, `cobertura` y `acciones`.
 
@@ -80,10 +82,17 @@ Si no elige nada en la segunda, es que no tiene. El objetivo va a `"objetivo"` e
 - **¿Cuáles de estas suscripciones ya no usas?** (`analisis.suscripciones` activas, selección múltiple, con el precio al mes en cada opción). Las que elija quedan con "Cancelar" en la pestaña Suscripciones.
 - **¿Qué es esta plata que te entra cada mes?** (`ingresos_que_se_repiten`): Mi roomie o pareja · Arriendo que cobro · Un cliente o trabajo extra · Otro. Un roomie o pareja que paga su parte va como Regla de Gasto de esa categoría (resta del gasto) y como cobro en Fijos.
 
-**5. Un solo mensaje de cifras, lo mínimo**: el saldo de hoy de cada cuenta que confirmó y, por cada tarjeta, cuánto debe hoy, qué día corta y qué día paga. Nada más por ahora: tasas, saldos de créditos, cédula y techo de gasto se preguntan después (paso 8).
+**5. Un solo mensaje de cifras, lo mínimo, y "no sé" vale**: el saldo de hoy de cada cuenta que confirmó y, por cada tarjeta, cuánto debe hoy, qué día corta y qué día paga. Díselo así: "Si no lo tienes a mano, escribe *no sé* y sigo con un estimado". Nunca frenes la configuración por esto:
+- Cuenta sin saldo: queda por fuera de la suma (`resumen.cuentas_sin_saldo`).
+- Tarjeta sin lo que debe: el motor lo estima con las compras que avisó la tarjeta en el último ciclo (`tarjetas[].estimada`, `estimada_con`). Sin día de corte o de pago también sigue.
+- Lo que quedó en "no sé" sale en `faltantes` con prioridad 1: pídelo una sola vez en la siguiente conversación, no en esta.
 
-**6. Crea el Sheet y cierra.** Crea todas las pestañas en el orden de la tabla de arriba y llénalas con lo confirmado (sueldo, lo apartado, su nombre en los bancos y lo que quiere lograr → Perfil; pagos fijos → Fijos; roomie → Reglas; lo confirmado y lo que quedó por confirmar → Notas; los correos leídos → Correos). Corre "Actualizar" con todo y respóndele:
+Nada más por ahora: tasas, saldos de créditos, cédula y techo de gasto se preguntan después (paso 8).
+
+**6. Llena el Sheet y cierra.** Llena las pestañas que creaste en el paso 0b con lo confirmado (sueldo, lo apartado, su nombre en los bancos y lo que quiere lograr → Perfil; pagos fijos → Fijos; roomie → Reglas; lo confirmado y lo que quedó por confirmar → Notas; los correos leídos → Correos). Corre "Actualizar" con todo y respóndele:
 > Puedes gastar **$X por día** hasta el [sueldo]. [La primera de `acciones`.] Aquí está tu Sheet: [enlace].
+
+Si `resumen.aproximado` es true, di la cifra con "≈" y por qué en una línea ("≈ $X por día: no sumé tu Nequi y lo de la tarjeta lo estimé con tus compras"). Al final cambia en Perfil "Configuración" a "lista (AAAA-MM-DD)".
 
 **7. Lo automático**, en una encuesta de selección múltiple: "¿Qué quieres que haga solo?" · Actualizar cada mañana · Mis pagos en Google Calendar con aviso 3 días y 1 día antes · Informe semanal por correo los lunes. Arma lo que elija ("Actualización automática" aquí; Calendar e informe en [calendario-e-informe.md](calendario-e-informe.md)). Si eligió Calendar y no está conectado, dile cómo conectarlo. Dile en una línea qué va a pasar: cada mañana, cuánto puede gastar; cada lunes, el informe; el día 1 de cada mes, el cierre del mes (cómo le fue, si hay tasas mejores para sus deudas y qué saldos confirmar).
 
@@ -194,7 +203,7 @@ El día 1 de cada mes, cuando agregue un crédito o una tarjeta, o cuando pregun
 **¿Cuánto puedo gastar?** Actualiza primero y responde con `resumen`, en 4 líneas:
 > Tienes $plata_en_cuentas en cuentas. Faltan $X de pagos antes del sueldo (falta_pagar_antes_del_sueldo, incluida la tarjeta). Te quedan $libre libres: $por_dia por día hasta el proximo_sueldo. *(alertas hasta alertas_hasta)*
 
-Si hay `cuentas_sin_saldo`, dile que esas no están sumadas y pídele el saldo.
+Si hay `cuentas_sin_saldo`, dile que esas no están sumadas y pídele el saldo. Si `aproximado` es true, da la cifra con "≈" y di qué falta (`cuentas_sin_saldo`, `tarjetas_estimadas`, `tarjetas_sin_deuda`).
 
 **¿Cómo voy este mes? / ¿En qué se me fue la plata? / ¿En qué gasto?** Usa `analisis`: gasto por categoría y mes, comercios donde más gasta (cuántas veces y cuánto), gastos más grandes, ingresos por fuente, suscripciones y cobros que se repiten. Para otro período (un mes viejo, el año), lee de Movimientos las filas de esas fechas y corre el motor con `"correos": []` y esas filas en `movimientos_previos`: el `analisis` sale de ese período. El mes en curso es parcial: dilo y no lo compares como si fuera completo. Si `sin_detalle` pasa del 20%, dilo y pregúntale por las transferencias más grandes sin identificar.
 
@@ -218,4 +227,4 @@ Si hay `cuentas_sin_saldo`, dile que esas no están sumadas y pídele el saldo.
 - Las tasas que encuentres en internet son las publicadas, no una oferta en firme.
 
 ---
-Versión 0.2.1 · 24-nov-2026
+Versión 0.2.2 · 24-nov-2026
