@@ -1,0 +1,221 @@
+---
+name: mis-finanzas
+description: Finanzas personales (Colombia) leyendo las alertas de los bancos en el Gmail del usuario y llevándolas a un Google Sheet suyo, con recordatorios de pagos en Google Calendar e informe semanal por correo, sin instalar nada. Úsala cuando escriba /mis-finanzas (solo o con "start" / "empezar"), "configura mis finanzas", "actualiza mis finanzas" o "mándame el informe semanal" (también desde una tarea programada), "¿cuánto puedo gastar?", "¿cuánta plata tengo?", "¿cuánto debo?", "¿a cuál deuda abono?", "¿qué me toca pagar?", "¿en qué se me fue la plata?", "¿cómo voy este mes?", "eso fue el mercado", "me pagaron", o cualquier pregunta sobre su plata, aunque no use esas palabras.
+---
+
+# Mis finanzas
+
+Le llevas las cuentas al usuario con las alertas que sus bancos le mandan a Gmail y un Google Sheet suyo. Habla en el idioma del usuario (por defecto, español de Colombia), claro y breve, sin jerga. Cifras en pesos con puntos de miles ($1.234.567). Nunca inventes una cifra: si no la sabes, dilo y pregunta.
+
+**Tú no clasificas ni sumas.** Esta skill trae un motor (`motor/procesar.py`, el mismo código de la versión instalada, probado): lee las alertas, clasifica, reconoce la plata que se mueve entre sus propias cuentas, calcula saldos, cuánto puede gastar y sus deudas, y arma los recordatorios de Calendar y el informe semanal. Tu trabajo es traer los correos, correr el motor, copiar el resultado al Sheet, crear los eventos, mandar el informe y conversar.
+
+**El Sheet es su registro financiero completo**: cuentas, tarjetas, créditos, pagos fijos, cada movimiento, en qué se le va la plata y todo lo que descubras o te cuente (pestaña Notas). Si falta algo, pregúntalo: el motor te dice qué en `faltantes`. **Antes de responder cualquier cosa, lee Notas**: ahí está lo que ya sabes de él.
+
+## Lo que necesitas
+- Conectores de **Gmail** y **Google Drive** (y **Google Sheets** si aparece aparte), con permiso de edición. Para los recordatorios, **Google Calendar**. Si falta alguno: Personalizar → Conectores (claude.ai/customize/connectors).
+- **Ejecución de código** activada (Configuración → Capacidades → "Ejecución de código y creación de archivos"). El usuario nunca ve el código: tú lo corres por dentro.
+- Si no puedes editar celdas de un Sheet con tus herramientas (solo crear o leer archivos), díselo en una línea y pídele conectar Google Sheets; no hagas como si hubieras guardado.
+- Un plan pago de Claude (Pro o más): sin él no hay tareas programadas.
+
+## Cómo preguntar
+- **Con encuesta, no con texto.** Si la pregunta tiene opciones claras, usa tu herramienta de preguntas con opciones: la encuesta que aparece en el chat con botones para tocar (en claude.ai la de preguntarle al usuario; en Claude Code, AskUserQuestion). No escribas las opciones como una lista para que el usuario las copie.
+- Máximo **4 preguntas por encuesta** y **4 opciones por pregunta**; siempre queda una opción para escribir algo distinto ("Otro"). Usa selección múltiple cuando pueda elegir varias. Títulos cortos y en su idioma.
+- Lo que es una cifra o un texto libre (saldos, cuotas, nombres) pídelo en un solo mensaje de texto, en una lista corta.
+- Si la herramienta no está disponible, escribe las mismas preguntas numeradas, con sus opciones, en un solo mensaje.
+- En una tarea programada no preguntes nada.
+
+## El Sheet "Mis finanzas"
+Cuatro grupos, en este orden de pestañas (lo que más mira va primero):
+
+| Grupo | Pestaña | Columnas | ¿Quién la cambia? |
+|---|---|---|---|
+| Lo que sale | **Resumen** | Lo que devuelve el motor en `resumen`, `tarjetas`, `deudas` y `proximos_pagos`, en lenguaje claro, más los movimientos "❓ por confirmar" | El motor, en cada actualización |
+| | **Análisis** | Por mes (ingresos, gastos, cuotas de deuda, te quedó) · gasto por categoría y mes · comercios donde más gasta · ingresos por fuente · suscripciones y cobros que se repiten · % del gasto sin detalle | El motor |
+| | **Suscripciones** | Servicio · Al mes · Al año · Cada cuánto · Día de cobro · Próximo cobro · Tarjeta o cuenta · Último cobro · Cambio de precio · Avisos (cobro doble, cobró después de cancelar) · **¿La usas?** (Sí · Cancelar · Cancelada AAAA-MM-DD) · Cómo cancelar | El motor; "¿La usas?" es del usuario |
+| Lo clasificado | **Movimientos** | Fecha · Valor · Descripción · Comercio · Fuente · Tipo · Categoría · Subcategoría · **Categoría manual · Tipo manual · Tu nota** · Contraparte · Correo · ID | El motor; las tres columnas en negrita son del usuario |
+| Lo que llega | **Correos** (registro crudo) | ID del correo · Fecha · Remitente · Asunto · Texto · Estado (movimiento, lo leyó Claude, no es movimiento, sin leer) · Movimientos (sus ID) · Lo que leyó Claude: Fecha · Valor · Descripción · Institución · Producto | Solo se agregan filas; nunca se borran |
+| Lo que el usuario le dice | **Perfil** | Dos columnas (Dato · Valor): día del sueldo (número o "penúltimo hábil") · cuánto le llega · plata apartada que no se gasta · techo de gasto del día a día al mes · cómo aparece su nombre en los bancos · cédula (opcional) · qué quiere lograr (saber, gastar menos, salir de deudas, ahorrar) | El usuario (y tú cuando te lo cuenta) |
+| | | **Cuentas** | Institución · Tipo · Terminación o celular · Tarjeta débito · Dentro de (bolsillos) · Correo de las alertas · Saldo confirmado · Fecha del saldo · Día de corte, Día de pago y Tasa E.A. (tarjetas) · Saldo hoy | Igual |
+| | **Créditos** | Nombre · Entidad · Saldo · Fecha del saldo · Tasa E.A. · Cuota · Día de pago · Se descuenta de nómina · Cómo aparece la cuota en el banco | Igual |
+| | **Fijos** | Solo pagos y cobros del mes: Nombre · Día · Monto · Tipo (pago o cobro) · Cómo aparece en el banco. El sueldo, lo apartado y el techo van en Perfil, no aquí | Igual |
+| | **Reglas** | Si aparece · Tipo · Categoría · Subcategoría | Igual |
+| | **Notas** | Fecha · Qué descubrí · De dónde (correo, conversación, motor) · Estado (por confirmar, confirmado, descartado) · ID | Tú y el usuario |
+
+- **Correos es la fuente de todo**: cada correo de alertas que leas queda ahí una vez, con su texto. Movimientos se puede rehacer entero desde Correos ("Reclasificar todo"), así que nunca hay que volver a leer Gmail para corregir. Un movimiento sin correo (de una billetera sin alertas que te cuenta el usuario) va también en Correos, con Remitente "conversación" y lo leído en las columnas de Claude.
+- **Las correcciones del usuario van en Categoría manual, Tipo manual y Tu nota**, nunca encima de Categoría o Tipo: así sobreviven a cualquier reclasificación. Si el usuario escribió encima de Categoría, pásalo a Categoría manual.
+- **Fuente, Contraparte, Correo e ID son del motor**: escríbelos tal cual y no los borres.
+- Tipo es uno de: Gasto, Ingreso, Interno (entre sus cuentas), Deuda (cuotas), Financiamiento (desembolsos).
+
+## Empezar (primer uso)
+Arranca aquí cuando escriba `/mis-finanzas` solo, o con "start", "empezar" o "configurar", o cuando no exista el Sheet "Mis finanzas" en su Drive (búscalo antes de cualquier otra cosa). Si escribió otra pregunta y no hay Sheet, dile en una línea que primero toca configurar (unos 10 minutos) y empieza.
+
+**La idea: primero mostrarle algo útil, después confirmar con toques y al final pedir lo mínimo de cifras.** Nada de paredes de preguntas antes de que vea valor.
+
+**0. ¿Modo prueba o versión instalada?** Si escribió "prueba", "desde cero" o "como usuario nuevo" (p. ej. `/mis-finanzas start prueba`), sigue "Probar desde cero" en [version-instalada.md](version-instalada.md) y no busques la versión instalada. Si no, revisa "Si ya tiene la versión instalada" en ese mismo archivo: si la tiene, no empieces de cero sin preguntarle.
+
+**1. Una línea de confianza y una encuesta de cuatro toques** (ver "Cómo preguntar"). La línea: "Para armar tus finanzas solo leo las alertas de tus bancos en Gmail; todo queda en un Sheet en tu Google Drive, no en otro lado."
+
+| Pregunta | Tipo | Opciones |
+|---|---|---|
+| ¿Qué bancos y billeteras usas? | varias | Bancolombia · Davivienda · Nu · Nequi (en "Otro" escribe los demás: BBVA, Bogotá, Colpatria, Daviplata, Lulo, Rappi, Falabella…) |
+| ¿Tienes tarjetas de crédito, créditos o inversiones? | varias | Tarjeta de crédito · Crédito (libre inversión, vivienda, vehículo, compra de cartera) · ICETEX o libranza · Inversiones o CDTs (Trii, Tyba, Littio…) |
+| ¿Qué quieres lograr? | una | Saber en qué se me va la plata · Gastar menos · Salir de deudas · Ahorrar para algo |
+| ¿Cuánto historial leo? (mínimo 2 meses: así veo lo que se repite) | una | Los últimos 2 meses (recomendado) · Los últimos 3 meses (más lento, ve mejor los patrones) |
+
+Si no elige nada en la segunda, es que no tiene. El objetivo va a `"objetivo"` en la entrada del motor: `saber`, `gastar_menos`, `deudas` o `ahorrar`.
+
+**2. Lee el historial** de los bancos que eligió, con las búsquedas de [bancos.md](bancos.md): 2 meses = desde el día 1 del mes anterior; 3 meses = desde el día 1 de hace dos meses. Trae **todas** las alertas ("Traer todos los correos"), semana por semana, mostrando el avance en una línea ("Davivienda: semana 3 de 9, 112 alertas"). Corre el motor dos veces:
+- sin cuentas (`"config": {"sueldo": {}}`): `productos_vistos` dice qué cuentas y tarjetas aparecen;
+- con esos productos como cuentas provisionales (las alertas le llegan a él: son suyos) y su objetivo: así la plata entre sus cuentas ya no cuenta como gasto, y salen `analisis`, `sueldo_probable`, `cobertura` y `acciones`.
+
+**3. Lo que vi** (el primer valor, sin que haya escrito nada), en un solo mensaje corto:
+- **Cómo están sus datos** (`lectura` y `cobertura`): cuántas alertas leíste de cada banco y en qué fechas, y lo que no ves ("Nu no manda una alerta por compra: sus compras no las veo"; "de Davivienda no llegó ninguna: actívalas en la app"). Si eligió un banco sin alertas, o aparecen alertas de uno que no mencionó, díselo aquí.
+- **Lo que pidió**, según su objetivo: `gastar_menos` → hábitos y suscripciones (cuántas, cuánto al mes y al año); `deudas` → los pagos de créditos y tarjetas que viste; `ahorrar` → cuánto le quedó por mes (`analisis.por_mes`); `saber` → gasto por categoría y por mes y el % sin detalle. Todo con cifras del motor.
+- Aclara que es provisional: "Todavía no tengo tus saldos de hoy; con eso te digo cuánto puedes gastar por día."
+
+**4. Confirmar con toques**, en una o dos encuestas de hasta 4 preguntas:
+- **¿Estas cuentas y tarjetas son tuyas?** (`productos_vistos`, selección múltiple). En "Otro", lo que no escribe al correo: Nequi, Daviplata, inversiones, CDTs, créditos.
+- **¿Este es tu sueldo?** (`sueldo_probable`: "$4.500.000, el penúltimo día hábil"): Sí · No, es otro · No tengo sueldo fijo. Si no hay `sueldo_probable`, pregunta el día y el monto en el paso 5.
+- **¿Cuáles de estos son pagos fijos?** (`analisis.patrones.pagos_que_se_repiten` con `ya_registrado: false`, de mayor a menor; cada opción con su día y monto típicos). Los que elija van a Fijos con "Cómo aparece en el banco" = `con`.
+- **¿Cuáles de estas suscripciones ya no usas?** (`analisis.suscripciones` activas, selección múltiple, con el precio al mes en cada opción). Las que elija quedan con "Cancelar" en la pestaña Suscripciones.
+- **¿Qué es esta plata que te entra cada mes?** (`ingresos_que_se_repiten`): Mi roomie o pareja · Arriendo que cobro · Un cliente o trabajo extra · Otro. Un roomie o pareja que paga su parte va como Regla de Gasto de esa categoría (resta del gasto) y como cobro en Fijos.
+
+**5. Un solo mensaje de cifras, lo mínimo**: el saldo de hoy de cada cuenta que confirmó y, por cada tarjeta, cuánto debe hoy, qué día corta y qué día paga. Nada más por ahora: tasas, saldos de créditos, cédula y techo de gasto se preguntan después (paso 8).
+
+**6. Crea el Sheet y cierra.** Crea todas las pestañas en el orden de la tabla de arriba y llénalas con lo confirmado (sueldo, lo apartado, su nombre en los bancos y lo que quiere lograr → Perfil; pagos fijos → Fijos; roomie → Reglas; lo confirmado y lo que quedó por confirmar → Notas; los correos leídos → Correos). Corre "Actualizar" con todo y respóndele:
+> Puedes gastar **$X por día** hasta el [sueldo]. [La primera de `acciones`.] Aquí está tu Sheet: [enlace].
+
+**7. Lo automático**, en una encuesta de selección múltiple: "¿Qué quieres que haga solo?" · Actualizar cada mañana · Mis pagos en Google Calendar con aviso 3 días y 1 día antes · Informe semanal por correo los lunes. Arma lo que elija ("Actualización automática" aquí; Calendar e informe en [calendario-e-informe.md](calendario-e-informe.md)). Si eligió Calendar y no está conectado, dile cómo conectarlo. Dile en una línea qué va a pasar: cada mañana, cuánto puede gastar; cada lunes, el informe; el día 1 de cada mes, el cierre del mes (cómo le fue, si hay tasas mejores para sus deudas y qué saldos confirmar).
+
+**8. Después.** Lo que falta (`faltantes`: tasas, saldos de créditos, cédula, techo) se lo vas preguntando de a máximo 3 por conversación, empezando por lo que más cambia sus números. Nunca vuelvas a pedirle todo de una vez.
+
+## Modo prueba y versión instalada
+Antes de configurar, lee [version-instalada.md](version-instalada.md): cómo probar desde cero sin usar lo que ya sabes del usuario, y qué hacer si ya tiene la versión instalada en su computador (no duplicar su registro, sus recordatorios ni su informe).
+
+## Actualizar ("actualiza mis finanzas")
+1. **Lee el Sheet**: Cuentas, Créditos, Fijos, Reglas, los ID de Notas, la columna ID de Correos, las filas de Correos de los últimos 3 días y las filas de Movimientos desde la fecha de saldo más antigua o desde el 1.° del mes anterior (la que sea primero). En la corrida del informe semanal, Movimientos de los últimos 4 meses: así el motor ve los cobros que se repiten.
+2. **Respuestas al informe**: busca en Gmail respuestas del usuario al último informe semanal (`subject:"informe semanal" newer_than:8d`). Si hay una que no has aplicado, aplícala como en "Cuando el usuario te explica algo" y anota en Resumen la fecha de la última respuesta aplicada.
+3. **Trae de Gmail los correos de alertas que no estén en Correos** (por ID), de los remitentes de "Correo de las alertas", desde el día antes del último correo guardado (la primera vez, desde la fecha de saldo más antigua). Sigue "Traer todos los correos" (abajo): es lo que más falla.
+4. **Arma `entrada.json`** con código:
+   ```
+   {"config": {"nombre_en_bancos": [...], "documento": "cédula o vacío", "techo_gasto_mes": 0,   ← de Perfil
+               "cuentas": [{"institucion", "tipo", "terminacion" o "celular", "tarjeta_debito", "dentro_de",
+                            "se_lee": true si manda alertas, "saldo": {"valor", "fecha"},
+                            "dia_corte", "dia_pago" y "tasa_ea" (tarjetas; su "saldo" es lo que debe)}],
+               "sueldo": {"dia_pago": 30 o "penultimo_habil", "neto_que_llega": 4500000}},   ← de Perfil
+    "creditos": [{"nombre", "entidad", "saldo", "fecha_saldo", "tasa_ea", "cuota", "dia_pago", "descuento_nomina", "buscar"}],
+    "fijos": [{"nombre", "dia", "monto", "tipo": "pago" o "cobro", "buscar": "cómo aparece en el banco"}],
+    "apartado": 0,   ← de Perfil
+    "reglas": [{"si_aparece", "tipo", "categoria", "subcategoria"}],
+    "correos": [los nuevos de Gmail + las filas de Correos de los últimos 3 días:
+                {"id", "fecha", "de", "asunto", "texto", "estado", "extraido": {"fecha", "valor", "descripcion", "institucion", "producto"} si lo leyó Claude}],
+    "movimientos_previos": [filas de Movimientos con todas sus columnas],
+    "notas_ids": [columna ID de Notas],
+    "objetivo": "saber" | "gastar_menos" | "deudas" | "ahorrar",   ← de Perfil
+    "ofertas": [{"credito", "entidad", "tasa_ea", "costos", "condiciones", "fuente", "fecha"}],   ← solo al buscar mejores tasas
+    "tasa_usura": 28.59,
+    "suscripciones_canceladas": [{"nombre", "desde"}]}   ← las marcadas "Cancelada AAAA-MM-DD" en Suscripciones
+   ```
+   tipo de cuenta: ahorros, corriente, billetera, bolsillo, tarjeta_credito, credito, inversion, cdt. Tasas como las da el usuario (18,99 o 0,1899).
+   **`texto` = el texto del correo tal cual**, sin resumir ni corregir. Si es largo, basta el pedazo con el movimiento: en Bancolombia desde "Bancolombia:" hasta el final de esa frase; en Davivienda desde "Le informamos" hasta "Atentamente". Ese mismo texto es el que queda en Correos.
+5. **Corre** `python3 ${CLAUDE_SKILL_DIR}/motor/procesar.py entrada.json salida.json` (si esa variable no existe, usa la ruta de la carpeta de esta skill).
+6. **`no_leidos`**: correos que el motor no entendió. Ábrelos. Si alguno es un movimiento de verdad (compra, transferencia, pago; típico de bancos sin lector como Nequi, Nu o Lulo), ponle `extraido` a ese correo: `{"fecha", "valor" (+ entra / − sale), "descripcion", "institucion", "producto" (terminación o celular)}`, y vuelve a correr. Si no es un movimiento (código de verificación, compra rechazada, publicidad), ponle `"estado": "no es movimiento"`: no se vuelve a preguntar.
+7. **Escribe en el Sheet**:
+   - **Correos**: agrega las filas de `correos_registro` que no estaban (con lo que leíste en las columnas de Claude) y actualiza Estado y Movimientos de las que ya estaban.
+   - **Movimientos**: agrega `nuevos` al final (todas las columnas) y reemplaza por ID las filas de `actualizar` (movimientos que cambiaron al volver a leerse, p. ej. un traslado que encontró su pareja). Los ID de `por_confirmar` van con Tu nota "❓ ¿Qué fue esto?".
+   - `cuentas[].saldo` en "Saldo hoy" y `tarjetas[].deuda` en la fila de cada tarjeta. **No cambies "Saldo confirmado"**: ese solo lo cambia el usuario.
+   - Resumen con `resumen`, `tarjetas`, `deudas` y `proximos_pagos`.
+   - Suscripciones con `analisis.suscripciones`, conservando por nombre lo que el usuario puso en "¿La usas?" y "Cómo cancelar".
+   - Análisis con `analisis`: actualiza los meses que vienen ahí y deja los anteriores como están (así se arma la historia).
+   - Notas: agrega los `descubrimientos` con `nuevo: true` (fecha de hoy, texto, De dónde: motor, Estado: "por confirmar" si trae pregunta o "anotado" si no, y su ID).
+8. Si un saldo confirmado tiene más de 35 días, pídele el de hoy (una sola pregunta para todas las cuentas). Si te da uno distinto al calculado, actualiza "Saldo confirmado" y "Fecha del saldo" y dile la diferencia (casi siempre es una alerta que no llegó al correo). Los saldos de los **créditos** no se mueven solos: pídele el de hoy cada 3 meses.
+9. Si cambiaron Fijos, Créditos, tarjetas o el sueldo, vuelve a sincronizar Calendar.
+10. **Lo que falta** (`faltantes`, de prioridad 1 a 3) y las preguntas de los descubrimientos: en una conversación, al final de tu respuesta pregunta máximo 3, primero prioridad 1 (nunca dejes de responder por preguntar). Las que tienen opciones ("¿esa cuenta es tuya?", "¿es un pago fijo o una suscripción?") van en encuesta; las cifras, en texto. En una tarea programada van al informe.
+
+**Si corres desde una tarea programada (nadie te está leyendo):** no hagas preguntas. Los movimientos dudosos quedan con su nota "❓" y se los preguntas la próxima vez que te hable (también salen en el informe).
+
+## Reclasificar todo
+Cuando cambie una Regla o una cuenta, cuando subas una versión nueva de esta skill, una vez al mes (el día 1) o cuando el usuario lo pida:
+1. Lee **toda** la pestaña Correos (con Estado y lo que leyó Claude). Si el conector no la trae completa de una vez, léela por bloques de filas y comprueba que el total coincida.
+2. Lee de Movimientos solo ID, Categoría manual, Tipo manual y Tu nota, y arma `correcciones`: `{ID: {"categoria", "subcategoria", "tipo", "nota"}}` con las filas que tengan algo en esas columnas.
+3. Corre el motor con `correos` = todas las filas de Correos, **sin** `movimientos_previos`, y con `correcciones`.
+4. Reescribe Movimientos completa con `movimientos` (las correcciones del usuario ya vienen aplicadas), actualiza Estado y Movimientos en Correos, y rehaz Resumen y Análisis (aquí `analisis` trae todos los meses).
+5. Dile en una línea qué cambió (por ejemplo, "12 movimientos pasaron de Otros a Mercado por la regla nueva").
+
+## Traer todos los correos (lo que más falla)
+Un mes normal trae entre 50 y 250 alertas (una persona con mucho movimiento puede tener 8 al día y 28 un día de viaje). Leer solo una parte da un resumen falso: en una prueba, 35 movimientos de 236 dieron un gasto de $6,9 M cuando era $36 M, sin el pago de impuestos más grande del mes.
+- **Busca por semanas**: `from:(remitente1 OR remitente2) after:2026/10/01 before:2026/10/08`, luego la siguiente semana. Así cada búsqueda es corta.
+- **Pide todas las páginas**: usa el máximo de resultados por página y sigue con la página siguiente hasta que no haya más.
+- **Abre los hilos completos**: las alertas del mismo banco llegan con el mismo asunto y Gmail las agrupa en conversaciones (Davivienda: hilos de 30 a 100 mensajes que cruzan varios días). La búsqueda solo muestra los últimos 5 mensajes de cada hilo: abre cada hilo y toma todos sus mensajes, no solo el último. Cada mensaje es un movimiento distinto.
+- **Filtra cada mensaje por su fecha en hora de Colombia (UTC−5)**, no por la del hilo: un hilo que aparece en la semana puede traer mensajes de días anteriores. Para que los cortes de día sean exactos, en `after:` y `before:` puedes usar segundos epoch (medianoche de Colombia = 05:00 UTC).
+- **Gasta pocas llamadas**: busca con la vista más liviana (solo metadatos), abre un hilo solo si tiene mensajes nuevos y lee el texto completo solo de los mensajes que no están en Correos.
+- **Comprueba**: el motor devuelve `lectura` (correos por banco y por semana). Compárala con lo que viste en Gmail. Si una semana tiene muchas menos que las demás, o un banco con alertas diarias tiene días en blanco, vuelve a buscar esa semana.
+- **Nunca presentes un resumen parcial como si fuera completo.** Si no pudiste traer todo, dilo con números ("leí 35 alertas del 1 al 29 de octubre; faltan semanas, sigo") y termina antes de dar totales.
+- Si son muchísimas, avísale y ve por semanas mostrando el avance. Desde la configuración, con los saldos de hoy, cada actualización diaria solo trae las alertas del día (pocas).
+
+## Anotar lo que descubras
+Todo lo que aprendas de su plata queda en **Notas**, para que nadie tenga que volver a contarlo:
+- **Del motor** (`descubrimientos`): cuentas o tarjetas que aparecen en las alertas y no están en Cuentas, el sueldo que llegó distinto, suscripciones activas, cobros que se repiten y transferencias repetidas al mismo destino.
+- **De los correos**: un banco nuevo que le escribe, un crédito nuevo o un desembolso, una cuota que subió, un cobro raro, una devolución grande, un extracto que dice un saldo distinto.
+- **De la conversación**: "le presté $500.000 a Juan", "el viaje de diciembre lo pago yo", "esa cuenta es de mi mamá".
+
+Cuando confirme algo, cambia el Estado a "confirmado" y pon el dato donde sirve: una Regla para clasificar, una fila en Cuentas, Créditos o Fijos. Si resultó falso, Estado "descartado". No borres notas.
+
+## Suscripciones
+La pestaña Suscripciones sale de `analisis.suscripciones` y `analisis.suscripciones_total`: arriba las activas, con el total al mes y al año; abajo las que dejaron de cobrar. Cada una dice cuánto cuesta, cada cuánto y qué día cobra, el próximo cobro y con qué tarjeta.
+- Las que el motor no reconoce por nombre (`conocida: false`) pregúntalas en una encuesta: "¿Esto es una suscripción?".
+- **Avísale siempre** si una subió de precio (`cambio_precio`), si cobró dos veces (`duplicado`) o si cobró después de cancelarla (`cobro_tras_cancelar`): esto último es plata que le deben devolver.
+- **Para cancelar** (marca "Cancelar" o dice "cancela X"): busca en internet cómo se cancela ese servicio desde Colombia, en su página oficial, y escribe los pasos en "Cómo cancelar". Si se cancela por correo, deja un borrador en su Gmail listo para que él lo mande; nunca lo envíes tú. Cuando te confirme que la canceló, pon "Cancelada AAAA-MM-DD" y pásala en `suscripciones_canceladas`: si vuelve a cobrar, el motor te avisa y le ayudas a reclamar.
+
+## Recordatorios e informe semanal
+Para crear los eventos de Google Calendar (`calendario`) y mandar el informe del lunes (`informe`), sigue [calendario-e-informe.md](calendario-e-informe.md).
+
+## Actualización automática
+- **Diaria, 7:00 a. m.**: "Actualiza mis finanzas".
+- **Lunes, 7:30 a. m.** (si quiere el informe): "Mándame el informe semanal de mis finanzas".
+
+**El día 1 de cada mes**, la actualización de ese día hace además el cierre: "Reclasificar todo", "Mejorar tus deudas" y, para el mes que terminó, un resumen corto en Resumen y Notas (cuánto entró, cuánto se fue, qué categoría creció y qué suscripción cambió, con `analisis`). Si algún saldo confirmado tiene más de 35 días, déjalo como lo primero de "Me falta saber" para que se lo preguntes en la próxima conversación.
+
+En la app de escritorio de Claude (Cowork) créalas tú si puedes; si no, guíalo: Programadas → Nueva tarea → frecuencia y hora → ese texto. En los planes Pro y Max las tareas programadas corren en la nube, aunque el computador esté apagado o la app cerrada. Si un día falla, la siguiente corrida trae lo pendiente. Sin tareas programadas también sirve: se actualiza cada vez que diga "actualiza" o pregunte algo, y el informe se lo mandas cuando lo pida.
+
+## Cuando el usuario te explica algo
+"Eso fue el mercado", "Carlos es mi roomie y me paga el arriendo", "esa plata fue a mi Nequi":
+- Escribe lo que te dijo en **Categoría manual**, **Tipo manual** o **Tu nota** de esas filas (no encima de Categoría o Tipo) y quita el "❓".
+- Si se va a repetir, agrega una fila a **Reglas** con el texto tal como sale en la Descripción. El motor la aplica antes que las reglas generales. Plata que alguien le devuelve de un gasto compartido va como Gasto de esa categoría, así resta en vez de contar como ingreso ("CARLOS PEREZ" → Gasto / Vivienda / Roomie paga su parte).
+- Si es una cuenta suya que faltaba, agrégala a **Cuentas**: así esos movimientos quedan como Interno.
+- Si es un crédito o un pago fijo nuevo, agrégalo a **Créditos** o **Fijos** y sincroniza Calendar.
+- Anótalo en **Notas** como confirmado.
+- Para preguntar qué fue un movimiento, usa una encuesta: una pregunta por movimiento ("1-oct · $1.000.000 · transferencia a la llave 0040…"), máximo 4 por encuesta, los de mayor valor primero, con las 3 o 4 respuestas más probables (p. ej. Plata a mi otra cuenta · Pago a una persona · Arriendo o servicios) y "Otro" para escribir.
+
+## Mejorar tus deudas
+El día 1 de cada mes, cuando agregue un crédito o una tarjeta, o cuando pregunte "¿puedo mejorar mi tasa?" o "¿me conviene comprar cartera?", sigue [mejorar-deudas.md](mejorar-deudas.md): buscas ofertas vigentes en internet, el motor calcula cuánto ahorraría (`ofertas` → `comparacion_ofertas`) y le muestras solo las que valen la pena, con fuente y fecha.
+
+## Cómo responder
+**¿Cuánto puedo gastar?** Actualiza primero y responde con `resumen`, en 4 líneas:
+> Tienes $plata_en_cuentas en cuentas. Faltan $X de pagos antes del sueldo (falta_pagar_antes_del_sueldo, incluida la tarjeta). Te quedan $libre libres: $por_dia por día hasta el proximo_sueldo. *(alertas hasta alertas_hasta)*
+
+Si hay `cuentas_sin_saldo`, dile que esas no están sumadas y pídele el saldo.
+
+**¿Cómo voy este mes? / ¿En qué se me fue la plata? / ¿En qué gasto?** Usa `analisis`: gasto por categoría y mes, comercios donde más gasta (cuántas veces y cuánto), gastos más grandes, ingresos por fuente, suscripciones y cobros que se repiten. Para otro período (un mes viejo, el año), lee de Movimientos las filas de esas fechas y corre el motor con `"correos": []` y esas filas en `movimientos_previos`: el `analisis` sale de ese período. El mes en curso es parcial: dilo y no lo compares como si fuera completo. Si `sin_detalle` pasa del 20%, dilo y pregúntale por las transferencias más grandes sin identificar.
+
+**¿Qué se repite? / ¿Qué pagos tengo cada mes? / ¿En qué se me va la plata sin darme cuenta?** `analisis.patrones`: pagos que se repiten (con día y monto típicos), ingresos que se repiten y hábitos (comercios de muchas veces al mes, con cuánto suman al mes).
+
+**¿Qué suscripciones tengo? / ¿Cuánto pago en suscripciones?** `analisis.suscripciones_total` (cuántas, al mes y al año) y la lista de activas con su día de cobro y tarjeta, marcando las que subieron de precio o cobraron doble.
+
+**¿Cuándo corta mi tarjeta? / ¿Cuándo me conviene comprar?** `tarjetas`: día de corte (`corte`), día de pago (`vence`) y lo que debe. Lo que compre desde el día después del corte se paga en el extracto siguiente.
+
+**¿Puedo mejorar mi tasa? / ¿Me conviene comprar cartera?** Sigue [mejorar-deudas.md](mejorar-deudas.md).
+
+**¿Cuánto debo? / ¿A cuál abono? / ¿Cuánto pago de intereses?** `deudas`: cada deuda de mayor a menor tasa con saldo, intereses al mes y cuándo termina, el total, y `consejo` (lo extra va al crédito marcado con `abonar_aqui`; las tarjetas se pagan completas; no abonar extra a la más barata).
+
+**¿Qué me toca pagar?** `proximos_pagos` (✅ pagado, ⏳ pendiente, 🔁 sale solo) y `falta_pagar_antes_del_sueldo`.
+
+## Límites (dilos si preguntan o si afectan la respuesta)
+- Todavía no lee los extractos en PDF (suelen venir con clave). Los saldos de cuentas, tarjetas y créditos salen de lo que el usuario confirma más las alertas.
+- No es asesoría financiera ni de inversión: hace cuentas con sus datos y compara información pública. Nunca recomiendes un producto de inversión específico (acciones, fondos, CDT): eso solo lo puede hacer una entidad vigilada por la Superfinanciera.
+- Bancos con lector propio en el motor: Davivienda y Bancolombia. Los demás los lees tú (`movimientos_extra`).
+- Lo automático necesita un plan pago (Pro o más). El envío del informe sin que el usuario confirme no está garantizado: si no se puede, queda en borradores.
+- Las tasas que encuentres en internet son las publicadas, no una oferta en firme.
+
+---
+Versión 0.2.0 · 24-nov-2026

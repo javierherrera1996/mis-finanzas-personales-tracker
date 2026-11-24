@@ -1,0 +1,4 @@
+{
+ "_nota": "Créditos activos. 'sufijo' = últimos dígitos del número del crédito. El saldo se actualiza solo con los extractos de Davivienda; para otros bancos actualízalo a mano. en_simulador=false lo deja fuera del simulador (ej. deudas muy baratas).",
+ "creditos": []
+}

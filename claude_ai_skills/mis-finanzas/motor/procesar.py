@@ -17,6 +17,10 @@ entrada.json:
   movimientos_previos  filas que ya están en Movimientos (con Categoría manual, Tipo manual y Tu nota)
   correcciones         {ID: {categoria, subcategoria, tipo, nota}}: las columnas tuyas de Movimientos, para reclasificar todo
   notas_ids            ids de la pestaña Notas (lo que ya se anotó), para marcar qué descubrimientos son nuevos
+  objetivo             lo que quiere lograr: saber | gastar_menos | deudas | ahorrar (ordena las acciones)
+  ofertas              [{credito, entidad, tasa_ea, costos, condiciones, fuente, fecha}]: tasas que Claude encontró en internet
+  tasa_usura           la tasa de usura vigente (Superfinanciera), para marcar deudas por encima
+  suscripciones_canceladas  [{nombre, desde}]: las que el usuario canceló, para avisar si siguen cobrando
 
 Dos usos: diario (correos nuevos + los de los últimos días, y movimientos_previos) o reclasificar todo (toda la pestaña
 Correos, sin movimientos_previos, con correcciones). Sin correos y con las filas de un período en movimientos_previos,
@@ -24,7 +28,9 @@ analiza ese período.
 
 salida.json: nuevos (filas para agregar a Movimientos), actualizar (filas que ya estaban y cambiaron), movimientos (todas,
 para reescribir la pestaña al reclasificar), correos_registro (filas de la pestaña Correos con su estado), no_leidos,
-cuentas, tarjetas, resumen, deudas, proximos_pagos, calendario, analisis, descubrimientos, faltantes e informe."""
+cuentas, tarjetas, resumen, deudas, proximos_pagos, calendario, analisis, descubrimientos, faltantes, sueldo_probable,
+cobertura (cómo están los datos de cada cuenta), acciones (qué hacer primero), comparacion_ofertas (cuánto ahorraría con
+cada oferta) e informe."""
 import datetime, html, json, os, re, shutil, sys, tempfile
 import reportes
 
@@ -141,10 +147,23 @@ def productos_vistos(movs):
     return sorted(out.values(), key=lambda x: -x["movimientos"])
 
 
+def dia_de_pago(x):
+    """'penúltimo hábil', 'penultimo_habil', 30, '30' -> 'penultimo_habil' o 30 (None si no es un día)."""
+    t = str(x or "").strip().lower()
+    if re.match(r"pen[uú]ltimo", t): return "penultimo_habil"
+    return int(t) if t.isdigit() and 1 <= int(t) <= 31 else None
+
+
+def es_fijo(p):
+    """Solo pagos y cobros del mes con día: el sueldo, la plata apartada o el techo no son pagos (si llegan aquí, se ignoran)."""
+    return (str(p.get("tipo") or "pago").lower() in ("pago", "cobro") and dia_de_pago(p.get("dia")) is not None
+            and not re.search(r"sueldo|salario|apartad|techo", str(p.get("nombre", "")), re.I))
+
+
 def fijo(p):
     """Fila de la pestaña Fijos -> pago de data/pagos_config.json. 'buscar' es texto tal como sale en el banco (no regex)."""
-    tipo = p.get("tipo") or "pago"
-    dia = p.get("dia") if p.get("dia") == "penultimo_habil" else int(p.get("dia") or 1)
+    tipo = str(p.get("tipo") or "pago").lower()
+    dia = dia_de_pago(p.get("dia"))
     return {"nombre": p["nombre"], "dia": dia, "monto": float(p.get("monto") or 0), "como": p.get("como", ""), "automatico": False,
             "tipo": "servicio" if tipo == "pago" else tipo, "buscar": re.escape(p["buscar"].strip()) if p.get("buscar") else ""}
 
@@ -170,6 +189,13 @@ def main(entrada, salida):
     cfg = dict(e["config"])
     cfg["cuentas"] = [dict(x) for x in cfg.get("cuentas", [])]
     cfg.setdefault("techo_gasto_mes", 0)   # sin techo no se compara (el motor instalado supone $6.000.000)
+    sueldo = dict(cfg.get("sueldo") or {})
+    if sueldo.get("dia_pago") is not None:
+        sueldo["dia_pago"] = dia_de_pago(sueldo["dia_pago"]) or "penultimo_habil"
+    cfg["sueldo"] = sueldo
+    for x in cfg["cuentas"]:
+        for k in ("dia_pago", "dia_corte"):
+            if x.get(k) is not None: x[k] = dia_de_pago(x[k])
     # pestaña Reglas: texto tal como sale en la descripción (no regex), antes de las reglas generales
     cfg["reglas_personales"] = [[re.escape(r["si_aparece"].strip()), r.get("tipo") or "Gasto", r.get("categoria") or "Otros", r.get("subcategoria") or ""]
                                 for r in e.get("reglas", []) if (r.get("si_aparece") or "").strip()] + cfg.get("reglas_personales", [])
@@ -208,10 +234,10 @@ def main(entrada, salida):
                              "descuento_nomina": x["descuento_nomina"]} for x in creditos]},
               open(os.path.join(trabajo, "data", "deudas_config.json"), "w"), ensure_ascii=False)
     pc = json.load(open(os.path.join(trabajo, "data", "pagos_config.json")))
-    pc["pagos"] = ([p for p in pc["pagos"] if p.get("tipo") == "ingreso"] + [fijo(p) for p in e.get("fijos") or [] if p.get("tipo") != "ingreso"]
-                   + [{"nombre": "Cuota " + x["nombre"], "dia": int(x["dia_pago"]), "monto": x["cuota"], "como": x["entidad"],
+    pc["pagos"] = ([p for p in pc["pagos"] if p.get("tipo") == "ingreso"] + [fijo(p) for p in e.get("fijos") or [] if es_fijo(p)]
+                   + [{"nombre": "Cuota " + x["nombre"], "dia": dia_de_pago(x["dia_pago"]), "monto": x["cuota"], "como": x["entidad"],
                        "automatico": x["descuento_nomina"], "tipo": "deuda", "buscar": re.escape(x["buscar"].strip()) if x["buscar"] else ""}
-                      for x in creditos if x["dia_pago"] and x["cuota"]])
+                      for x in creditos if dia_de_pago(x["dia_pago"]) and x["cuota"]])
     json.dump(pc, open(os.path.join(trabajo, "data", "pagos_config.json"), "w"), ensure_ascii=False)
     if e.get("apartado"):
         json.dump({"inversion": e["apartado"]}, open(os.path.join(trabajo, "data", "reservas.json"), "w"))
@@ -279,15 +305,15 @@ def main(entrada, salida):
     pp = est["proximo_pago"]
     for p in agente.PRODUCTOS:
         if p["tipo"] != "tarjeta_credito": continue
-        s, t = p.get("saldo"), {"nombre": p["nombre"], "deuda": None, "desde": None, "dia_pago": p.get("dia_pago"),
+        s, t = p.get("saldo"), {"nombre": p["nombre"], "deuda": None, "desde": None, "dia_pago": p.get("dia_pago"), "dia_corte": p.get("dia_corte"),
                                 "tasa_ea": reportes.tasa(p.get("tasa_ea")) or None, "terminacion": p.get("terminacion")}
         if isinstance(s, dict) and s.get("valor") is not None and s.get("fecha"):
             post = [r for r in todos if r["Fecha"] > s["fecha"]]
             compras = sum(r["Valor"] for r in post if cu.de_fuente(r["Fuente"], agente.PRODUCTOS) is p)
             pagos = sum(r["Valor"] for r in post if r.get("Contraparte") == p["id"])
             t.update(deuda=round(s["valor"] - compras + pagos), desde=s["fecha"])
-            if t["deuda"] > 0 and p.get("dia_pago"):
-                d = int(p["dia_pago"])
+            if t["deuda"] > 0 and isinstance(p.get("dia_pago"), int):
+                d = p["dia_pago"]
                 vence = datetime.date(hoy.year, hoy.month, min(d, 28))
                 if vence < hoy:
                     vence = datetime.date(hoy.year + hoy.month // 12, hoy.month % 12 + 1, min(d, 28))
@@ -295,6 +321,12 @@ def main(entrada, salida):
                 if vence < pp:
                     por_pagar_tc += t["deuda"]
                     est["por_pagar_antes_del_sueldo"].append({"nombre": p["nombre"], "fecha": vence, "monto": t["deuda"]})
+        if isinstance(p.get("dia_corte"), int):   # lo que se compre después del corte se paga en el extracto siguiente
+            dc = p["dia_corte"]
+            corte = datetime.date(hoy.year, hoy.month, min(dc, 28))
+            if corte < hoy:
+                corte = datetime.date(hoy.year + hoy.month // 12, hoy.month % 12 + 1, min(dc, 28))
+            t["corte"] = corte.isoformat()
         tarjetas.append(t)
     est["libre"] -= por_pagar_tc
     est["por_dia"] = round(est["libre"] / est["dias_al_pago"])
@@ -339,11 +371,16 @@ def main(entrada, salida):
     res["proximos_pagos"] = proximos
     res["calendario"] = reportes.eventos_calendario(agente.pagos_config()["pagos"], [p for p in agente.PRODUCTOS if p["tipo"] == "tarjeta_credito"],
                                                     hoy, agente)
-    res["analisis"] = reportes.analisis(todos, agente)
+    res["analisis"] = reportes.analisis(todos, agente, hoy, {x["nombre"]: x["desde"] for x in e.get("suscripciones_canceladas") or []})
     ya_notas = set(e.get("notas_ids") or [])
     res["descubrimientos"] = [dict(x, nuevo=x["id"] not in ya_notas)
                               for x in reportes.descubrimientos(todos, nuevos, cfg, res["productos_vistos"], res["analisis"], hoy)]
     res["faltantes"] = reportes.faltantes(c["cuentas"], tarjetas, creditos, cfg, hoy)
+    # primer uso: el sueldo que se ve en los correos, cómo están los datos de cada cuenta y qué hacer primero
+    res["sueldo_probable"] = reportes.sueldo_probable(todos, agente)
+    res["cobertura"] = reportes.cobertura(agente.PRODUCTOS, todos, c["cuentas"], cu)
+    res["acciones"] = reportes.acciones(e.get("objetivo"), res["analisis"], deu, hoy)
+    res["comparacion_ofertas"] = reportes.comparar_ofertas(creditos, tarjetas, e.get("ofertas") or [], e.get("tasa_usura"))
     res["informe"] = reportes.informe(est, res, deu, proximos, preguntar, hoy)
     os.chdir(os.path.dirname(os.path.abspath(salida)) or ".")
     json.dump(res, open(salida, "w"), ensure_ascii=False, indent=1, default=str)

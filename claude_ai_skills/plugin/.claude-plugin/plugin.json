@@ -1,0 +1,19 @@
+{
+  "name": "mis-finanzas",
+  "displayName": "Mis finanzas",
+  "version": "0.2.0",
+  "description": "Tus finanzas personales en Colombia a partir de las alertas de tus bancos en Gmail: cuánto puedes gastar por día hasta el sueldo, en qué se te va la plata, suscripciones, deudas por tasa y mejores ofertas, todo en un Google Sheet tuyo.",
+  "author": {
+    "name": "javierherrera1996"
+  },
+  "homepage": "https://github.com/javierherrera1996/mis-finanzas-personales-tracker",
+  "repository": "https://github.com/javierherrera1996/mis-finanzas-personales-tracker",
+  "keywords": [
+    "finanzas personales",
+    "colombia",
+    "gmail",
+    "presupuesto",
+    "deudas",
+    "suscripciones"
+  ]
+}

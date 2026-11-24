@@ -156,7 +156,7 @@ class MotorSkill(unittest.TestCase):
         a = s["analisis"]
         self.assertEqual(a["por_mes"]["2026-09"]["ingresos"], 4500000)
         self.assertEqual(a["por_mes"]["2026-10"]["gastos"], 85000 + 120000 + 200000 + 80000 + 70000 + 30000)
-        self.assertEqual(a["suscripciones"], [{"nombre": "Netflix", "mensual": 30000, "ultimo": "2026-10-21"}])
+        self.assertEqual([(x["nombre"], x["mensual"], x["ultimo_cobro"]) for x in a["suscripciones"]], [("Netflix", 30000, "2026-10-21")])
         d = {x["id"]: x for x in s["descubrimientos"]}
         self.assertIn("2 veces", d["destino:0099887766"]["texto"])           # transferencias repetidas al mismo destino
         self.assertIn("producto:bancolombia-7070", d)                       # una tarjeta que no está en sus cuentas
@@ -218,6 +218,116 @@ class MotorSkill(unittest.TestCase):
         self.assertEqual([m["ID"] for m in d2["actualizar"]], [antes["ID"]])
         self.assertEqual(d2["actualizar"][0]["Tipo"], "Interno")
         self.assertEqual([m["Tipo"] for m in d2["nuevos"]], ["Interno"])
+
+    def test_fijos_como_los_escribe_claude(self):
+        # así quedó la pestaña Fijos en una prueba real: el sueldo, lo apartado y el techo como filas, y días en texto
+        cfg = copy.deepcopy(CONFIG)
+        cfg["sueldo"]["dia_pago"] = "penúltimo hábil"
+        cfg["cuentas"].append({"institucion": "Bancolombia", "tipo": "bolsillo", "terminacion": "9999", "dentro_de": "4455"})
+        fijos = [{"nombre": "Sueldo", "dia": "penúltimo hábil", "monto": 4500000, "tipo": "cobro"},
+                 {"nombre": "Plata apartada", "dia": "", "monto": 10000000, "tipo": ""},
+                 {"nombre": "Techo de gasto del día a día al mes", "dia": "", "monto": 2500000, "tipo": ""},
+                 {"nombre": "Provisión renta → bolsillo", "dia": "penúltimo hábil", "monto": 300000, "tipo": "pago"},
+                 {"nombre": "Arriendo", "dia": "5", "monto": 1200000, "tipo": "Pago"}]
+        s = self.correr({"config": cfg, "correos": correos(), "fijos": fijos})
+        nombres = [x["titulo"] for x in s["calendario"]]
+        self.assertTrue(any("Arriendo" in t for t in nombres) and any("Provisión renta" in t for t in nombres))
+        self.assertFalse(any("Plata apartada" in t or "Techo" in t or t.startswith("💵 Sueldo") for t in nombres))
+        self.assertEqual(next(x for x in s["calendario"] if x["id"] == "mis-finanzas:sueldo")["recurrencia"],
+                         "RRULE:FREQ=MONTHLY;BYDAY=MO,TU,WE,TH,FR;BYSETPOS=-2")
+        self.assertIn("Cuánto tienes hoy en Bancolombia bolsillo *9999", [x["que_falta"] for x in s["faltantes"]])
+
+    def test_patrones_con_dos_meses(self):
+        # un usuario nuevo, sin pagos fijos: el motor ve en dos meses de alertas lo que se repite
+        def alerta(i, fecha, texto):
+            return {"id": f"p{i}", "fecha": fecha + "T12:00:00", "de": BANCOLOMBIA, "asunto": "Alertas y Notificaciones",
+                    "texto": f"Bancolombia: {texto}. ¿Dudas? llamanos"}
+        corr, i = [], 0
+        for mes, dia_arr in (("09", "04"), ("10", "06")):
+            i += 1; corr.append(alerta(i, f"2026-{mes}-{dia_arr}", f"Pagaste $1.500.000,00 a INMOBILIARIA EJEMPLO SAS desde tu producto *4455 el {dia_arr}/{mes}/2026 10:00:00"))
+            i += 1; corr.append(alerta(i, f"2026-{mes}-15", f"Compraste COP45.900,00 en NETFLIX.COM, el 15/{mes}/2026 a las 08:00. Esta compra esta asociada a T.Cred *8899"))
+            i += 1; corr.append(alerta(i, f"2026-{mes}-20", f"Recibiste una transferencia por $700.000,00 de CARLOS PEREZ en tu cuenta *4455 el 20/{mes}/2026"))
+            for k in range(5):   # un hábito: muchas veces al mes, montos y días distintos
+                i += 1; corr.append(alerta(i, f"2026-{mes}-{10 + k:02d}", f"Compraste COP{12 + k}.000,00 en UBER RIDES, el {10 + k}/{mes}/2026 a las 22:00. Esta compra esta asociada a T.Cred *8899"))
+        s = self.correr({"config": CONFIG, "correos": corr})
+        pa = s["analisis"]["patrones"]
+        fijos = {x["con"]: x for x in pa["pagos_que_se_repiten"]}
+        self.assertEqual((fijos["INMOBILIARIA EJEMPLO"]["monto_tipico"], fijos["INMOBILIARIA EJEMPLO"]["meses"]), (1500000, 2))
+        self.assertIn("NETFLIX COM", fijos)
+        self.assertNotIn("UBER RIDES", fijos)                                   # es un hábito, no un pago fijo
+        self.assertEqual([x["con"] for x in pa["habitos"]], ["UBER"])
+        self.assertEqual([x["con"] for x in pa["ingresos_que_se_repiten"]], ["CARLOS PEREZ"])
+        ids = [x["id"] for x in s["descubrimientos"]]
+        self.assertIn("patron:inmobiliaria-ejemplo", ids)
+        self.assertIn("ingreso:carlos-perez", ids)
+
+    def test_primer_valor_del_onboarding(self):
+        # usuaria nueva que todavía no ha dicho su sueldo: el motor lo propone, dice cómo están sus datos y qué hacer primero
+        cfg = copy.deepcopy(CONFIG)
+        cfg["sueldo"] = {}
+        def alerta(i, fecha, texto):
+            return {"id": f"o{i}", "fecha": fecha + "T12:00:00", "de": BANCOLOMBIA, "asunto": "Alertas y Notificaciones",
+                    "texto": f"Bancolombia: {texto}. ¿Dudas? llamanos"}
+        corr, i = [], 0
+        for f_ in ("2026-09-29", "2026-10-29"):   # penúltimo día hábil de cada mes
+            i += 1; corr.append(alerta(i, f_, f"Recibiste un pago de Nomina de EMPRESA EJEMPLO SAS por $4.500.000,00 en tu cuenta *4455 el {f_[8:]}/{f_[5:7]}/2026"))
+        for mes in ("09", "10"):
+            for k in range(6):
+                i += 1; corr.append(alerta(i, f"2026-{mes}-{10 + k:02d}", f"Compraste COP{40 + k}.000,00 en RAPPI COLOMBIA, el {10 + k}/{mes}/2026 a las 20:00. Esta compra esta asociada a T.Deb *1234"))
+        s = self.correr({"config": cfg, "correos": corr, "objetivo": "gastar_menos"})
+        self.assertEqual(s["sueldo_probable"]["monto"], 4500000)
+        self.assertEqual(s["sueldo_probable"]["dia"], "penultimo_habil")
+        self.assertIn("Rappi", s["acciones"][0])
+        cob = {x["nombre"]: x for x in s["cobertura"]}
+        self.assertEqual(cob["Bancolombia ahorros *4455"]["movimientos"], 2 + 12)
+        self.assertIn("no manda alertas", cob["Trii"]["nota"])
+        self.assertIn("Rappi", s["informe"]["texto"].split("UNA COSA PARA ESTA SEMANA")[1])
+
+    def test_ofertas_y_corte_de_tarjeta(self):
+        cfg = copy.deepcopy(CONFIG)
+        next(c for c in cfg["cuentas"] if c["tipo"] == "tarjeta_credito").update(saldo={"valor": 1000000, "fecha": "2026-09-29"}, dia_corte=8, dia_pago=25)
+        creditos = [{"nombre": "Libre inversión", "entidad": "Banco", "saldo": 20000000, "tasa_ea": 22, "cuota": 700000, "dia_pago": 5},
+                    {"nombre": "ICETEX", "entidad": "ICETEX", "saldo": 10000000, "tasa_ea": 5, "cuota": 300000, "dia_pago": 5}]
+        ofertas = [{"credito": "Libre inversión", "entidad": "Otro banco", "tasa_ea": 16, "costos": 200000, "fuente": "ejemplo.com", "fecha": "2026-10-01"},
+                   {"credito": "ICETEX", "entidad": "Otro banco", "tasa_ea": 16, "fuente": "ejemplo.com"},   # más cara: no vale la pena
+                   {"credito": "Bancolombia tarjeta *8899", "entidad": "Compra de cartera", "tasa_ea": 15, "fuente": "ejemplo.com"}]
+        s = self.correr({"config": cfg, "correos": correos(), "creditos": creditos, "ofertas": ofertas, "tasa_usura": "21,5"})
+        co = {(o["credito"], o["tasa_oferta"]): o for o in s["comparacion_ofertas"]["ofertas"]}
+        li = co[("Libre inversión", 0.16)]
+        self.assertTrue(li["vale_la_pena"])
+        self.assertLess(li["meses_con_la_oferta"], li["meses_que_faltan"])
+        self.assertGreater(li["ahorro_cuota_mismo_plazo"], 0)
+        self.assertFalse(co[("ICETEX", 0.16)]["vale_la_pena"])
+        self.assertGreater(co[("Bancolombia tarjeta *8899", 0.15)]["ahorro_total_un_ano"], 0)
+        self.assertEqual([x["credito"] for x in s["comparacion_ofertas"]["sobre_usura"]], ["Libre inversión", "Bancolombia tarjeta *8899"])
+        tc = next(t for t in s["tarjetas"] if "8899" in t["nombre"])
+        self.assertTrue(tc["corte"].endswith("-08"))
+        self.assertTrue(any(x["titulo"].startswith("✂️ Corte") for x in s["calendario"]))
+        self.assertIn("PARA MEJORAR TUS DEUDAS", s["informe"]["texto"])
+
+    def test_suscripciones_claras(self):
+        def alerta(i, fecha, comercio, valor):
+            return {"id": f"s{i}", "fecha": fecha + "T12:00:00", "de": BANCOLOMBIA, "asunto": "Alertas y Notificaciones",
+                    "texto": f"Bancolombia: Compraste COP{valor},00 en {comercio}, el {fecha[8:]}/{fecha[5:7]}/2026 a las 08:00. Esta compra esta asociada a T.Cred *8899. ¿Dudas? llamanos"}
+        corr = [alerta(1, "2026-08-15", "NETFLIX.COM", "38.900"), alerta(2, "2026-09-15", "NETFLIX.COM", "38.900"),
+                alerta(3, "2026-10-15", "NETFLIX.COM", "44.900"),                                      # subió de precio
+                alerta(4, "2026-10-03", "SPOTIFY", "18.500"), alerta(5, "2026-10-04", "SPOTIFY", "18.500"),   # cobro doble
+                alerta(6, "2026-09-05", "TINDER", "49.000"), alerta(7, "2026-10-05", "TINDER", "49.000"),     # la canceló el 20-sep
+                alerta(8, "2026-09-02", "GIMNASIO BARRIO", "90.000"), alerta(9, "2026-10-02", "GIMNASIO BARRIO", "90.000"),
+                alerta(10, "2026-09-20", "RESTAURANTE EJEMPLO", "60.000"), alerta(11, "2026-10-20", "RESTAURANTE EJEMPLO", "60.000")]
+        s = self.correr({"config": CONFIG, "correos": corr, "suscripciones_canceladas": [{"nombre": "Tinder", "desde": "2026-09-20"}]})
+        su = {x["nombre"]: x for x in s["analisis"]["suscripciones"]}
+        self.assertEqual(su["Netflix"]["cambio_precio"], {"de": 38900, "a": 44900, "fecha": "2026-10-15"})
+        self.assertEqual((su["Netflix"]["mensual"], su["Netflix"]["al_ano"], su["Netflix"]["dia_de_cobro"]), (44900, 44900 * 12, 15))
+        self.assertEqual(su["Netflix"]["proximo_cobro"][:7], "2026-11")
+        self.assertEqual(su["Spotify"]["duplicado"], ["2026-10-04"])
+        self.assertEqual(su["Tinder"]["cobro_tras_cancelar"], ["2026-10-05"])
+        self.assertFalse(su["Gimnasio Barrio"]["conocida"])             # no está en la lista, pero cobra igual cada mes
+        self.assertNotIn("Restaurante Ejemplo", su)                      # comida que se repite no es una suscripción
+        ids = [x["id"] for x in s["descubrimientos"]]
+        for k in ("precio:netflix:2026-10-15", "duplicado:spotify:2026-10-04", "tras-cancelar:tinder:2026-10-05"):
+            self.assertIn(k, ids)
+        self.assertIn("SUSCRIPCIONES:", s["informe"]["texto"])
 
     def test_davivienda_con_el_texto_en_una_linea(self):
         cfg = copy.deepcopy(CONFIG)
