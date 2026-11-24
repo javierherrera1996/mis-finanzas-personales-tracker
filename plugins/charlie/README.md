@@ -1,4 +1,6 @@
-# Mis finanzas
+# CHARLIE
+
+**Habla con tus cuentas.** Pregúntale lo que quieras a tu plata y simula antes de decidir: "¿me alcanza para el viaje?", "¿y si abono $500.000 al mes a la tarjeta?", "¿y si cancelo Netflix?". Las cifras salen de un motor, no de suposiciones.
 
 Tus finanzas personales en Colombia, sin instalar nada en tu computador. Claude lee las alertas de movimientos que tus
 bancos te mandan a Gmail (Bancolombia, Davivienda y otros), las clasifica con un motor que viene dentro del plugin y lo
@@ -13,10 +15,10 @@ Necesitas Claude Pro o Max y que tus bancos te manden las alertas de cada movimi
    (claude.ai/customize/connectors). Para los recordatorios de pagos, también Google Calendar.
 2. **Activa la ejecución de código**: Configuración → Capacidades → "Ejecución de código y creación de archivos".
 3. **Instala el plugin**: Personalizar → Plugins (claude.ai/customize/plugins) → Agregar → Agregar marketplace →
-   `javierherrera1996/mis-finanzas-personales-tracker` → instala **Mis finanzas**.
+   `javierherrera1996/mis-finanzas-personales-tracker` → instala **CHARLIE**.
    En Claude Code: `/plugin marketplace add javierherrera1996/mis-finanzas-personales-tracker` y luego
-   `/plugin install mis-finanzas@mis-finanzas`.
-4. **Empieza**: en un chat nuevo escribe `/mis-finanzas:empezar` (o "configura mis finanzas"). Son unos 10 minutos.
+   `/plugin install charlie@charlie`.
+4. **Empieza**: en un chat nuevo escribe `/charlie:empezar` (o "configura mis finanzas"). Son unos 10 minutos.
 5. **Déjalo solo** (opcional): Programadas → Nueva tarea → todos los días a las 7:00 → "Actualiza mis finanzas".
    Los lunes a las 7:30 → "Mándame el informe semanal de mis finanzas".
 

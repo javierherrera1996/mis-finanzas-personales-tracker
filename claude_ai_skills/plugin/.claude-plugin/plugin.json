@@ -1,8 +1,8 @@
 {
-  "name": "mis-finanzas",
-  "displayName": "CHARLIE · Mis finanzas",
-  "version": "0.7.0",
-  "description": "Tus finanzas personales en Colombia a partir de las alertas de tus bancos en Gmail: cuánto puedes gastar por día hasta el sueldo, en qué se te va la plata, suscripciones, deudas por tasa y mejores ofertas, todo en un Google Sheet tuyo.",
+  "name": "charlie",
+  "displayName": "CHARLIE",
+  "version": "0.8.0",
+  "description": "CHARLIE: habla con tus cuentas. Pregúntale a tu plata y simula antes de decidir (¿me alcanza?, ¿y si abono?, ¿y si cancelo?), con las alertas de tus bancos en Gmail. Para Colombia, dentro de tu Claude.",
   "author": {
     "name": "javierherrera1996"
   },

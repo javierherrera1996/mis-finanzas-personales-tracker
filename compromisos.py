@@ -160,9 +160,10 @@ def lista(movs, pagos, tarjetas=(), suscripciones=(), marcas=None, hoy=None, has
                 est = "por_recibir" if entra else ("vence_pronto" if (f0 - hoy).days <= 3 else "pendiente")
             elif p.get("automatico"):
                 est = "automatico" if not p.get("buscar") else ("sin_confirmar" if (hoy - f0).days > 3 else "por_confirmar")
-            elif not p.get("buscar") or (not cand and (yy, mm) < (y, m)) or (historia_desde and _iso(ini) < historia_desde):
-                # No se puede saber: no dice cómo aparece en el banco, o es de un mes anterior y nunca se ha visto un pago
-                # de esto (lo acaba de registrar, o lo paga por un camino sin alertas). Se pregunta; no se alarma.
+            elif not p.get("buscar") or not cand or (historia_desde and _iso(ini) < historia_desde):
+                # No se puede saber: no dice cómo aparece en el banco, nunca se ha visto un pago de esto en las alertas (lo
+                # acaba de registrar, o lo paga por un camino sin alertas) o la historia leída no alcanza. Se pregunta; no se
+                # alarma. Desde que aparezca un pago, los meses sin pago sí quedan atrasados.
                 est = "sin_confirmar"
                 it["nota"] = ("No sé cómo aparece este pago en tus alertas: dime cómo lo pagas." if not p.get("buscar")
                               else "No veo ningún pago de esto en tus alertas: ¿lo pagas por otro lado?")

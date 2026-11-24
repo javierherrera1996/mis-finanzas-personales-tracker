@@ -1,16 +1,16 @@
 {
-  "name": "mis-finanzas",
+  "name": "charlie",
   "owner": {
     "name": "javierherrera1996"
   },
-  "description": "Mis finanzas: tu asistente de finanzas personales para Colombia, dentro de tu Claude.",
+  "description": "CHARLIE: habla con tus cuentas. Tu asesor de finanzas personales para Colombia, dentro de tu Claude.",
   "plugins": [
     {
-      "name": "mis-finanzas",
-      "displayName": "CHARLIE · Mis finanzas",
-      "source": "./plugins/mis-finanzas",
-      "version": "0.7.0",
-      "description": "Tus finanzas personales en Colombia a partir de las alertas de tus bancos en Gmail: cuánto puedes gastar por día hasta el sueldo, en qué se te va la plata, suscripciones, deudas por tasa y mejores ofertas, todo en un Google Sheet tuyo.",
+      "name": "charlie",
+      "displayName": "CHARLIE",
+      "source": "./plugins/charlie",
+      "version": "0.8.0",
+      "description": "CHARLIE: habla con tus cuentas. Pregúntale a tu plata y simula antes de decidir (¿me alcanza?, ¿y si abono?, ¿y si cancelo?), con las alertas de tus bancos en Gmail. Para Colombia, dentro de tu Claude.",
       "category": "productivity",
       "homepage": "https://github.com/javierherrera1996/mis-finanzas-personales-tracker",
       "license": "MIT"

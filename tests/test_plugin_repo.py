@@ -1,4 +1,4 @@
-"""El repo sirve de marketplace de plugins de Claude: .claude-plugin/marketplace.json apunta a plugins/mis-finanzas/.
+"""El repo sirve de marketplace de plugins de Claude: .claude-plugin/marketplace.json apunta a plugins/charlie/.
 Estas pruebas fallan si alguien cambió la skill o el motor y no volvió a correr claude_ai_skills/empaquetar.py."""
 import filecmp, json, os, sys, tempfile, unittest
 
@@ -31,8 +31,8 @@ class PluginRepo(unittest.TestCase):
 
     def test_plugin_del_repo_al_dia(self):
         tmp = tempfile.mkdtemp()
-        nuevo = empaquetar.armar_plugin(tmp, "mis-finanzas")
-        repo = os.path.join(RAIZ, "plugins", "mis-finanzas")
+        nuevo = empaquetar.armar_plugin(tmp, "charlie")
+        repo = os.path.join(RAIZ, "plugins", "charlie")
         self.assertEqual(archivos(nuevo), archivos(repo), "corre: python claude_ai_skills/empaquetar.py")
         for f in archivos(nuevo):
             self.assertTrue(filecmp.cmp(os.path.join(nuevo, f), os.path.join(repo, f), shallow=False),

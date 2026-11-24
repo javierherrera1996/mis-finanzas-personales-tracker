@@ -1,6 +1,6 @@
 """Arma claude_ai_skills/mis-finanzas.zip: SKILL.md + motor/ (procesar.py, festivos) + los módulos del motor y data_inicial
 copiados de la raíz del repo, para que la skill corra exactamente el mismo código que la versión instalada.
-Además deja el plugin en plugins/mis-finanzas/ (lo que instala Claude desde el marketplace de este repo).
+Además deja el plugin en plugins/charlie/ (lo que instala Claude desde el marketplace de este repo).
 Uso: python claude_ai_skills/empaquetar.py"""
 import os, shutil, tempfile, zipfile
 
@@ -44,13 +44,14 @@ def comprimir(carpeta, zp):
 
 
 def publicar_en_repo():
-    """Deja el plugin armado en plugins/mis-finanzas/: de ahí lo instala Claude cuando agregan este repo como marketplace
+    """Deja el plugin armado en plugins/charlie/: de ahí lo instala Claude cuando agregan este repo como marketplace
     (.claude-plugin/marketplace.json en la raíz). Hay que correrlo y hacer commit cada vez que cambie la skill o el motor;
     tests/test_plugin_repo.py falla si quedó desactualizado."""
     plugins = os.path.join(RAIZ, "plugins")
-    shutil.rmtree(os.path.join(plugins, "mis-finanzas"), ignore_errors=True)
+    for viejo in ("mis-finanzas", "charlie"):   # el plugin se llamó mis-finanzas hasta la 0.7.0
+        shutil.rmtree(os.path.join(plugins, viejo), ignore_errors=True)
     os.makedirs(plugins, exist_ok=True)
-    d = armar_plugin(plugins, "mis-finanzas")
+    d = armar_plugin(plugins, "charlie")
     print(d, sum(len(f) for _, _, f in os.walk(d)), "archivos")
 
 

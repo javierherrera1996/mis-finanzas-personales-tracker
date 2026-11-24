@@ -153,6 +153,9 @@ summary { cursor: pointer; padding: 14px 0; font-weight: 600; list-style-positio
 details > div { padding-bottom: 14px; color: var(--muted); font-size: 15px; display: grid; gap: 8px; }
 
 .asks { display: flex; flex-wrap: wrap; gap: 8px; }
+.chat { display: grid; gap: 8px; max-width: 720px; }
+.chat .q { justify-self: end; background: var(--accent); color: var(--accent-ink); border-radius: 14px 14px 4px 14px; padding: 9px 14px; max-width: 85%; }
+.chat .a { justify-self: start; background: var(--surface); border: 1px solid var(--line); border-radius: 14px 14px 14px 4px; padding: 9px 14px; max-width: 85%; }
 .ask { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 14px; }
 
 footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; display: flex; flex-wrap: wrap; gap: 8px 20px; justify-content: space-between; }
@@ -180,10 +183,10 @@ html { scroll-behavior: smooth; }
     <div>
       <div class="eyebrow">
         <span class="chip">Hecho para Colombia</span>
-        <span class="chip beta">Beta · versión 0.7.0</span>
+        <span class="chip beta">Beta · versión 0.8.0</span>
       </div>
-      <h1>CHARLIE: tus finanzas, <span>dentro de tu Claude</span></h1>
-      <p class="lead">Claude lee las alertas que tus bancos te mandan a Gmail, arma un Google Sheet con cada movimiento y te dice cuánto puedes gastar por día hasta el sueldo. No instalas nada en tu computador.</p>
+      <h1>CHARLIE: <span>habla con tus cuentas</span></h1>
+      <p class="lead">Pregúntale lo que quieras a tu plata y simula antes de decidir: ¿me alcanza?, ¿y si abono a la tarjeta?, ¿y si cancelo una suscripción? CHARLIE lee las alertas que tus bancos te mandan a Gmail y saca las cifras de un motor, no de suposiciones. Todo dentro de tu Claude, sin instalar nada.</p>
       <div class="needs">
         <div><span class="tick" aria-hidden="true">✓</span><span><b>Claude Pro o Max.</b> Las tareas automáticas necesitan un plan pago.</span></div>
         <div><span class="tick" aria-hidden="true">✓</span><span><b>Alertas de tus bancos en Gmail.</b> Cada compra y transferencia te llega al correo.</span></div>
@@ -290,7 +293,7 @@ html { scroll-behavior: smooth; }
         <div class="panel" role="tabpanel" id="panel-code" aria-labelledby="tab-code" hidden>
           <p>En una sesión de Claude Code, una línea a la vez:</p>
           <div class="copy"><code id="c-cc1">/plugin marketplace add javierherrera1996/mis-finanzas-personales-tracker</code><button type="button" data-copy="c-cc1">Copiar</button></div>
-          <div class="copy"><code id="c-cc2">/plugin install mis-finanzas@mis-finanzas</code><button type="button" data-copy="c-cc2">Copiar</button></div>
+          <div class="copy"><code id="c-cc2">/plugin install charlie@charlie</code><button type="button" data-copy="c-cc2">Copiar</button></div>
           <p class="muted">Claude Code necesita los conectores de Gmail y Drive de tu cuenta de claude.ai, o servidores MCP equivalentes.</p>
         </div>
 
@@ -313,8 +316,8 @@ html { scroll-behavior: smooth; }
           <span class="time">10 min</span>
         </div>
         <p>Abre un chat nuevo y escribe:</p>
-        <div class="copy"><code id="c-start">/mis-finanzas:empezar</code><button type="button" data-copy="c-start">Copiar</button></div>
-        <p class="muted">También sirve escribir "configura mis finanzas". Para probarlo como alguien nuevo: <code>/mis-finanzas:empezar prueba</code>.</p>
+        <div class="copy"><code id="c-start">/charlie:empezar</code><button type="button" data-copy="c-start">Copiar</button></div>
+        <p class="muted">También sirve escribir "configura mis finanzas". Para probarlo como alguien nuevo: <code>/charlie:empezar prueba</code>.</p>
         <div class="flow">
           <div><b>1</b>Tocas 4 opciones: bancos, deudas, qué quieres lograr e historial.</div>
           <div><b>2</b>Lee tus últimas 2 semanas de alertas; el resto, hasta 2 meses, lo completa solo cada día.</div>
@@ -338,12 +341,28 @@ html { scroll-behavior: smooth; }
         <div class="copy"><code id="c-lunes">Mándame el informe semanal de mis finanzas</code><button type="button" data-copy="c-lunes">Copiar</button></div>
         <p class="muted">Corren en la nube aunque tengas el computador apagado. Claude también te ofrece crearlas al final del paso 5.</p>
         <p class="label">Para verlo desde el celular, pídele tu tablero</p>
-        <div class="copy"><code id="c-tablero">/mis-finanzas:tablero</code><button type="button" data-copy="c-tablero">Copiar</button></div>
+        <div class="copy"><code id="c-tablero">/charlie:tablero</code><button type="button" data-copy="c-tablero">Copiar</button></div>
         <p class="muted">Crea una página en tu cuenta de Claude con Inicio, Cuentas, Movimientos, Flujo, Reportes, Compromisos (con "Ya lo pagué") y Metas. Se llena con cada actualización. No la compartas con enlace público: así la actualización automática puede escribir en ella.</p>
         <label class="done-toggle"><input type="checkbox" id="hecho-6" data-paso="6"> Ya quedaron programadas</label>
       </section>
     </main>
   </div>
+
+  <section class="section" aria-labelledby="t-habla">
+    <h2 id="t-habla">Habla con tus cuentas</h2>
+    <p class="muted" style="color:var(--muted)">Lo más importante de CHARLIE es la conversación. Ejemplos con cifras inventadas:</p>
+    <div class="chat">
+      <div class="q">¿Me alcanza para un viaje de $3 M en marzo?</div>
+      <div class="a">Al ritmo de los últimos 3 meses te quedan ≈ $2.800.000 al mes: para marzo tendrías ≈ $14 M. Te alcanza, aunque es un estimado, no una promesa.</div>
+      <div class="q">¿Y si abono $500.000 al mes a la libre inversión?</div>
+      <div class="a">Terminas en junio de 2028 en vez de noviembre de 2029: 17 cuotas menos y $3.030.141 menos de intereses.</div>
+      <div class="q">¿Cuánto ahorro si gasto 30 % menos en restaurantes?</div>
+      <div class="a">Gastas en promedio $419.433 al mes en comida fuera; con 30 % menos te quedan $125.830 al mes, $1.509.960 al año.</div>
+      <div class="q">Eso de $1.000.000 del 15 de octubre fue a mi Nequi.</div>
+      <div class="a">Listo: lo pasé a "entre mis cuentas" y no cuenta como gasto. Ya no lo vuelvo a preguntar.</div>
+    </div>
+    <p class="muted" style="color:var(--muted)">Al terminar la configuración te entrega tu resumen financiero (lo que tienes, lo que debes, cada mes, en qué se va, deudas y suscripciones) con unas pocas preguntas numeradas para que tus cifras queden exactas.</p>
+  </section>
 
   <section class="section" aria-labelledby="t-solo">
     <h2 id="t-solo">Lo que hace solo</h2>
@@ -352,13 +371,15 @@ html { scroll-behavior: smooth; }
       <div class="tile"><span class="when">Cada lunes</span><h3>Tu informe semanal</h3><p>Llega a tu correo: cuánto gastaste, en qué, lo que vence en las próximas dos semanas y las preguntas que tiene para ti.</p></div>
       <div class="tile"><span class="when">El día 1</span><h3>El cierre del mes</h3><p>Cómo te fue, qué suscripción cambió de precio y si alguna deuda se puede pagar con una tasa más baja.</p></div>
     </div>
-    <p class="muted" style="color:var(--muted)">Después pregúntale lo que quieras:</p>
+    <p class="muted" style="color:var(--muted)">Y cuando quieras, pregúntale:</p>
     <div class="asks">
       <span class="ask">¿Cuánto puedo gastar?</span>
       <span class="ask">¿En qué se me fue la plata?</span>
       <span class="ask">¿Qué suscripciones tengo?</span>
       <span class="ask">¿A cuál deuda abono?</span>
       <span class="ask">¿Me conviene comprar cartera?</span>
+      <span class="ask">¿Cuándo salgo de deudas?</span>
+      <span class="ask">¿Y si cancelo Netflix?</span>
       <span class="ask">Eso de $450.000 fue el arriendo</span>
     </div>
   </section>
@@ -430,7 +451,7 @@ html { scroll-behavior: smooth; }
   </section>
 
   <footer>
-    <span>CHARLIE · Mis finanzas 0.7.0 · beta · licencia MIT</span>
+    <span>CHARLIE 0.8.0 · beta · licencia MIT · <a href="https://github.com/javierherrera1996/mis-finanzas-personales-tracker/blob/main/docs/privacidad.md" target="_blank" rel="noopener">Privacidad</a></span>
     <span><a href="https://github.com/javierherrera1996/mis-finanzas-personales-tracker" target="_blank" rel="noopener">Código en GitHub</a> · <a href="https://github.com/javierherrera1996/mis-finanzas-personales-tracker/issues" target="_blank" rel="noopener">Reportar un problema</a></span>
   </footer>
 </div>

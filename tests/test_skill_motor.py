@@ -427,6 +427,38 @@ class MotorSkill(unittest.TestCase):
         self.assertTrue(all(f["parcial"] for f in rep["flujo"] if f["mes"] + "-01" < hd))
         self.assertFalse([m for m in rep["meses_base"] if m + "-01" < hd])
 
+    def test_simulaciones_y_resumen_financiero(self):
+        """Habla con tus cuentas: las cifras de "¿y si…?" salen del motor, y la configuración cierra con el resumen
+        financiero y preguntas numeradas."""
+        creditos = [{"nombre": "Libre inversión", "entidad": "Banco", "saldo": 20000000, "tasa_ea": 22, "cuota": 700000, "dia_pago": 5},
+                    {"nombre": "ICETEX", "entidad": "ICETEX", "saldo": 10000000, "tasa_ea": 5, "cuota": 300000, "dia_pago": 5}]
+        sims = [{"tipo": "abono_extra", "credito": "libre", "monto_mes": 500000},
+                {"tipo": "salir_de_deudas", "extra_mes": 300000},
+                {"tipo": "me_alcanza", "monto": 100000},
+                {"tipo": "ahorrar_para", "monto": 3000000, "fecha": "2027-06-01", "meta": "el viaje"},
+                {"tipo": "recortar", "categoria": "Comida", "porcentaje": 30},
+                {"tipo": "cancelar", "suscripcion": "No existe"},
+                {"tipo": "otra_cosa"}]
+        s = self.correr({"config": copy.deepcopy(CONFIG), "correos": correos(), "creditos": creditos, "simulaciones": sims})
+        ab, sal, alc, aho, rec, can, otra = s["simulaciones"]
+        self.assertLess(ab["resultado"]["meses_con"], ab["resultado"]["meses_sin"])
+        self.assertGreater(ab["resultado"]["ahorro_intereses"], 0)
+        self.assertIn("Libre inversión", ab["texto"])
+        self.assertLessEqual(sal["resultado"]["meses_con"], sal["resultado"]["meses_sin"])
+        self.assertEqual(sal["resultado"]["orden"][0]["credito"], "Libre inversión")   # lo extra va primero a la de mayor tasa
+        self.assertIn("alcanza", alc["resultado"])
+        self.assertGreater(aho["resultado"]["al_mes"], 0)
+        self.assertNotIn("error", rec["resultado"], rec["texto"])
+        self.assertAlmostEqual(rec["resultado"]["ahorro_ano"], rec["resultado"]["ahorro_mes"] * 12, delta=12)
+        self.assertEqual(can["resultado"].get("error"), "suscripcion")
+        self.assertEqual(otra["error"], "tipo")
+        rf = s["resumen_financiero"]
+        self.assertTrue(rf["texto"].startswith("## Tu resumen financiero"))
+        self.assertEqual([p["n"] for p in rf["preguntas"]], list(range(1, len(rf["preguntas"]) + 1)))
+        self.assertLessEqual(len(rf["preguntas"]), 7)
+        self.assertIn("Tu resumen financiero", rf["html"])
+        self.assertEqual(rf["secciones"]["hoy"]["diferencia"], rf["secciones"]["hoy"]["lo_que_tienes"] - rf["secciones"]["hoy"]["lo_que_debes"])
+
     def test_suscripciones_claras(self):
         def alerta(i, fecha, comercio, valor):
             return {"id": f"s{i}", "fecha": fecha + "T12:00:00", "de": BANCOLOMBIA, "asunto": "Alertas y Notificaciones",

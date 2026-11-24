@@ -16,19 +16,23 @@ Lee los correos de tus bancos, organiza cada peso en un Google Sheet y tú solo 
 
 ---
 
+## 💬 CHARLIE: habla con tus cuentas
+
+Pregúntale lo que quieras a tu plata y **simula antes de decidir**: *¿me alcanza para un viaje de $3 M en marzo?, ¿y si abono $500.000 al mes a la tarjeta?, ¿cuánto ahorro si cancelo Netflix?* Las cifras salen de un motor que lee las alertas de tus bancos en tu Gmail; el Sheet, el tablero y los correos son su memoria y sus avisos.
+
 ## ⚡ Instálalo en tu Claude (sin instalar nada en tu computador)
 
 Necesitas Claude **Pro o Max** y que tus bancos te manden las alertas de cada movimiento a Gmail.
 
 1. **Conecta Gmail y Google Drive** (y Google Sheets si aparece aparte) en [Personalizar → Conectores](https://claude.ai/customize/connectors).
 2. **Activa la ejecución de código** en Configuración → Capacidades.
-3. **Agrega este repo como marketplace** en [Personalizar → Plugins](https://claude.ai/customize/plugins) → Agregar → Agregar marketplace → `javierherrera1996/mis-finanzas-personales-tracker`, e instala **Mis finanzas**.
-4. En un chat nuevo escribe **`/mis-finanzas:empezar`**. En unos 10 minutos tienes tu Sheet y cuánto puedes gastar por día.
+3. **Agrega este repo como marketplace** en [Personalizar → Plugins](https://claude.ai/customize/plugins) → Agregar → Agregar marketplace → `javierherrera1996/mis-finanzas-personales-tracker`, e instala **CHARLIE**.
+4. En un chat nuevo escribe **`/charlie:empezar`**. En unos 10 minutos tienes tu Sheet y cuánto puedes gastar por día.
 5. (Opcional) En **Programadas**, crea una tarea diaria: *"Actualiza mis finanzas"*.
 
-En Claude Code: `/plugin marketplace add javierherrera1996/mis-finanzas-personales-tracker` y `/plugin install mis-finanzas@mis-finanzas`.
+En Claude Code: `/plugin marketplace add javierherrera1996/mis-finanzas-personales-tracker` y `/plugin install charlie@charlie`.
 
-El plugin vive en [`plugins/mis-finanzas/`](plugins/mis-finanzas) (se arma con `python claude_ai_skills/empaquetar.py`). La versión completa para tu Mac, con extractos en PDF y años de historia, sigue abajo.
+El plugin vive en [`plugins/charlie/`](plugins/charlie) (se arma con `python claude_ai_skills/empaquetar.py`). La versión completa para tu Mac, con extractos en PDF y años de historia, sigue abajo.
 
 ---
 

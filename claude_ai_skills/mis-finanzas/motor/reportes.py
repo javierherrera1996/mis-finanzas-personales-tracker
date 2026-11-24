@@ -484,6 +484,8 @@ def faltantes(filas, tarjetas, creditos, cfg, hoy):
             add("saldo:" + slug(x["nombre"]), f"Cuánto tienes hoy en {x['nombre']}", 1 if liquida else 2)
         elif x["saldo"] is None:
             add("saldo:" + slug(x["nombre"]), f"El saldo de hoy de {x['nombre']} (no manda alertas; el último es del {d(x['desde'])})", 1)
+        elif liquida and x["saldo"] < -1000:   # imposible en una cuenta de ahorros: le entra plata que no avisa (otra cuenta, efectivo)
+            add("saldo:" + slug(x["nombre"]), f"Cuánto tienes hoy en {x['nombre']} (con las alertas me da negativo: seguramente te entra plata que no veo)", 1)
         elif dias(x["desde"]) > 35:
             add("saldo:" + slug(x["nombre"]), f"El saldo de hoy de {x['nombre']} (el último que me diste es del {d(x['desde'])})", 2)
     for t in tarjetas:

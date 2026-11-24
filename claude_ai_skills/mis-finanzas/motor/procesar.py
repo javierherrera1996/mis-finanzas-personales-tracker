@@ -369,7 +369,9 @@ def main(entrada, salida):
             "plata_en_cuentas": round(c["total"]), "apartado": round(c.get("reservado_inversion", 0)), "disponible": round(c["disponible"]),
             "inversiones": round(c["inversiones"]), "cuentas_sin_saldo": c["sin_saldo"],
             # la cifra por día es aproximada si faltan saldos o la deuda de una tarjeta salió de las alertas: dilo
-            "aproximado": bool(c["sin_saldo"] or [t for t in tarjetas if t.get("estimada") or t["deuda"] is None]),
+            "aproximado": bool(c["sin_saldo"] or [t for t in tarjetas if t.get("estimada") or t["deuda"] is None]
+                               or [f for f in c["cuentas"] if f.get("tipo") in cu.LIQUIDOS and (f.get("saldo") or 0) < -1000]),
+            "cuentas_negativas": [f["nombre"] for f in c["cuentas"] if f.get("tipo") in cu.LIQUIDOS and (f.get("saldo") or 0) < -1000],
             "tarjetas_estimadas": [t["nombre"] for t in tarjetas if t.get("estimada")],
             "tarjetas_sin_deuda": [t["nombre"] for t in tarjetas if t["deuda"] is None],
             "proximo_sueldo": est["proximo_pago"].isoformat(), "dias_al_sueldo": est["dias_al_pago"],
@@ -398,6 +400,9 @@ def main(entrada, salida):
     res["compromisos"] = compromisos.lista(todos, agente.pagos_config()["pagos"], tarjetas, res["analisis"].get("suscripciones") or [],
                                            e.get("marcas_compromisos") or {}, hoy, historia_desde=e.get("historia_desde"))
     res["compromisos_resumen"] = compromisos.resumen(res["compromisos"], hoy)
+    # lo que ya explica un compromiso (el arriendo que salió por PSE sin nombre) no se pregunta (igual que el sistema original)
+    evid = {ev.get("id") for c in res["compromisos"] for ev in c.get("evidencia") or [] if ev.get("id")}
+    res["por_confirmar"] = [i for i in res["por_confirmar"] if i not in evid]
     # Avisos: alertas de hoy y si sale correo (la memoria vive en la pestaña Avisos: entra en avisos_memoria)
     import avisos
     alertas_hoy = avisos.generar(res["compromisos"], tarjetas, res["analisis"].get("suscripciones") or [], res["resumen"]["proximo_sueldo"], hoy)
@@ -413,6 +418,12 @@ def main(entrada, salida):
     res["acciones"] = reportes.acciones(e.get("objetivo"), res["analisis"], deu, hoy)
     res["comparacion_ofertas"] = reportes.comparar_ofertas(creditos, tarjetas, e.get("ofertas") or [], e.get("tasa_usura"))
     res["informe"] = reportes.informe(est, res, deu, proximos, preguntar, hoy)
+    # "¿y si…?": simulaciones que pidió el usuario (las cifras salen de aquí, no de Claude)
+    import simular
+    res["simulaciones"] = simular.correr(e.get("simulaciones"), res, hoy)
+    # resumen financiero: el cierre de la configuración (y el de cada mes), con las preguntas numeradas
+    import resumen
+    res["resumen_financiero"] = resumen.armar(res, hoy, e.get("objetivo"))
     # tablero (artifact del usuario): un documento por sección para su almacén (colección tablero)
     import tablero
     res["tablero"] = tablero.armar(res, hoy, e.get("sheet_url"), e.get("metas"), e.get("historia_desde"))
